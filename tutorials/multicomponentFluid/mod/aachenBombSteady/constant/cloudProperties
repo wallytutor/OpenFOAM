@@ -107,7 +107,7 @@ subModels
             thetaOuter        constant 42.0;
 
             flowType          constantVelocity;
-            Umag              12.0;
+            Umag              8.0;
 
             injectionMethod   disc;
             dInner            0;

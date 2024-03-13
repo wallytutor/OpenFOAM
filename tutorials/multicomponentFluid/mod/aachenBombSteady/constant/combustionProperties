@@ -15,13 +15,13 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Turbulent models.
-// combustionModel EDC;
+combustionModel EDC;
 
 // Single step and inherited.
 // combustionModel singleStepCombustion;
 // combustionModel FSD;
 // combustionModel diffusion;
-combustionModel infinitelyFastChemistry;
+// combustionModel infinitelyFastChemistry;
 
 // Laminar and inherited.
 // combustionModel laminar;
