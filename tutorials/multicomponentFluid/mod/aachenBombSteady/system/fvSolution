@@ -109,7 +109,7 @@ PIMPLE
     nNonOrthogonalCorrectors 0;
     momentumPredictor        yes;
 
-    maxCo                    2.5;
+    maxCo                    0.5;
     rDeltaTSmoothingCoeff    0.5;
     alphaTemp                1;
     maxDeltaT                1;
