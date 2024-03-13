@@ -14,16 +14,39 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-//combustionModel EDC;
+// Turbulent models.
+// combustionModel EDC;
+
+// Single step and inherited.
+// combustionModel singleStepCombustion;
 // combustionModel FSD;
+// combustionModel diffusion;
+combustionModel infinitelyFastChemistry;
+
+// Laminar and inherited.
 // combustionModel laminar;
-// combustionModel infinitelyFastChemistry;
-combustionModel PaSR;
+// combustionModel PaSR;
+
+EDCCoeffs
+{
+    version v2016;
+}
+
+infinitelyFastChemistryCoeffs
+{
+    semiImplicit no;
+    C            5.0;
+}
 
 PaSRCoeffs
 {
     Cmix                1.0;
 }
 
+// For single step models.
+reaction
+{
+    reaction  "C7H16 + 11O2 = 7CO2 + 8H2O";
+}
 
 // ************************************************************************* //

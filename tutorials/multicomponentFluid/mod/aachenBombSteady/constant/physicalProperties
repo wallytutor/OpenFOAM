@@ -31,6 +31,9 @@ newFormat       yes;
 
 defaultSpecie     N2;
 
+// For single-step combustion models.
+fuel              C7H16;
+
 liquids
 {
     C7H16;

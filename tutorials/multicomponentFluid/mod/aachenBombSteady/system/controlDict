@@ -18,13 +18,13 @@ application       foamRun;
 
 solver            multicomponentFluid;
 
-startFrom         startTime;
+startFrom         latestTime;
 
 startTime         0;
 
 stopAt            endTime;
 
-endTime           100;
+endTime           200;
 
 deltaT            1;
 
