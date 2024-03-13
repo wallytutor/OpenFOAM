@@ -16,12 +16,6 @@ FoamFile
 
 solvers
 {
-    // For potentialFoam initialization.
-    Phi
-    {
-        $p;
-    }
-
     "rho.*"
     {
         solver          diagonal;
@@ -57,6 +51,12 @@ solvers
     {
         $p;
         relTol          0;
+    }
+
+    // For potentialFoam initialization.
+    Phi
+    {
+        $p;
     }
 
     "(U|Yi|h|e|k|epsilon|omega)"
