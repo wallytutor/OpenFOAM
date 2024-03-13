@@ -23,7 +23,7 @@ solution
     maxCo           0.1;
 
     coupled         true;
-    transient       yes;
+    transient       no;
     cellValueSourceCorrection on;
 
     sourceTerms
@@ -36,6 +36,12 @@ solution
             Yi              explicit 1;
             h               explicit 1;
             radiation       explicit 1;
+
+            // rho             semiImplicit 1;
+            // U               semiImplicit 1;
+            // Yi              semiImplicit 1;
+            // h               semiImplicit 1;
+            // radiation       semiImplicit 1;
         }
     }
 
@@ -76,6 +82,7 @@ subModels
     particleForces
     {
         sphereDrag;
+        gravity;
     }
 
     injectionModels
@@ -84,7 +91,7 @@ subModels
         {
             type              coneInjection;
             
-            SOI               5000;
+            SOI               100;
             //duration        1.25e-3;
 
             massFlowRate      0.003;
@@ -152,25 +159,30 @@ subModels
         }
     }
 
-    dispersionModel none;
+    dispersionModel          none;
+    // dispersionModel          stochasticDispersionRAS;
 
-    patchInteractionModel standardWallInteraction;
+    patchInteractionModel    standardWallInteraction;
 
-    heatTransferModel RanzMarshall;
+    heatTransferModel        RanzMarshall;
 
-    compositionModel singlePhaseMixture;
+    compositionModel         singlePhaseMixture;
 
-    phaseChangeModel liquidEvaporationBoil;
+    phaseChangeModel         liquidEvaporationBoil;
+    // phaseChangeModel         liquidEvaporation;
 
-    surfaceFilmModel none;
+    // devolatilisationModel    none;
+    // surfaceReactionModel     none;
 
-    atomisationModel none;
+    surfaceFilmModel         none;
 
-    breakupModel    ReitzDiwakar; // ReitzKHRT;
+    atomisationModel         none;
+
+    breakupModel             ReitzDiwakar; // ReitzKHRT;
 
     stochasticCollisionModel none;
 
-    radiation       off;
+    radiation                off;
 
     standardWallInteractionCoeffs
     {
@@ -209,26 +221,26 @@ subModels
         Cs              10;
     }
 
-/*
-    ReitzKHRTCoeffs
-    {
-        solveOscillationEq yes;
-        B0              0.61;
-        B1              40;
-        Ctau            1;
-        CRT             0.1;
-        msLimit         0.2;
-        WeberLimit      6;
-    }
-*/
-    TABCoeffs
-    {
-        y0              0;
-        yDot0           0;
-        Cmu             10;
-        Comega          8;
-        WeCrit          12;
-    }
+
+    // ReitzKHRTCoeffs
+    // {
+    //     solveOscillationEq yes;
+    //     B0              0.61;
+    //     B1              40;
+    //     Ctau            1;
+    //     CRT             0.1;
+    //     msLimit         0.2;
+    //     WeberLimit      6;
+    // }
+
+    // TABCoeffs
+    // {
+    //     y0              0;
+    //     yDot0           0;
+    //     Cmu             10;
+    //     Comega          8;
+    //     WeCrit          12;
+    // }
 }
 
 

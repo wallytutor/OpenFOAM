@@ -17,6 +17,11 @@ runApplication renumberMesh -overwrite
 
 runApplication decomposePar
 
+runApplication potentialFoam
+
+# remove incompatible (volumetric) flux field
+rm -f 0/phi
+
 runApplication foamRun
 #runApplication mpirun -np 8 foamRun -parallel
 

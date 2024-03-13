@@ -12,6 +12,9 @@ tutorials/*
 tutorials/multicomponentFluid/*
 !tutorials/multicomponentFluid/mod/
 
+# Any sandbox
+sandbox*
+
 ###############################################################################
 # Julia
 ###############################################################################

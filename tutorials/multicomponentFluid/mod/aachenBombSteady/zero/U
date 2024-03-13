@@ -24,6 +24,10 @@ boundaryField
         type                flowRateInletVelocity;
         massFlowRate        constant 0.030;
         profile             turbulentBL;
+
+        // For potentialFoam initialization.
+        // Computed approximately at initial temperature.
+        rhoInlet            0.746;
     }
     outlet
     {

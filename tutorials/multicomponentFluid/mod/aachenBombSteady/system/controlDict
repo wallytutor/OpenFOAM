@@ -40,7 +40,7 @@ writePrecision    6;
 
 writeCompression  off;
 
-timeFormat        general;
+timeFormat        fixed;
 
 timePrecision     0;
 

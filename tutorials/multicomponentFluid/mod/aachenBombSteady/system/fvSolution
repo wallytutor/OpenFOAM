@@ -18,25 +18,33 @@ solvers
 {
     "rho.*"
     {
-        solver          diagonal;
+        // solver          diagonal;
+
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       0;
+        relTol          0;
     }
 
     pcorr
     {
         solver          GAMG;
         smoother        GaussSeidel;
-
-        tolerance       1e-3;
+        tolerance       1.0e-03;
         relTol          0;
     }
 
     p
     {
-        solver          GAMG;
-        smoother        GaussSeidel;
-
-        tolerance       1e-6;
-        relTol          0.1;
+        // solver          GAMG;
+        // smoother        GaussSeidel;
+        // tolerance       1e-6;
+        // relTol          0.1;
+        solver           GAMG;
+        smoother         DICGaussSeidel;
+        tolerance        1.0e-06;
+        relTol           0.05;
+        maxIter          50;
     }
 
     pFinal
@@ -45,43 +53,66 @@ solvers
         relTol          0;
     }
 
-    "(U|k|epsilon)"
+    // For potentialFoam initialization.
+    Phi
+    {
+        $p;
+    }
+
+    // "(U|k|epsilon)"
+    // {
+    //     solver          smoothSolver;
+    //     smoother        symGaussSeidel;
+    //     tolerance       1e-6;
+    //     relTol          0.1;
+    // }
+    // "(U|k|epsilon)Final"
+    // {
+    //     $U;
+    //     relTol          0;
+    // }
+
+    // "(h|Yi|O2|N2|H2O)"
+    // {
+    //     solver          PBiCGStab;
+    //     preconditioner  DILU;
+    //     tolerance       1e-6;
+    //     relTol          0.1;
+    // }
+    // "(h|Yi|O2|N2|H2O)Final"
+    // {
+    //     $Yi;
+    //     relTol          0;
+    // }
+
+    "(U|Yi|h|e|k|epsilon|omega).*"
     {
         solver          smoothSolver;
-        smoother        symGaussSeidel;
-
-        tolerance       1e-6;
+        smoother        GaussSeidel;
+        tolerance       0;
         relTol          0.1;
+        maxIter         20;
     }
+}
 
-    "(U|k|epsilon)Final"
-    {
-        $U;
-        relTol          0;
-    }
-
-    "(h|Yi|O2|N2|H2O)"
-    {
-        solver          PBiCGStab;
-        preconditioner  DILU;
-
-        tolerance       1e-6;
-        relTol          0.1;
-    }
-
-    "(h|Yi|O2|N2|H2O)Final"
-    {
-        $Yi;
-        relTol          0;
-    }
+// Used for potentialFoam initialisation
+potentialFlow
+{
+    nNonOrthogonalCorrectors 5;
 }
 
 PIMPLE
 {
-    transonic       no;
-    nCorrectors     2;
+    transonic                no;
+    nOuterCorrectors         1;
+    nCorrectors              2;
     nNonOrthogonalCorrectors 0;
-    momentumPredictor yes;
+    momentumPredictor        yes;
+
+    maxCo                    2.5;
+    rDeltaTSmoothingCoeff    0.5;
+    alphaTemp                1;
+    maxDeltaT                1;
 }
 
 relaxationFactors

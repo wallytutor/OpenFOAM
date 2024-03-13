@@ -16,7 +16,8 @@ FoamFile
 
 ddtSchemes
 {
-    default         steadyState;
+    // default         steadyState;
+    default         localEuler;
 }
 
 gradSchemes
@@ -28,19 +29,21 @@ divSchemes
 {
     default         none;
 
-    div(phi,U)      Gauss upwind;
-    div(phid,p)     Gauss upwind;
-    div(phi,K)      Gauss linear;
-    div(phi,k)      Gauss upwind;
-    div(phi,epsilon) Gauss upwind;
-    div(U)          Gauss linear;
+    div(phid,p)      Gauss upwind;
+    div(phi,U)       bounded Gauss upwind;
+    div(phi,K)       bounded Gauss upwind;
+    div(phi,h)       bounded Gauss upwind;
+    div(phi,k)       bounded Gauss upwind;
+    div(phi,epsilon) bounded Gauss upwind;
+    div(phi,omega)   bounded Gauss upwind;
+    div(phi,Yi_h)    Gauss upwind;
     div(((rho*nuEff)*dev2(T(grad(U))))) Gauss linear;
-    div(phi,Yi_h)   Gauss upwind;
 }
 
 laplacianSchemes
 {
     default         Gauss linear orthogonal;
+    // default         Gauss linear uncorrected;
 }
 
 interpolationSchemes
@@ -51,7 +54,12 @@ interpolationSchemes
 snGradSchemes
 {
     default         orthogonal;
+    // default         uncorrected;
 }
 
+wallDist
+{
+    method          meshWave;
+}
 
 // ************************************************************************* //
