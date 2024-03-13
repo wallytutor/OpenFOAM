@@ -15,7 +15,7 @@ runApplication blockMesh
 
 runApplication renumberMesh -overwrite
 
-runApplication decomposePar
+# runApplication decomposePar
 
 runApplication potentialFoam
 

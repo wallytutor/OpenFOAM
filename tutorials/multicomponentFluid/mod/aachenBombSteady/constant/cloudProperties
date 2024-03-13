@@ -18,7 +18,7 @@ type        sprayCloud;
 
 solution
 {
-    calcFrequency   10;
+    calcFrequency   1;
     maxTrackTime    5.0;
     maxCo           0.1;
 
@@ -91,7 +91,7 @@ subModels
         {
             type              coneInjection;
             
-            SOI               100;
+            SOI               0;
             //duration        1.25e-3;
 
             massFlowRate      0.003;

@@ -16,14 +16,20 @@ FoamFile
 
 solvers
 {
+    // For potentialFoam initialization.
+    Phi
+    {
+        $p;
+    }
+
     "rho.*"
     {
-        // solver          diagonal;
+        solver          diagonal;
 
-        solver          PCG;
-        preconditioner  DIC;
-        tolerance       0;
-        relTol          0;
+        // solver          PCG;
+        // preconditioner  DIC;
+        // tolerance       0;
+        // relTol          0;
     }
 
     pcorr
@@ -36,15 +42,15 @@ solvers
 
     p
     {
-        // solver          GAMG;
-        // smoother        GaussSeidel;
-        // tolerance       1e-6;
-        // relTol          0.1;
-        solver           GAMG;
-        smoother         DICGaussSeidel;
-        tolerance        1.0e-06;
-        relTol           0.05;
-        maxIter          50;
+        solver          GAMG;
+        smoother        GaussSeidel;
+        tolerance       1.0e-06;
+        relTol          0.1;
+        // solver           GAMG;
+        // smoother         DICGaussSeidel;
+        // tolerance        1.0e-06;
+        // relTol           0.05;
+        // maxIter          50;
     }
 
     pFinal
@@ -53,24 +59,18 @@ solvers
         relTol          0;
     }
 
-    // For potentialFoam initialization.
-    Phi
+    "(U|Yi|h|e|k|epsilon|omega)"
     {
-        $p;
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1.0e-06;
+        relTol          0.1;
     }
-
-    // "(U|k|epsilon)"
-    // {
-    //     solver          smoothSolver;
-    //     smoother        symGaussSeidel;
-    //     tolerance       1e-6;
-    //     relTol          0.1;
-    // }
-    // "(U|k|epsilon)Final"
-    // {
-    //     $U;
-    //     relTol          0;
-    // }
+    "(U|Yi|h|e|k|epsilon|omega)Final"
+    {
+        $U;
+        relTol          0;
+    }
 
     // "(h|Yi|O2|N2|H2O)"
     // {
@@ -85,14 +85,14 @@ solvers
     //     relTol          0;
     // }
 
-    "(U|Yi|h|e|k|epsilon|omega).*"
-    {
-        solver          smoothSolver;
-        smoother        GaussSeidel;
-        tolerance       0;
-        relTol          0.1;
-        maxIter         20;
-    }
+    // "(U|Yi|h|e|k|epsilon|omega).*"
+    // {
+    //     solver          smoothSolver;
+    //     smoother        GaussSeidel;
+    //     tolerance       0;
+    //     relTol          0.1;
+    //     maxIter         20;
+    // }
 }
 
 // Used for potentialFoam initialisation
