@@ -14,7 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// combustionModel EDC;
+//combustionModel EDC;
 // combustionModel FSD;
 // combustionModel laminar;
 // combustionModel infinitelyFastChemistry;

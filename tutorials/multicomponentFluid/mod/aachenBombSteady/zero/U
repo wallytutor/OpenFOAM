@@ -22,7 +22,7 @@ boundaryField
     inlet
     {
         type                flowRateInletVelocity;
-        massFlowRate        constant 0.030;
+        massFlowRate        constant 0.300;
         profile             turbulentBL;
 
         // For potentialFoam initialization.

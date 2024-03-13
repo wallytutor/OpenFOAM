@@ -94,24 +94,24 @@ subModels
             // SOI               0;
             // duration          1.0e+300;
 
-            massFlowRate      0.003;
+            flowRateProfile   constant 1;
+            massFlowRate      0.030;
             uniformParcelSize volume;
             // parcelsPerSecond  20000000;
             parcelsPerSecond  20000;
 
-            injectionMethod   disc;
-            flowType          flowRateAndDischarge;
-            dInner            0;
-            dOuter            0.0002;
-            position          (0.001 0.1 0.1);
+    
+            position          (0.001 0.0 0.0);
             direction         (1 0 0);
+            thetaInner        constant 0.0;
+            thetaOuter        constant 42.0;
 
-            flowRateProfile constant 1;
+            flowType          constantVelocity;
+            Umag              12.0;
 
-            Cd              constant 0.9;
-
-            thetaInner      constant 0.0;
-            thetaOuter      constant 10.0;
+            injectionMethod   disc;
+            dInner            0;
+            dOuter            0.002;
 
             sizeDistribution
             {
