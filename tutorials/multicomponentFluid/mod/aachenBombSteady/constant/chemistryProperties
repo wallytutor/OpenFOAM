@@ -7,21 +7,21 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      chemistryProperties;
+    format          ascii;
+    class           dictionary;
+    location        "constant";
+    object          chemistryProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 chemistryType
 {
-    solver               ode;
+    solver          ode;
 }
 
-chemistry                on;
+chemistry       off;
 
-initialChemicalTimeStep  1.0e-07;
+initialChemicalTimeStep 1e-07;
 
 odeCoeffs
 {
@@ -29,6 +29,7 @@ odeCoeffs
     eps             0.05;
 }
 
-#include "reactions"
+#include        "reactions"
+
 
 // ************************************************************************* //

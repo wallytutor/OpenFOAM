@@ -7,57 +7,58 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      controlDict;
+    format          ascii;
+    class           dictionary;
+    location        "system";
+    object          controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-application       foamRun;
+application     foamRun;
 
-solver            multicomponentFluid;
+solver          multicomponentFluid;
 
-startFrom         latestTime;
+startFrom       latestTime;
 
-startTime         0;
+startTime       0;
 
-stopAt            endTime;
+stopAt          endTime;
 
-endTime           5000;
+endTime         100;
 
-deltaT            1;
+deltaT          1;
 
-writeControl      adjustableRunTime;
+writeControl    adjustableRunTime;
 
-writeInterval     20;
+writeInterval   20;
 
-purgeWrite        5;
+purgeWrite      5;
 
-writeFormat       binary;
+writeFormat     binary;
 
-writePrecision    6;
+writePrecision  6;
 
-writeCompression  off;
+writeCompression off;
 
-timeFormat        fixed;
+timeFormat      fixed;
 
-timePrecision     0;
+timePrecision   0;
 
-adjustTimeStep    yes;
+adjustTimeStep  yes;
 
-maxCo             0.1;
+maxCo           0.1;
 
 runTimeModifiable yes;
 
 functions
 {
-    #includeFunc Qdot
+    #includeFunc    Qdot
 }
 
 OptimisationSwitches
 {
-    fileHandler collated;
+    fileHandler     collated;
 }
+
 
 // ************************************************************************* //

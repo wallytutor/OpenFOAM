@@ -7,46 +7,35 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      combustionProperties;
+    format          ascii;
+    class           dictionary;
+    location        "constant";
+    object          combustionProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Turbulent models.
-combustionModel EDC;
-
-// Single step and inherited.
-// combustionModel singleStepCombustion;
-// combustionModel FSD;
-// combustionModel diffusion;
-// combustionModel infinitelyFastChemistry;
-
-// Laminar and inherited.
-// combustionModel laminar;
-// combustionModel PaSR;
-
 EDCCoeffs
 {
-    version v2016;
+    version         v2016;
 }
 
 infinitelyFastChemistryCoeffs
 {
-    semiImplicit no;
-    C            5.0;
+    semiImplicit    no;
+    C               5;
 }
 
 PaSRCoeffs
 {
-    Cmix                1.0;
+    Cmix            1;
 }
 
-// For single step models.
 reaction
 {
-    reaction  "C7H16 + 11O2 = 7CO2 + 8H2O";
+    reaction        "C7H16 + 11O2 = 7CO2 + 8H2O";
 }
+
+combustionModel none;
+
 
 // ************************************************************************* //
