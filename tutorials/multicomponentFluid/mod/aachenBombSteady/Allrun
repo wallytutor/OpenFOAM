@@ -31,11 +31,14 @@ rm -f 0/phi
 # runApplication foamRun
 
 ncores=32
-runApplication decomposePar
-runApplication mpirun -np ${ncores} foamRun -parallel
+
+if [ ! -f log.mpirun.1 ]; then
+    runApplication decomposePar
+    runApplication mpirun -np ${ncores} foamRun -parallel
+    mv log.mpirun log.mpirun.1
+fi
 
 # Prepare for intermediate run.
-mv log.mpirun log.mpirun.1
 foamDictionary constant/chemistryProperties \
     -entry chemistry       -set on
 foamDictionary constant/combustionProperties \
@@ -43,6 +46,9 @@ foamDictionary constant/combustionProperties \
 foamDictionary system/controlDict \
     -entry endTime         -set 1000
 
-runApplication mpirun -np ${ncores} foamRun -parallel
+if [ ! -f log.mpirun.2 ]; then
+    runApplication mpirun -np ${ncores} foamRun -parallel
+    mv log.mpirun log.mpirun.2
+fi
 
 #------------------------------------------------------------------------------
