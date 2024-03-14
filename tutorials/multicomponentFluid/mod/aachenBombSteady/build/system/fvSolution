@@ -1,0 +1,126 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  11
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "rho.*"
+    {
+        solver          diagonal;
+
+        // solver          PCG;
+        // preconditioner  DIC;
+        // tolerance       0;
+        // relTol          0;
+    }
+
+    pcorr
+    {
+        solver          GAMG;
+        smoother        GaussSeidel;
+        tolerance       1.0e-03;
+        relTol          0;
+    }
+
+    p
+    {
+        solver          GAMG;
+        smoother        GaussSeidel;
+        tolerance       1.0e-06;
+        relTol          0.1;
+        // solver           GAMG;
+        // smoother         DICGaussSeidel;
+        // tolerance        1.0e-06;
+        // relTol           0.05;
+        // maxIter          50;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
+
+    // For potentialFoam initialization.
+    Phi
+    {
+        $p;
+    }
+
+    "(U|Yi|h|e|k|epsilon|omega)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1.0e-06;
+        relTol          0.1;
+    }
+    "(U|Yi|h|e|k|epsilon|omega)Final"
+    {
+        $U;
+        relTol          0;
+    }
+
+    // "(h|Yi|O2|N2|H2O)"
+    // {
+    //     solver          PBiCGStab;
+    //     preconditioner  DILU;
+    //     tolerance       1e-6;
+    //     relTol          0.1;
+    // }
+    // "(h|Yi|O2|N2|H2O)Final"
+    // {
+    //     $Yi;
+    //     relTol          0;
+    // }
+
+    // "(U|Yi|h|e|k|epsilon|omega).*"
+    // {
+    //     solver          smoothSolver;
+    //     smoother        GaussSeidel;
+    //     tolerance       0;
+    //     relTol          0.1;
+    //     maxIter         20;
+    // }
+}
+
+// Used for potentialFoam initialisation
+potentialFlow
+{
+    nNonOrthogonalCorrectors 5;
+}
+
+PIMPLE
+{
+    transonic                no;
+    nOuterCorrectors         1;
+    nCorrectors              2;
+    nNonOrthogonalCorrectors 0;
+    momentumPredictor        yes;
+
+    maxCo                    0.5;
+    rDeltaTSmoothingCoeff    0.5;
+    alphaTemp                1;
+    maxDeltaT                1;
+}
+
+relaxationFactors
+{
+    equations
+    {
+        ".*"        1;
+    }
+}
+
+// ************************************************************************* //
