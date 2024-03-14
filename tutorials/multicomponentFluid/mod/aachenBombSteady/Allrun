@@ -15,14 +15,34 @@ runApplication blockMesh
 
 runApplication renumberMesh -overwrite
 
-# runApplication decomposePar
+# Prepare for initial run.
+foamDictionary constant/chemistryProperties \
+    -entry chemistry       -set off
+foamDictionary constant/combustionProperties \
+    -entry combustionModel -set none
+foamDictionary system/controlDict \
+    -entry endTime         -set 100
 
 runApplication potentialFoam
 
 # remove incompatible (volumetric) flux field
 rm -f 0/phi
 
-runApplication foamRun
-#runApplication mpirun -np 8 foamRun -parallel
+# runApplication foamRun
+
+ncores=32
+runApplication decomposePar
+runApplication mpirun -np ${ncores} foamRun -parallel
+
+# Prepare for intermediate run.
+mv log.mpirun log.mpirun.1
+foamDictionary constant/chemistryProperties \
+    -entry chemistry       -set on
+foamDictionary constant/combustionProperties \
+    -entry combustionModel -set infinitelyFastChemistry
+foamDictionary system/controlDict \
+    -entry endTime         -set 1000
+
+runApplication mpirun -np ${ncores} foamRun -parallel
 
 #------------------------------------------------------------------------------
