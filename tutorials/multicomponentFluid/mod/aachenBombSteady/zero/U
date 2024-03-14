@@ -22,8 +22,12 @@ boundaryField
     inlet
     {
         type                flowRateInletVelocity;
-        massFlowRate        constant 0.300;
         profile             turbulentBL;
+
+        // Following stoichiometry of C7H16 + 11O2 = 7CO2 + 8H2O, for 100 g of
+        // fuel one needs 176 g of O2, which corresponds to 23.4% of total mass
+        // flow rate. So to 0.1 kg/s of fuel one needs 0.176 kg/s / 0.234 =>
+        massFlowRate        constant 0.7521;
 
         // For potentialFoam initialization.
         // Computed approximately at initial temperature.
