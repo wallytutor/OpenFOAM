@@ -53,6 +53,7 @@ runTimeModifiable yes;
 functions
 {
     #includeFunc    Qdot
+    #includeFunc    residuals(p, U, T, k, epsilon, cloud:alpha)
 }
 
 OptimisationSwitches
