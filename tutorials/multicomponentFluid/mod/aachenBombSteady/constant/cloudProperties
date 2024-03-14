@@ -91,11 +91,11 @@ subModels
         {
             type              coneInjection;
             
-            // SOI               0;
+            SOI               1;
             // duration          1.0e+300;
 
             flowRateProfile   constant 1;
-            massFlowRate      0.1;
+            massFlowRate      0.01;
             uniformParcelSize volume;
             // parcelsPerSecond  20000000;
             parcelsPerSecond  20000;
@@ -125,40 +125,46 @@ subModels
         }
     }
 
+    // ------------------------------------------------------------------------
+
     dispersionModel          none;
     // dispersionModel          stochasticDispersionRAS;
 
+    // ------------------------------------------------------------------------
+
+    isotropyModel stochastic;
+
+    stochasticCoeffs
+    {
+        timeScaleModel
+        {
+            type        isotropic;
+            alphaPacked 0.6;
+            e           0.9;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+
     patchInteractionModel    standardWallInteraction;
-
-    heatTransferModel        RanzMarshall;
-
-    compositionModel         singlePhaseMixture;
-
-    phaseChangeModel         liquidEvaporationBoil;
-    // phaseChangeModel         liquidEvaporation;
-
-    // devolatilisationModel    none;
-    // surfaceReactionModel     none;
-
-    surfaceFilmModel         none;
-
-    atomisationModel         none;
-
-    breakupModel             ReitzDiwakar; // ReitzKHRT;
-
-    stochasticCollisionModel none;
-
-    radiation                off;
 
     standardWallInteractionCoeffs
     {
         type            rebound;
     }
 
+    // ------------------------------------------------------------------------
+
+    heatTransferModel        RanzMarshall;
+
     RanzMarshallCoeffs
     {
         BirdCorrection  true;
     }
+
+    // ------------------------------------------------------------------------
+
+    compositionModel         singlePhaseMixture;
 
     singlePhaseMixtureCoeffs
     {
@@ -171,6 +177,10 @@ subModels
         );
     }
 
+    // ------------------------------------------------------------------------
+
+    phaseChangeModel         liquidEvaporationBoil;
+
     liquidEvaporationBoilCoeffs
     {
         enthalpyTransfer enthalpyDifference;
@@ -178,6 +188,10 @@ subModels
         activeLiquids    ( C7H16 );
     }
 
+    // ------------------------------------------------------------------------
+
+    breakupModel             ReitzDiwakar; // ReitzKHRT;
+    
     ReitzDiwakarCoeffs
     {
         solveOscillationEq yes;
@@ -187,31 +201,34 @@ subModels
         Cs              10;
     }
 
+    // ------------------------------------------------------------------------
 
-    // ReitzKHRTCoeffs
-    // {
-    //     solveOscillationEq yes;
-    //     B0              0.61;
-    //     B1              40;
-    //     Ctau            1;
-    //     CRT             0.1;
-    //     msLimit         0.2;
-    //     WeberLimit      6;
-    // }
+    devolatilisationModel    none;
 
-    // TABCoeffs
-    // {
-    //     y0              0;
-    //     yDot0           0;
-    //     Cmu             10;
-    //     Comega          8;
-    //     WeCrit          12;
-    // }
+    surfaceReactionModel     none;
+
+    surfaceFilmModel         none;
+
+    atomisationModel         none;
+
+    stochasticCollisionModel none;
+
+    radiation                off;
 }
 
 
 cloudFunctions
 {
+    massFlux1
+    {
+        type massFlux;
+    }
+    patchPostProcessing1
+    {
+        type             patchPostProcessing;
+        maxStoredParcels 1000;
+        patches          ( inlet outlet );
+    }
     particleTracks1
     {
         type            particleTracks;
