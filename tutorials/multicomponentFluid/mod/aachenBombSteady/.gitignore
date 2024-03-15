@@ -8,6 +8,10 @@ polyMesh/
 constant/reactions
 constant/speciesThermo
 
+# Generated files
+constant/chemistryProperties
+constant/combustionProperties
+
 # Logs
 log.*
 

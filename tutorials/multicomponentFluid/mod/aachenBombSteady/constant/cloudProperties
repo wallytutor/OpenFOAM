@@ -23,7 +23,7 @@ solution
     maxCo           0.3;
 
     coupled         true;
-    transient       no;
+    transient       yes;
     cellValueSourceCorrection on;
 
     sourceTerms

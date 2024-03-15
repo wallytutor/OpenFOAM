@@ -15,6 +15,10 @@ runApplication blockMesh
 
 runApplication renumberMesh -overwrite
 
+# Copy files for running
+cp constant/chemistryProperties.orig  constant/chemistryProperties
+cp constant/combustionProperties.orig constant/combustionProperties
+
 # Prepare for initial run.
 foamDictionary constant/chemistryProperties \
     -entry chemistry       -set off
