@@ -24,7 +24,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         100;
+endTime         100000;
 
 deltaT          1;
 
@@ -53,7 +53,7 @@ runTimeModifiable yes;
 functions
 {
     #includeFunc    Qdot
-    #includeFunc    residuals(p, U, T, k, epsilon, cloud:alpha)
+    #includeFunc    residuals(p, U, h, k, epsilon)
 }
 
 OptimisationSwitches
