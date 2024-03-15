@@ -55,4 +55,12 @@ if [ ! -f log.mpirun.2 ]; then
     mv log.mpirun log.mpirun.2
 fi
 
+foamDictionary system/controlDict \
+    -entry endTime         -set 100000
+
+if [ ! -f log.mpirun.3 ]; then
+    runApplication mpirun -np ${ncores} foamRun -parallel
+    mv log.mpirun log.mpirun.3
+fi
+
 #------------------------------------------------------------------------------
