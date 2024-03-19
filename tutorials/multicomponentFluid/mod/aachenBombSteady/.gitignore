@@ -11,6 +11,7 @@ constant/speciesThermo
 # Generated files
 constant/chemistryProperties
 constant/combustionProperties
+system/controlDict
 
 # Computed inputs
 parameters

@@ -12,6 +12,7 @@ rm -rf \
     constant/speciesThermo \
     constant/chemistryProperties \
     constant/combustionProperties \
+    system/controlDict \
     parameters
 
 #------------------------------------------------------------------------------

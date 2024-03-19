@@ -22,6 +22,7 @@ prepareCase()
     cp -avr zero/0/ 0/
     cp zero/constant/chemistryProperties  constant/chemistryProperties
     cp zero/constant/combustionProperties constant/combustionProperties
+    cp zero/system/controlDict system/controlDict
 
     runApplication chemkinToFoam \
                 chemkin/chem.inp \
