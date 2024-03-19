@@ -7,23 +7,34 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "constant";
-    object      momentumTransport;
+    format      binary;
+    class       volScalarField;
+    location    "0";
+    object      C7H16;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  RAS;
+dimensions      [0 0 0 0 0 0 0];
 
-RAS
+internalField   uniform 0.0;
+
+boundaryField
 {
-    // model           kEpsilon;
-    model           kOmegaSST;
-
-    turbulence      on;
-
-    printCoeffs     on;
+    inlet
+    {
+        type            fixedValue;
+        value           uniform 0.0;
+    }
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform 0;
+        value           uniform 0;
+    }
+    walls
+    {
+        type            zeroGradient;
+    }
 }
 
 

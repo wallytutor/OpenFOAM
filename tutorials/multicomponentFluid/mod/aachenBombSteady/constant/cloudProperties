@@ -14,34 +14,28 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type        sprayCloud;
+type        reactingMultiphaseCloud;
 
 solution
 {
-    calcFrequency   1;
+    calcFrequency   10;
     maxTrackTime    5.0;
     maxCo           0.3;
 
     coupled         true;
-    transient       yes;
     cellValueSourceCorrection on;
+    // transient       yes;
 
     sourceTerms
     {
         resetOnStartup  false;
         schemes
         {
-            rho             explicit 1;
-            U               explicit 1;
-            Yi              explicit 1;
-            h               explicit 1;
-            radiation       explicit 1;
-
-            // rho             semiImplicit 1;
-            // U               semiImplicit 1;
-            // Yi              semiImplicit 1;
-            // h               semiImplicit 1;
-            // radiation       semiImplicit 1;
+            rho             semiImplicit 1;
+            U               semiImplicit 1;
+            Yi              semiImplicit 1;
+            h               semiImplicit 1;
+            radiation       semiImplicit 1;
         }
     }
 
@@ -67,9 +61,6 @@ solution
 constantProperties
 {
     T0              320;
-
-    // place holders for rho0 and Cp0
-    // - reset from liquid properties using T0
     rho0            1000;
     Cp0             4187;
 
@@ -90,27 +81,22 @@ subModels
         model1
         {
             type              coneInjection;
-            
-            SOI               1;
-            // duration          1.0e+300;
 
-            flowRateProfile   constant 1;
             massFlowRate      0.01;
             uniformParcelSize volume;
-            // parcelsPerSecond  20000000;
-            parcelsPerSecond  20000;
+            parcelsPerSecond  200000;
+            flowRateProfile   constant 1;
 
-    
             position          (0.001 0.0 0.0);
-            direction         (1 0 0);
+            direction         (1.000 0.0 0.0);
             thetaInner        constant 0.0;
             thetaOuter        constant 42.0;
 
             flowType          constantVelocity;
-            Umag              8.0;
+            Umag              3.0;
 
             injectionMethod   disc;
-            dInner            0;
+            dInner            0.000;
             dOuter            0.002;
 
             sizeDistribution
@@ -127,8 +113,8 @@ subModels
 
     // ------------------------------------------------------------------------
 
-    dispersionModel          none;
-    // dispersionModel          stochasticDispersionRAS;
+    //dispersionModel          none;
+    dispersionModel          stochasticDispersionRAS;
 
     // ------------------------------------------------------------------------
 
@@ -164,7 +150,8 @@ subModels
 
     // ------------------------------------------------------------------------
 
-    compositionModel         singlePhaseMixture;
+    // compositionModel         singlePhaseMixture;
+    compositionModel         singleMixtureFraction;
 
     singlePhaseMixtureCoeffs
     {
@@ -177,21 +164,50 @@ subModels
         );
     }
 
+    singleMixtureFractionCoeffs
+    {
+        phases
+        (
+            gas
+            {
+            }
+            liquid
+            {
+                C7H16               1;
+            }
+            solid
+            {
+            }
+        );
+
+        YGasTot0        0;
+        YLiquidTot0     1;
+        YSolidTot0      0;
+    }
+
     // ------------------------------------------------------------------------
 
-    phaseChangeModel         liquidEvaporationBoil;
+    // phaseChangeModel         liquidEvaporationBoil;
+    phaseChangeModel         liquidEvaporation;
 
     liquidEvaporationBoilCoeffs
     {
         enthalpyTransfer enthalpyDifference;
+        activeLiquids    ( C7H16 );
+    }
 
+    liquidEvaporationCoeffs
+    {
+        enthalpyTransfer enthalpyDifference;
         activeLiquids    ( C7H16 );
     }
 
     // ------------------------------------------------------------------------
 
-    breakupModel             ReitzDiwakar; // ReitzKHRT;
-    
+    // breakupModel             ReitzDiwakar;
+    // breakupModel             ReitzKHRT;
+    breakupModel             none;
+
     ReitzDiwakarCoeffs
     {
         solveOscillationEq yes;

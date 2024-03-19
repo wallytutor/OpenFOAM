@@ -24,19 +24,19 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         100000;
+endTime         200;
 
 deltaT          1;
 
-writeControl    adjustableRunTime;
+writeControl    timeStep;
 
 writeInterval   20;
 
 purgeWrite      5;
 
-writeFormat     binary;
+writeFormat     ascii;
 
-writePrecision  6;
+writePrecision  10;
 
 writeCompression off;
 
@@ -44,16 +44,26 @@ timeFormat      fixed;
 
 timePrecision   0;
 
-adjustTimeStep  yes;
-
-maxCo           0.1;
-
 runTimeModifiable yes;
 
 functions
 {
     #includeFunc    Qdot
     #includeFunc    residuals(p, U, h, k, epsilon)
+    surfaceFieldValue1
+    {
+        type            surfaceFieldValue;
+        libs            ( "libfieldFunctionObjects.so" );
+        enabled         yes;
+        writeControl    writeTime;
+        log             yes;
+        writeFields     no;
+        select          patch;
+        patch           outlet;
+        operation       average;
+        weightField     phi;
+        fields          ( C7H16 O2 H2O T );
+    }
 }
 
 OptimisationSwitches

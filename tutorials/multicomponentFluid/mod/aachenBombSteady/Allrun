@@ -3,64 +3,72 @@ cd ${0%/*} || exit 1
 
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-touch case.foam
+updateProperties()
+{
+    foamDictionary constant/chemistryProperties \
+        -entry chemistry       -set $1
+    foamDictionary constant/combustionProperties \
+        -entry combustionModel -set $2
+    foamDictionary system/controlDict \
+        -entry endTime         -set $3
+}
 
-cp -avr zero/ 0/
+prepareCase()
+{
+    touch case.foam
 
-runApplication chemkinToFoam \
-               chemkin/chem.inp chemkin/therm.dat chemkin/transportProperties \
-               constant/reactions constant/speciesThermo
+    cp -avr zero/ 0/
+    cp constant/chemistryProperties.orig  constant/chemistryProperties
+    cp constant/combustionProperties.orig constant/combustionProperties
 
-runApplication blockMesh
+    runApplication chemkinToFoam \
+                chemkin/chem.inp \
+                chemkin/therm.dat \
+                chemkin/transportProperties \
+                constant/reactions \
+                constant/speciesThermo
 
-runApplication renumberMesh -overwrite
+    runApplication blockMesh
+    runApplication renumberMesh -overwrite
 
-# Copy files for running
-cp constant/chemistryProperties.orig  constant/chemistryProperties
-cp constant/combustionProperties.orig constant/combustionProperties
+    updateProperties off none 100
+}
 
-# Prepare for initial run.
-foamDictionary constant/chemistryProperties \
-    -entry chemistry       -set off
-foamDictionary constant/combustionProperties \
-    -entry combustionModel -set none
-foamDictionary system/controlDict \
-    -entry endTime         -set 100
+initializeFields()
+{
+    runApplication potentialFoam
 
-runApplication potentialFoam
+    # Remove incompatible (volumetric) flux field
+    rm -f 0/phi
+}
 
-# remove incompatible (volumetric) flux field
-rm -f 0/phi
+runParallel()
+{
+    ncores=32
+    runno=$1
 
-# runApplication foamRun
+    if [ ! -d processors$ncores ]; then
+        runApplication decomposePar
+    fi
 
-ncores=32
+    if [ ! -f log.mpirun.$runno ]; then
+        runApplication mpirun -np ${ncores} foamRun -parallel
+        mv log.mpirun log.mpirun.$runno
+    fi
+}
 
-if [ ! -f log.mpirun.1 ]; then
-    runApplication decomposePar
-    runApplication mpirun -np ${ncores} foamRun -parallel
-    mv log.mpirun log.mpirun.1
-fi
+prepareCase
 
-# Prepare for intermediate run.
-foamDictionary constant/chemistryProperties \
-    -entry chemistry       -set on
-foamDictionary constant/combustionProperties \
-    -entry combustionModel -set infinitelyFastChemistry
-foamDictionary system/controlDict \
-    -entry endTime         -set 1000
+initializeFields
 
-if [ ! -f log.mpirun.2 ]; then
-    runApplication mpirun -np ${ncores} foamRun -parallel
-    mv log.mpirun log.mpirun.2
-fi
+runParallel 1
 
-foamDictionary system/controlDict \
-    -entry endTime         -set 100000
+updateProperties on infinitelyFastChemistry 200
 
-if [ ! -f log.mpirun.3 ]; then
-    runApplication mpirun -np ${ncores} foamRun -parallel
-    mv log.mpirun log.mpirun.3
-fi
+runParallel 2
+
+# runApplication reconstructPar -latestTime
+# runApplication steadyParticleTracks
+# runApplication foamToVTK
 
 #------------------------------------------------------------------------------

@@ -16,41 +16,13 @@ FoamFile
 
 solvers
 {
-    "rho.*"
+    "p.*"
     {
-        solver          diagonal;
-
-        // solver          PCG;
-        // preconditioner  DIC;
-        // tolerance       0;
-        // relTol          0;
-    }
-
-    pcorr
-    {
-        solver          GAMG;
-        smoother        GaussSeidel;
-        tolerance       1.0e-03;
-        relTol          0;
-    }
-
-    p
-    {
-        solver          GAMG;
-        smoother        GaussSeidel;
-        tolerance       1.0e-06;
-        relTol          0.1;
-        // solver           GAMG;
-        // smoother         DICGaussSeidel;
-        // tolerance        1.0e-06;
-        // relTol           0.05;
-        // maxIter          50;
-    }
-
-    pFinal
-    {
-        $p;
-        relTol          0;
+        solver           GAMG;
+        smoother         DICGaussSeidel;
+        tolerance        0;
+        relTol           0.05;
+        maxIter          50;
     }
 
     // For potentialFoam initialization.
@@ -59,46 +31,20 @@ solvers
         $p;
     }
 
-    "(U|Yi|h|e|k|epsilon|omega)"
+    "(U|Yi|h|e|k|epsilon|omega).*"
     {
         solver          smoothSolver;
-        smoother        symGaussSeidel;
-        tolerance       1.0e-06;
+        smoother        GaussSeidel;
+        tolerance       0;
         relTol          0.1;
+        maxIter         20;
     }
-    "(U|Yi|h|e|k|epsilon|omega)Final"
-    {
-        $U;
-        relTol          0;
-    }
-
-    // "(h|Yi|O2|N2|H2O)"
-    // {
-    //     solver          PBiCGStab;
-    //     preconditioner  DILU;
-    //     tolerance       1e-6;
-    //     relTol          0.1;
-    // }
-    // "(h|Yi|O2|N2|H2O)Final"
-    // {
-    //     $Yi;
-    //     relTol          0;
-    // }
-
-    // "(U|Yi|h|e|k|epsilon|omega).*"
-    // {
-    //     solver          smoothSolver;
-    //     smoother        GaussSeidel;
-    //     tolerance       0;
-    //     relTol          0.1;
-    //     maxIter         20;
-    // }
 }
 
 // Used for potentialFoam initialisation
 potentialFlow
 {
-    nNonOrthogonalCorrectors 5;
+    nNonOrthogonalCorrectors 10;
 }
 
 PIMPLE
@@ -117,9 +63,17 @@ PIMPLE
 
 relaxationFactors
 {
+    fields
+    {
+        p               0.3;
+        rho             1;
+    }
+
     equations
     {
-        ".*"        1;
+        U               0.7;
+        h               0.7;
+        ".*"            0.7;
     }
 }
 

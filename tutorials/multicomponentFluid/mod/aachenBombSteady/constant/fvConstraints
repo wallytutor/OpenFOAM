@@ -9,22 +9,16 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant";
-    object      momentumTransport;
+    object      fvConstraints;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  RAS;
-
-RAS
+limitp
 {
-    // model           kEpsilon;
-    model           kOmegaSST;
+    type       limitPressure;
 
-    turbulence      on;
-
-    printCoeffs     on;
+    minFactor  0.1;
+    maxFactor  1.5;
 }
-
 
 // ************************************************************************* //

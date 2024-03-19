@@ -16,8 +16,8 @@ FoamFile
 
 ddtSchemes
 {
-    // default         steadyState;
-    default         localEuler;
+    default         steadyState;
+    // default         localEuler;
 }
 
 gradSchemes
@@ -42,8 +42,8 @@ divSchemes
 
 laplacianSchemes
 {
-    default         Gauss linear orthogonal;
-    // default         Gauss linear uncorrected;
+    // default         Gauss linear orthogonal;
+    default         Gauss linear uncorrected;
 }
 
 interpolationSchemes
@@ -53,8 +53,8 @@ interpolationSchemes
 
 snGradSchemes
 {
-    default         orthogonal;
-    // default         uncorrected;
+    // default         orthogonal;
+    default         uncorrected;
 }
 
 wallDist
