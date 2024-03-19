@@ -14,7 +14,11 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+#include "$FOAM_CASE/parameters"
+
 type        reactingMultiphaseCloud;
+// type        reactingCloud;
+// type        sprayCloud;
 
 solution
 {
@@ -24,7 +28,6 @@ solution
 
     coupled         true;
     cellValueSourceCorrection on;
-    // transient       yes;
 
     sourceTerms
     {
@@ -82,7 +85,7 @@ subModels
         {
             type              coneInjection;
 
-            massFlowRate      0.01;
+            massFlowRate      $mdot_fuel;
             uniformParcelSize volume;
             parcelsPerSecond  20000;
             flowRateProfile   constant 1;
@@ -93,7 +96,7 @@ subModels
             thetaOuter        constant 42.0;
 
             flowType          constantVelocity;
-            Umag              8.0;
+            Umag              $U_air;
 
             injectionMethod   disc;
             dInner            0.000;

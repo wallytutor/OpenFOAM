@@ -25,6 +25,12 @@ infinitelyFastChemistryCoeffs
     C               5;
 }
 
+diffusionCoeffs
+{
+    semiImplicit    no;
+    C               5;
+}
+
 PaSRCoeffs
 {
     Cmix            1;
