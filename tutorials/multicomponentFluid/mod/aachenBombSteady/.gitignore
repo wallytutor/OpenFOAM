@@ -12,6 +12,9 @@ constant/speciesThermo
 constant/chemistryProperties
 constant/combustionProperties
 
+# Computed inputs
+parameters
+
 # Logs
 log.*
 
