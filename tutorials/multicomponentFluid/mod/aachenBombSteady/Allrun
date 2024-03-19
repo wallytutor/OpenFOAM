@@ -17,9 +17,9 @@ prepareCase()
 {
     touch case.foam
 
-    cp -avr zero/ 0/
-    cp constant/chemistryProperties.orig  constant/chemistryProperties
-    cp constant/combustionProperties.orig constant/combustionProperties
+    cp -avr zero/0/ 0/
+    cp zero/constant/chemistryProperties  constant/chemistryProperties
+    cp zero/constant/combustionProperties constant/combustionProperties
 
     runApplication chemkinToFoam \
                 chemkin/chem.inp \
@@ -30,8 +30,6 @@ prepareCase()
 
     runApplication blockMesh
     runApplication renumberMesh -overwrite
-
-    updateProperties off none 100
 }
 
 initializeFields()
@@ -58,14 +56,16 @@ runParallel()
 }
 
 prepareCase
-
 initializeFields
 
+updateProperties off none 100
 runParallel 1
 
 updateProperties on infinitelyFastChemistry 200
-
 runParallel 2
+
+updateProperties on PaSR 500
+runParallel 3
 
 # runApplication reconstructPar -latestTime
 # runApplication steadyParticleTracks

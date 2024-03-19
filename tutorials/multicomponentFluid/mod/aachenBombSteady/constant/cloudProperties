@@ -84,7 +84,7 @@ subModels
 
             massFlowRate      0.01;
             uniformParcelSize volume;
-            parcelsPerSecond  200000;
+            parcelsPerSecond  20000;
             flowRateProfile   constant 1;
 
             position          (0.001 0.0 0.0);
@@ -93,7 +93,7 @@ subModels
             thetaOuter        constant 42.0;
 
             flowType          constantVelocity;
-            Umag              3.0;
+            Umag              8.0;
 
             injectionMethod   disc;
             dInner            0.000;
