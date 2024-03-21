@@ -71,7 +71,7 @@ k, ε, ν = prepare_kε(U_air; I)
 # DUMP RESULTS
 ##############################################################################
 
-open("breakdown/parameters", "w") do fp
+open("parameters", "w") do fp
     write(fp, """\
     YN2_air       $(1.0 - YO2_air);\n
     YO2_air       $(YO2_air);\n
