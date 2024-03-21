@@ -30,7 +30,9 @@ thermoType
 defaultSpecie     air;
 
 liquids
-{}
+{
+    C7H16;
+}
 
 solids
 {}

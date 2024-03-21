@@ -19,4 +19,10 @@ buoyancyForce
     type        buoyancyForce;
 }
 
+clouds
+{
+    type    clouds;
+    libs    ("liblagrangianParcel.so");
+}
+
 // ************************************************************************* //
