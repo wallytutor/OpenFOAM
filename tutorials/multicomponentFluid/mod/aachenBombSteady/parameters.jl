@@ -9,6 +9,8 @@ mdot_fuel = 0.01
 P_air = 101325.0
 T_air = 800.0
 
+I = 0.05
+
 ##############################################################################
 # CONSTANTS
 ##############################################################################
@@ -24,6 +26,20 @@ const nH = 16
 
 # Mass fraction of O2 in air
 const YO2_air = 0.234
+
+##############################################################################
+# TURBULENCE
+##############################################################################
+
+# https://www.openfoam.com/documentation/guides/latest/doc/
+# guide-turbulence-ras-k-epsilon.html
+
+function prepare_kε(u_ref; L = 0.2, I = 0.05, Cμ = 0.09)
+    k = (3/2) * (I * u_ref)^2
+    ε = Cμ^(3/4) * k^(1/2) / L
+    ν = Cμ * k^2 / ε
+    return k, ε, ν
+end
 
 ##############################################################################
 # BALANCES
@@ -48,6 +64,9 @@ rho_air = (P_air * 0.02896) / (8.31446261815324 * T_air)
 # Mean air inlet velocity [m/s]
 U_air = mdot_air / (rho_air * 0.2^2)
 
+# Turbulence initial conditions.
+k, ε, ν = prepare_kε(U_air; I)
+
 ##############################################################################
 # DUMP RESULTS
 ##############################################################################
@@ -61,6 +80,10 @@ open("breakdown/parameters", "w") do fp
     rho_air       $(rho_air);\n
     U_air         $(U_air);\n
     T_air         $(T_air);\n
-    P_air         $(P_air);
+    P_air         $(P_air);\n
+    I             $(I);\n
+    k             $(k);\n
+    epsilon       $(ε);\n
+    nut           $(ν);
     """)
 end
