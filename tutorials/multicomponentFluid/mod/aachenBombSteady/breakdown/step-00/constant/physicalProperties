@@ -9,18 +9,13 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    object      decomposeParDict;
+    location    "constant";
+    object      physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains  32;
+viscosityModel  constant;
 
-method              hierarchical;
-
-hierarchicalCoeffs
-{
-    n               (8 2 2);
-    order           xyz;
-}
+nu              0.01;
 
 // ************************************************************************* //

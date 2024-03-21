@@ -64,11 +64,12 @@ runParallel()
 prepareCase
 initializeFields
 
-updateProperties off none 200
+updateProperties off none 100
 runParallel 1
 
 # updateProperties on diffusion 1000
-updateProperties on infinitelyFastChemistry 1000
+# updateProperties on infinitelyFastChemistry 1000
+updateProperties on laminar 1000
 runParallel 2
 
 # updateProperties on PaSR 500

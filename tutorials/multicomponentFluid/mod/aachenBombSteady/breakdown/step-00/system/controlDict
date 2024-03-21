@@ -16,7 +16,7 @@ FoamFile
 
 application     foamRun;
 
-solver          multicomponentFluid;
+solver          incompressibleFluid;
 
 startFrom       latestTime;
 
@@ -24,7 +24,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1000;
+endTime         100;
 
 deltaT          1;
 
@@ -48,22 +48,13 @@ runTimeModifiable yes;
 
 functions
 {
-    #includeFunc    Qdot
-    #includeFunc    residuals(p, U, h, k, epsilon)
-    surfaceFieldValue1
-    {
-        type            surfaceFieldValue;
-        libs            ( "libfieldFunctionObjects.so" );
-        enabled         yes;
-        writeControl    writeTime;
-        log             yes;
-        writeFields     no;
-        select          patch;
-        patch           outlet;
-        operation       average;
-        weightField     phi;
-        fields          ( C7H16 O2 H2O T );
-    }
+    #includeFunc residuals(p, U)
+
+    #includeFunc patchFlowRate(patch=inlet, phi)
+
+    #includeFunc patchFlowRate(patch=outlet, phi)
+
+    #include "$FOAM_CASE/../functions/massAvgOutletPressureVelocity"
 }
 
 OptimisationSwitches

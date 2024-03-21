@@ -52,7 +52,7 @@ U_air = mdot_air / (rho_air * 0.2^2)
 # DUMP RESULTS
 ##############################################################################
 
-open("parameters", "w") do fp
+open("breakdown/parameters", "w") do fp
     write(fp, """\
     YN2_air       $(1.0 - YO2_air);\n
     YO2_air       $(YO2_air);\n
