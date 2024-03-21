@@ -63,7 +63,6 @@ constantProperties
     T0              320;
     rho0            1000;
     Cp0             4187;
-
     constantVolume  false;
 }
 
@@ -110,7 +109,7 @@ subModels
         }
     }
 
-    #include "$FOAM_CASE/constant/cloudModels/default"
+    #include "$FOAM_CASE/constant/cloudModels/$type"
 }
 
 cloudFunctions
@@ -119,12 +118,14 @@ cloudFunctions
     {
         type massFlux;
     }
-    patchPostProcessing1
-    {
-        type             patchPostProcessing;
-        maxStoredParcels 1000;
-        patches          ( outlet );
-    }
+
+    // patchPostProcessing1
+    // {
+    //     type             patchPostProcessing;
+    //     maxStoredParcels 1000;
+    //     patches          ( outlet );
+    // }
+
     particleTracks1
     {
         type            particleTracks;

@@ -1,1 +1,7 @@
+# Copied files.
 system/blockMeshDict
+
+# Generated files
+[0-9]*
+polyMesh/
+log.*
