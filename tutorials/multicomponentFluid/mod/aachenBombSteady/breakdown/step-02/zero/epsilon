@@ -8,39 +8,42 @@
 FoamFile
 {
     format      ascii;
-    class       volVectorField;
+    class       volScalarField;
     location    "0";
-    object      U;
+    object      epsilon;
 }
-// ************************************************************************* //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "$FOAM_CASE/../parameters"
 
-dimensions          [0 1 -1 0 0 0 0];
+dimensions      [0 2 -3 0 0 0 0];
 
-internalField       uniform (0 0 0);
+internalField   uniform $epsilon;
 
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
-    
+
     inlet
     {
-        type                flowRateInletVelocity;
-        profile             turbulentBL;
-        massFlowRate        $mdot_air;
-        rhoInlet            $rho_air;
+        type            turbulentMixingLengthDissipationRateInlet;
+        mixingLength    0.005;
+        phi             phi;
+        k               k;
+        value           $internalField;
     }
     outlet
     {
-        type                inletOutlet;
-        inletValue          uniform (0 0 0);
+        type            inletOutlet;
+        inletValue      $internalField;
+        value           $internalField;
     }
     walls
     {
-        type                fixedValue;
-        value               uniform (0 0 0);
+        type            epsilonWallFunction;
+        value           $internalField;
     }
 }
+
 
 // ************************************************************************* //

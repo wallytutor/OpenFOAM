@@ -8,17 +8,17 @@
 FoamFile
 {
     format      ascii;
-    class       volVectorField;
+    class       volScalarField;
     location    "0";
-    object      U;
+    object      alphat;
 }
-// ************************************************************************* //
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 #include "$FOAM_CASE/../parameters"
 
-dimensions          [0 1 -1 0 0 0 0];
+dimensions      [1 -1 -1 0 0 0 0];
 
-internalField       uniform (0 0 0);
+internalField   uniform 0;
 
 boundaryField
 {
@@ -26,21 +26,21 @@ boundaryField
     
     inlet
     {
-        type                flowRateInletVelocity;
-        profile             turbulentBL;
-        massFlowRate        $mdot_air;
-        rhoInlet            $rho_air;
+        type            calculated;
+        value           uniform 0;
     }
     outlet
     {
-        type                inletOutlet;
-        inletValue          uniform (0 0 0);
+        type            calculated;
+        value           uniform 0;
     }
     walls
     {
-        type                fixedValue;
-        value               uniform (0 0 0);
+        type            compressible::alphatWallFunction;
+        // Prt             0.85;
+        value           uniform 0;
     }
 }
+
 
 // ************************************************************************* //

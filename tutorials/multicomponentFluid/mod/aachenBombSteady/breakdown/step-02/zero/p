@@ -8,38 +8,34 @@
 FoamFile
 {
     format      ascii;
-    class       volVectorField;
+    class       volScalarField;
     location    "0";
-    object      U;
+    object      p;
 }
 // ************************************************************************* //
 
 #include "$FOAM_CASE/../parameters"
 
-dimensions          [0 1 -1 0 0 0 0];
+dimensions      [1 -1 -2 0 0 0 0];
 
-internalField       uniform (0 0 0);
+internalField   uniform $P_air;
 
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
-    
+
     inlet
     {
-        type                flowRateInletVelocity;
-        profile             turbulentBL;
-        massFlowRate        $mdot_air;
-        rhoInlet            $rho_air;
+        type            zeroGradient;
     }
     outlet
     {
-        type                inletOutlet;
-        inletValue          uniform (0 0 0);
+        type            totalPressure;
+        p0              $internalField;
     }
     walls
     {
-        type                fixedValue;
-        value               uniform (0 0 0);
+        type            zeroGradient;
     }
 }
 
