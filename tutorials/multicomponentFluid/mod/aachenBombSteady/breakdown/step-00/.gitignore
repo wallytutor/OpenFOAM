@@ -3,6 +3,7 @@
 constant/
 system/
 Allclean
+processor*/
 
 # Ignore all logs.
 log.*

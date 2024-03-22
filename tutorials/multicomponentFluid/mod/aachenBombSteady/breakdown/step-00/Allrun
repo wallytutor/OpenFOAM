@@ -6,15 +6,20 @@ cd ${0%/*} || exit 1
 touch case.foam
 
 cp -avr zero/* .
+cp ../components/decomposeParDict system/
 cp ../components/blockMeshDict system/
 cp ../components/fv* system/
 cp ../components/Allclean .
 
 runApplication blockMesh
 runApplication potentialFoam
-runApplication foamRun
+rm -rf 0/phi
+runApplication decomposePar
+runApplication mpirun -np 32 foamRun -parallel
+reconstructPar -latestTime
+rm -rf processor*/
 
 cp "postProcessing/residuals(p,U)/0/residuals.dat" residuals.ref
-tail -18 log.foamRun >> residuals.ref
+tail -19 log.mpirun >> residuals.ref
 
 #------------------------------------------------------------------------------

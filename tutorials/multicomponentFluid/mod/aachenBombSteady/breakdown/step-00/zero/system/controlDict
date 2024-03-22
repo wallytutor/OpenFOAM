@@ -57,10 +57,4 @@ functions
     #include "$FOAM_CASE/../functions/massAvgOutletPressureVelocity"
 }
 
-OptimisationSwitches
-{
-    fileHandler     collated;
-}
-
-
 // ************************************************************************* //
