@@ -58,10 +58,4 @@ functions
     #include "$FOAM_CASE/../functions/massAvgOutletTemperature"
 }
 
-OptimisationSwitches
-{
-    fileHandler     collated;
-}
-
-
 // ************************************************************************* //
