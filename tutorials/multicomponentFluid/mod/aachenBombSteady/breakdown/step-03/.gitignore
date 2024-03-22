@@ -1,7 +1,12 @@
-# Copied files.
-system/blockMeshDict
-
-# Generated files
+# Ignore built case.
 [0-9]*
-polyMesh/
+constant/
+system/
+Allclean
+processor*/
+
+# Ignore all logs.
 log.*
+
+# Unignore actual base case from zero/ directory.
+!zero/*
