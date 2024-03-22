@@ -15,5 +15,6 @@ runApplication potentialFoam
 runApplication foamRun
 
 cp "postProcessing/residuals(p,U,k,epsilon)/0/residuals.dat" residuals.ref
+tail -20 log.foamRun >> residuals.ref
 
 #------------------------------------------------------------------------------

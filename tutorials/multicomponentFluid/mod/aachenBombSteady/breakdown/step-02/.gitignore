@@ -2,6 +2,7 @@
 [0-9]*
 constant/
 system/
+Allclean
 
 # Ignore all logs.
 log.*

@@ -201,3 +201,23 @@
 198               	1.1981200192e-13	2.2602737266e-15	3.6727319507e-14	3.5119174987e-14	8.5136443023e-16	9.7194615130e-17
 199               	1.1959567041e-13	2.2466893370e-15	3.5976537480e-14	3.4815006175e-14	8.2569300431e-16	9.4292038587e-17
 200               	1.1966654552e-13	2.2585255102e-15	3.4680316073e-14	3.3733668897e-14	8.1534415036e-16	9.2385010401e-17
+
+Time = 200s
+
+smoothSolver:  Solving for Ux, Initial residual = 2.25852551e-15, Final residual = 1.554764997e-15, No Iterations 20
+smoothSolver:  Solving for Uy, Initial residual = 3.468031607e-14, Final residual = 2.320017373e-15, No Iterations 1
+smoothSolver:  Solving for Uz, Initial residual = 3.37336689e-14, Final residual = 2.041149572e-15, No Iterations 1
+GAMG:  Solving for p, Initial residual = 1.196665455e-13, Final residual = 2.718229691e-14, No Iterations 50
+time step continuity errors : sum local = 3.417458404e-14, global = 1.867205465e-16
+GAMG:  Solving for p, Initial residual = 1.013372782e-13, Final residual = 2.749511672e-14, No Iterations 50
+time step continuity errors : sum local = 3.430106304e-14, global = 1.58277193e-16, cumulative = 0.0005570998666
+smoothSolver:  Solving for epsilon, Initial residual = 9.23850104e-17, Final residual = 4.66565204e-17, No Iterations 20
+smoothSolver:  Solving for k, Initial residual = 8.153441504e-16, Final residual = 5.314351366e-16, No Iterations 20
+ExecutionTime = 34.083587 s  ClockTime = 38 s
+
+surfaceFieldValue massAvgOutletPressureVelocity write:
+    average(outlet) of p = 0
+    average(outlet) of U = (8.685656056 -7.556776087e-16 -3.551096843e-16)
+
+End
+
