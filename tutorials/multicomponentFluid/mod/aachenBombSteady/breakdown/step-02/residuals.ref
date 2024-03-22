@@ -314,7 +314,7 @@ GAMG:  Solving for p, Initial residual = 7.026012261e-10, Final residual = 5.227
 time step continuity errors : sum local = 5.584526155e-10, global = 2.681439658e-12, cumulative = 0.0005042795338
 smoothSolver:  Solving for epsilon, Initial residual = 1.092138974e-12, Final residual = 3.691421985e-14, No Iterations 1
 smoothSolver:  Solving for k, Initial residual = 5.922598504e-12, Final residual = 2.25071232e-13, No Iterations 1
-ExecutionTime = 120.731326 s  ClockTime = 128 s
+ExecutionTime = 118.78575 s  ClockTime = 125 s
 
 surfaceFieldValue massAvgOutletPressureVelocity write:
     average(outlet) of p = 101325
