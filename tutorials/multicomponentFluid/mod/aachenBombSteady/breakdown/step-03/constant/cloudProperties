@@ -97,15 +97,8 @@ subModels
             dInner            0.000;
             dOuter            0.002;
 
-            sizeDistribution
-            {
-                type            RosinRammler;
-                Q               3;
-                min             0.000001;
-                max             0.000150;
-                d               0.000150;
-                n               3.5;
-            }
+            #include "$FOAM_CASE/constant/cloudModels/psdFixedValue"
+            // #include "$FOAM_CASE/constant/cloudModels/psdRosinRammler"
         }
     }
 
