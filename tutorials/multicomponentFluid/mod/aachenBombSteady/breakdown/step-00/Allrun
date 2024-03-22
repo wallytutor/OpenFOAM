@@ -8,6 +8,7 @@ touch case.foam
 cp -avr zero/* .
 cp ../components/blockMeshDict system/
 cp ../components/fv* system/
+cp ../components/Allclean .
 
 runApplication blockMesh
 runApplication potentialFoam

@@ -5,14 +5,15 @@ cd ${0%/*} || exit 1
 
 touch case.foam
 
-cp ../components/blockMeshDict system/blockMeshDict
-
-cp -avr zero/ 0/
+cp -avr zero/* .
+cp ../components/blockMeshDict system/
+cp ../components/fv* system/
+cp ../components/Allclean .
 
 runApplication blockMesh
-
 runApplication potentialFoam
-
 runApplication foamRun
+
+cp "postProcessing/residuals(p,U,k,epsilon)/0/residuals.dat" residuals.ref
 
 #------------------------------------------------------------------------------
