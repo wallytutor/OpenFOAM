@@ -26,7 +26,7 @@ runApplication mpirun -np 32 foamRun -parallel
 reconstructPar -latestTime
 rm -rf processor*/
 
-# cp "postProcessing/residuals(p,U,k,epsilon,h,C7H16)/0/residuals.dat" residuals.ref
-# tail -52 log.mpirun >> residuals.ref
+cp "postProcessing/residuals(p,U,k,epsilon,h,C7H16)/0/residuals.dat" residuals.ref
+tail -55 log.mpirun >> residuals.ref
 
 #------------------------------------------------------------------------------
