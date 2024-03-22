@@ -24,7 +24,7 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         500;
+endTime         50;
 
 deltaT          1;
 
@@ -48,7 +48,7 @@ runTimeModifiable yes;
 
 functions
 {
-    #includeFunc residuals(p, U, k, epsilon, h)
+    #includeFunc residuals(p, U, k, epsilon, h, C7H16)
 
     #includeFunc patchFlowRate(patch=inlet, phi)
 
