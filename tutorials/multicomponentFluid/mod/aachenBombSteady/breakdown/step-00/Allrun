@@ -5,7 +5,9 @@ cd ${0%/*} || exit 1
 
 touch case.foam
 
-cp ../components/blockMeshDict system/blockMeshDict
+cp -avr zero/* .
+
+cp ../components/blockMeshDict system/
 cp ../components/fv* system/
 
 cp -avr zero/ 0/
