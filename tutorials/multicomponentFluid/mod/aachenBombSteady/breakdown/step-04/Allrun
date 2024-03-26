@@ -5,13 +5,16 @@ cd ${0%/*} || exit 1
 
 touch case.foam
 
-cp -avr zero/* .
-cp ../components/fv* system/
-cp ../components/blockMeshDict system/
-cp ../components/decomposeParDict system/
+cp -avr zero/*                            .
+cp ../components/Allclean                 .
+
+cp ../components/fv*                      system/
+cp ../components/blockMeshDict            system/
+cp ../components/decomposeParDict         system/
 cp ../components/steadyParticleTracksDict system/
-cp ../components/chemistryProperties constant/
-cp ../components/Allclean .
+
+cp ../components/chemistryProperties      constant/
+cp ../components/combustionProperties     constant/
 
 runApplication chemkinToFoam \
             chemkin/chem.inp \
@@ -24,10 +27,7 @@ runApplication blockMesh
 runApplication potentialFoam
 rm -rf 0/phi
 runApplication decomposePar
-#runApplication mpirun -np 32 foamRun -parallel
-
-# TODO working here! chemistry, intermediates...
-#cp ../components/combustionProperties constant/
+runApplication mpirun -np 32 foamRun -parallel
 
 #runApplication reconstructPar -latestTime
 #runApplication steadyParticleTracks

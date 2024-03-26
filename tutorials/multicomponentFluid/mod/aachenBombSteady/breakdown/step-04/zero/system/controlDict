@@ -24,15 +24,15 @@ startTime       0;
 
 stopAt          endTime;
 
-endTime         1000;
+endTime         10000;
 
 deltaT          1;
 
 writeControl    timeStep;
 
-writeInterval   20;
+writeInterval   100;
 
-purgeWrite      5;
+purgeWrite      3;
 
 writeFormat     ascii;
 
