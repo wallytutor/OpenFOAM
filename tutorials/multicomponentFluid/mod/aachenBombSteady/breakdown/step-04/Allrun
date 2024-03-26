@@ -6,9 +6,11 @@ cd ${0%/*} || exit 1
 touch case.foam
 
 cp -avr zero/* .
-cp ../components/decomposeParDict system/
-cp ../components/blockMeshDict system/
 cp ../components/fv* system/
+cp ../components/blockMeshDict system/
+cp ../components/decomposeParDict system/
+cp ../components/steadyParticleTracksDict system/
+cp ../components/chemistryProperties constant/
 cp ../components/Allclean .
 
 runApplication chemkinToFoam \
@@ -22,11 +24,19 @@ runApplication blockMesh
 runApplication potentialFoam
 rm -rf 0/phi
 runApplication decomposePar
-runApplication mpirun -np 32 foamRun -parallel
-reconstructPar -latestTime
-rm -rf processor*/
+#runApplication mpirun -np 32 foamRun -parallel
 
-cp "postProcessing/residuals(p,U,k,epsilon,h,C7H16)/0/residuals.dat" residuals.ref
-tail -55 log.mpirun >> residuals.ref
+# TODO working here! chemistry, intermediates...
+#cp ../components/combustionProperties constant/
+
+#runApplication reconstructPar -latestTime
+#runApplication steadyParticleTracks
+#runApplication foamToVTK -latestTime
+#rm -rf processor*/
+
+#cp "postProcessing/residuals(p,U,k,epsilon,h,C7H16)/0/residuals.dat" residuals.ref
+#tail -55 log.mpirun >> residuals.ref
+
+
 
 #------------------------------------------------------------------------------

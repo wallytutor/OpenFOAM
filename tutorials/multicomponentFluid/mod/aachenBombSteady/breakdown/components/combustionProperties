@@ -38,10 +38,10 @@ PaSRCoeffs
 
 reaction
 {
+    //reaction        "C7H16 + 11O2 + 70N2 = 7CO2 + 8H2O + 70N2";
     reaction        "C7H16 + 11O2 = 7CO2 + 8H2O";
 }
 
-combustionModel none;
-
+combustionModel EDC;
 
 // ************************************************************************* //

@@ -57,6 +57,7 @@ functions
     #include "$FOAM_CASE/../functions/massAvgOutletPressureVelocity"
     #include "$FOAM_CASE/../functions/massAvgOutletTemperature"
     #include "$FOAM_CASE/../functions/massAvgOutletFuelVapor"
+    #include "$FOAM_CASE/../functions/massAvgOutletOxidant"
 }
 
 // ************************************************************************* //
