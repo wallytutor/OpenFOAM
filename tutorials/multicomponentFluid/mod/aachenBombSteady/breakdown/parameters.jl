@@ -78,6 +78,7 @@ open("parameters", "w") do fp
     mdot_fuel     $(mdot_fuel);\n
     mdot_air      $(mdot_air);\n
     rho_air       $(rho_air);\n
+    U_jet         $(3U_air);\n
     U_air         $(U_air);\n
     T_air         $(T_air);\n
     P_air         $(P_air);\n
