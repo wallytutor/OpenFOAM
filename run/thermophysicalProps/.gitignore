@@ -1,0 +1,6 @@
+100/
+constant/polyMesh
+constant/thermophysicalProperties
+logs/
+postProcessing/
+log.rhoSimpleFoam

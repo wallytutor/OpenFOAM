@@ -1,0 +1,65 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2212                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+application        rhoSimpleFoam;
+
+startFrom          latestTime;
+
+startTime          0;
+
+stopAt             endTime;
+
+endTime            100000;
+
+deltaT             1;
+
+writeControl       timeStep;
+
+writeInterval      1000;
+
+purgeWrite         0;
+
+writeFormat        ascii;
+
+writePrecision     6;
+
+writeCompression   off;
+
+timeFormat         general;
+
+timePrecision      6;
+
+graphFormat        raw;
+
+runTimeModifiable  true;
+
+functions
+{
+    #includeFunc func_avgInlet
+    #includeFunc func_avgOutlet
+
+    residuals
+    {
+        type                solverInfo;
+        libs                ("libutilityFunctionObjects.so");
+        fields              (p h U);
+        writeResidualFields yes;
+        writeControl        timeStep;
+        writeInterval       1000;
+    }
+}
+
+// ************************************************************************* //

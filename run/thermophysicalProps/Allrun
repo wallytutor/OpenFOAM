@@ -1,0 +1,40 @@
+#!/bin/sh
+# Before running: `pip install pyfoam`.
+
+# Run from this directory.
+cd ${0%/*} || exit 1
+
+# Source running tools.
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Clean-up before launching.
+rm -rf log.* postProcessing constant/polyMesh/
+
+# Generate mesh if required.
+if [ ! -d constant/polyMesh/ ]; then
+    /usr/bin/gmsh constant/wedge.geo -3 -format msh2 > log.gmsh
+    runApplication gmshToFoam constant/wedge.msh
+    rm -rf constant/wedge.msh
+    
+    export PATH="${HOME}/.local/bin/:${PATH}"
+    pyFoamChangeBoundaryType.py . front wedge
+    pyFoamChangeBoundaryType.py . back  wedge
+    pyFoamChangeBoundaryType.py . wall  wall
+    
+    runApplication checkMesh
+    
+    mkdir -p logs/
+    mv log.* logs/
+
+    tail -5 logs/log.checkMesh | head -2
+else
+    echo "Mesh already there..."
+fi
+
+# Ensure a default thermophysical file is found.
+if [ ! -f constant/thermophysicalProperties ]; then
+    echo "Copying default thermophysical properties"
+    cp constant/air/thermophysicalProperties-2 constant/thermophysicalProperties
+fi
+
+runApplication $(getApplication) &
