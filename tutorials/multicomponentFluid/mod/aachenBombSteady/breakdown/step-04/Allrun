@@ -29,14 +29,17 @@ rm -rf 0/phi
 runApplication decomposePar
 runApplication mpirun -np 32 foamRun -parallel
 
-#runApplication reconstructPar -latestTime
-#runApplication steadyParticleTracks
-#runApplication foamToVTK -latestTime
-#rm -rf processor*/
+# Do not log this!
+reconstructPar -latestTime
+steadyParticleTracks
+
+# Clean-up
+rm -rf processor*/
+
+# NOT WORKING!
+# foamToVTK -latestTime
 
 #cp "postProcessing/residuals(p,U,k,epsilon,h,C7H16)/0/residuals.dat" residuals.ref
 #tail -55 log.mpirun >> residuals.ref
-
-
 
 #------------------------------------------------------------------------------

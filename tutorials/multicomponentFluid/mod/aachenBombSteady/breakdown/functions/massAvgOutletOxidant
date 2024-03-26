@@ -1,4 +1,4 @@
-massAvgOutletFuelVapor
+massAvgOutletOxidant
 {
     type            surfaceFieldValue;
     libs            ( "libfieldFunctionObjects.so" );
