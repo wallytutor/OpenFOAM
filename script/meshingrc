@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+
+rename_stl_files_from_solid_names() {
+    # Rename STL files based on solid names in first line
+    #
+    # Usage:
+    #   rename_stl_files_from_solid_names [OPTIONS] [DIRECTORY]
+    #
+    # Arguments:
+    #   DIRECTORY    Target directory containing STL files (default: current directory)
+    #
+    # Options:
+    #   -n, --dry-run    Show what would be renamed without actually renaming
+    #   -h, --help       Display this help message
+    #
+    # Description:
+    #   This function reads the first line of each STL file in the specified
+    #   directory (or current directory if not specified) and extracts the
+    #   solid name between quotes. It then renames each file to match its
+    #   solid name (e.g., "tunnel(6).stl" -> "environment-bottom.stl").
+    #
+    # Examples:
+    #   rename_stl_files_from_solid_names                    # Current directory
+    #   rename_stl_files_from_solid_names /path/to/stls      # Specific directory
+    #   rename_stl_files_from_solid_names --dry-run          # Test mode
+    #   rename_stl_files_from_solid_names -n /path/to/stls   # Test in specific dir
+    
+    local directory="."
+    local dry_run=false
+    
+    # Parse arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -h|--help)
+                echo "Usage: rename_stl_files_from_solid_names [OPTIONS] [DIRECTORY]"
+                echo ""
+                echo "Rename STL files based on solid names in their first line."
+                echo ""
+                echo "Options:"
+                echo "  -n, --dry-run    Show what would be renamed without actually renaming"
+                echo "  -h, --help       Display this help message"
+                echo ""
+                echo "Arguments:"
+                echo "  DIRECTORY        Target directory (default: current directory)"
+                echo ""
+                echo "Examples:"
+                echo "  rename_stl_files_from_solid_names"
+                echo "  rename_stl_files_from_solid_names /path/to/stls"
+                echo "  rename_stl_files_from_solid_names --dry-run"
+                echo "  rename_stl_files_from_solid_names -n /path/to/stls"
+                return 0
+                ;;
+            -n|--dry-run)
+                dry_run=true
+                shift
+                ;;
+            *)
+                directory="$1"
+                shift
+                ;;
+        esac
+    done
+    
+    if [ "$dry_run" = true ]; then
+        echo "DRY RUN MODE - No files will be renamed"
+    fi
+    
+    echo "Scanning STL files in: $directory"
+    echo "----------------------------------------"
+    
+    # Change to target directory if specified
+    if [ "$directory" != "." ]; then
+        pushd "$directory" > /dev/null || {
+            echo "Error: Cannot access directory $directory"
+            return 1
+        }
+    fi
+    
+    local count=0
+    local skipped=0
+    local warnings=0
+    
+    for stl_file in *.stl; do
+        # Skip if no STL files found
+        [ -f "$stl_file" ] || continue
+        
+        # Extract text between quotes from first line
+        local solid_name=$(head -n 1 "$stl_file" | grep -oP '(?<=").*?(?=")')
+        
+        if [ -n "$solid_name" ]; then
+            local new_name="${solid_name}.stl"
+            
+            # Skip if file already has the correct name
+            if [ "$stl_file" != "$new_name" ]; then
+                if [ "$dry_run" = true ]; then
+                    echo "[DRY RUN] Would rename: $stl_file -> $new_name"
+                else
+                    echo "Renaming: $stl_file -> $new_name"
+                    mv "$stl_file" "$new_name"
+                fi
+                ((count++))
+            else
+                echo "Skipping: $stl_file"
+                ((skipped++))
+            fi
+        else
+            echo "Warning: No solid name found in $stl_file"
+            ((warnings++))
+        fi
+    done
+    
+    # Return to original directory if we changed
+    if [ "$directory" != "." ]; then
+        popd > /dev/null
+    fi
+    
+    echo "----------------------------------------"
+    echo "Summary:"
+    if [ "$dry_run" = true ]; then
+        echo "  Would rename: $count"
+    else
+        echo "  Renamed: $count"
+    fi
+    echo "  Skipped: $skipped"
+    echo "  Warnings: $warnings"
+    echo "Done."
+}
