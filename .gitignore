@@ -1,0 +1,8 @@
+# Any sandbox
+*sandbox*
+
+# Compilation artifacts
+linux64GccDPInt32Opt
+
+# Compiled code:
+platforms/
