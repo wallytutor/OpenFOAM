@@ -1,0 +1,8 @@
+# Unignore report:
+!01-model-cowper-like.qmd
+!02-model-porous-media.qmd
+
+# Quarto files:
+/.quarto/
+**/*.quarto_ipynb
+_book/

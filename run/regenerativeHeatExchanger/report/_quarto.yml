@@ -1,0 +1,39 @@
+project:
+  type: book
+
+execute:
+  freeze:  false
+  cache:   false
+  echo:    false
+  warning: false
+
+book:
+  title: "Regenerative Heat Exchanger"
+  author: "Walter Dal'Maz Silva"
+  date: "last-modified"
+
+  chapters:
+    - index.qmd
+    - 01-model-cowper-like.qmd
+    - 02-model-porous-media.qmd
+    - references.qmd
+
+  # appendices:
+  #   - A0-appendix.qmd
+
+bibliography: https://raw.githubusercontent.com/wallytutor/kompanion/refs/heads/main/notes/references.bib
+
+toc: true
+toc-depth: 2
+
+format:
+  pdf:
+    reference-location: document
+    highlight-style: github
+    documentclass: scrreprt
+    papersize: a4
+    fontsize: 11pt
+    mainfont: "Latin Modern Sans"
+    sansfont: "Latin Modern Sans"
+    geometry:
+      - margin=25mm
