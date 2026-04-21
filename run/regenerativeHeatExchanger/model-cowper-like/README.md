@@ -90,11 +90,11 @@ geom = CowperLikeGeometry(
     # Use with care based on the above values:
     num_points_angular = 6,
     fluid_bl_tot = 0.003,
-    fluid_bl_ext = 0.0001,
+    fluid_bl_ext = 0.0002,
     fluid_bl_int = 0.0006,
     solid_bl_ext = 0.0050,
     solid_bl_int = 0.0001,
-    rel_layer    = 0.15,
+    rel_layer    = 0.25,
 )
 
 if not Path(mesh).exists():
@@ -104,12 +104,16 @@ if not Path(mesh).exists():
 ## Prepare mesh
 
 ```python
-run(log1, ["gmshToFoam", mesh])
-run(log2, ["renumberMesh"])
-run(log3, ["createPatch", "-overwrite"])
-run(log4, ["splitMeshRegions", "-cellZones"])
-run(log5, ["checkMesh", "-region", "fluid"])
-run(log6, ["checkMesh", "-region", "solid"])
+!cp 'constant/userParameters.orig' 'constant/userParameters'
+```
+
+```python
+run(log01, ["gmshToFoam", mesh])
+run(log02, ["renumberMesh"])
+run(log03, ["createPatch", "-overwrite"])
+run(log04, ["splitMeshRegions", "-cellZones"])
+run(log05, ["checkMesh", "-region", "fluid"])
+run(log06, ["checkMesh", "-region", "solid"])
 
 # To avoid any confusion, remove original mesh:
 if Path("constant/polyMesh").exists():
@@ -139,16 +143,16 @@ expand_field("solid", "T")
 ## Simulate charging
 
 ```python
-run(log7, ["decomposePar", "-allRegions"])
-run(log8, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
+run(log07, ["decomposePar", "-allRegions"])
+run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
 ```
 
 ```python
-run(log9, ["foamLog",  log8])
+run(log09, ["foamLog",  log08])
 ```
 
 ```python
-!tail -20 'log.08.foamMultiRun'
+# !tail -20 'log.08.foamMultiRun'
 ```
 
 ```python
@@ -172,8 +176,11 @@ def plot_convergence():
     p = plot2d(0, 0)
 
     for fname in final:
-        df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
-        p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+        try:
+            df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
+            p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+        except FileNotFoundError as err:
+            print(err)
 
     p.axes[0].set_xlabel("Time step")
     p.axes[0].set_ylabel("log10(residual)")
