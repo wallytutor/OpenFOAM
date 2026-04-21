@@ -25,10 +25,13 @@ About the conception:
 ```python
 import os
 import foamlib
+import numpy as np
+import pandas as pd
 import shutil
 import subprocess
 from pathlib import Path
 from ruamel.yaml import YAML
+from majordome_utilities.plotting import plot2d
 from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
@@ -161,9 +164,63 @@ run(log10, ["reconstructPar", "-allRegions", "-latestTime"])
 ## Post-processing
 
 ```python
-(21600*850/0.051) / (3600*24*365)
+def plot_convergence():
+    final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0", 
+             "eFinalRes_0", "hFinalRes_0",
+             "kFinalRes_0", "omegaFinalRes_0"]
+
+    p = plot2d(0, 0)
+
+    for fname in final:
+        df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
+        p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+
+    p.axes[0].set_xlabel("Time step")
+    p.axes[0].set_ylabel("log10(residual)")
+    p.axes[0].legend(loc=1, fontsize="small", ncol=2)
+
+
+def get_post(region, function, fname, time="0.000000e+00"):
+    return "/".join(["postProcessing", region, function, time, f"{fname}.dat"])
+
+
+def load_table(region, function, fname, time="0.000000e+00"):
+    fname = get_post(region, function, fname, time)
+    return pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
+
+
+def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
+    df = load_table(region, function, fname, time)
+    p = plot2d(df[0], df[1])
+    p.axes[0].set_xlabel("Time [s]")
+    p.axes[0].set_ylabel(ylabel or function)
+    return p
 ```
 
 ```python
+plot_convergence()
+```
 
+```python
+p = plot_table("fluid", "pressureInlet", "surfaceFieldValue")
+```
+
+```python
+p = plot_table("fluid", "flowRateInlet", "surfaceFieldValue")
+```
+
+```python
+p = plot_table("fluid", "flowRateOutlet", "surfaceFieldValue")
+```
+
+```python
+p = plot_table("fluid", "temperatureOutlet", "surfaceFieldValue")
+```
+
+```python
+p = plot_table("solid", "solidTemperature", "volFieldValue")
+```
+
+```python
+(21600*2141/0.143) / (3600*24*365)
 ```
