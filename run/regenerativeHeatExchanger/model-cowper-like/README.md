@@ -30,12 +30,45 @@ import subprocess
 from pathlib import Path
 from ruamel.yaml import YAML
 from heat_recovery.cowper_like import CowperLikeGeometry
+from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
 ```
 
 ```python
 # Configure number of processors:
-os.environ["NUM_PROCS"] = "4"
+os.environ["NUM_PROCS"] = NUM_PROCS = "4"
+
+# Names of all generated log files:
+log01 = "log.01.gmshToFoam"
+log02 = "log.02.renumberMesh"
+log03 = "log.03.createPatch"
+log04 = "log.04.splitMeshRegions"
+log05 = "log.05.checkMeshFluid"
+log06 = "log.06.checkMeshSolid"
+log07 = "log.07.decomposePar"
+log08 = "log.08.foamMultiRun"
+log09 = "log.09.foamLog"
+log10 = "log.10.reconstructPar"
+```
+
+```python
+def run(log, cmd, blocking=True):
+    if Path(log).exists():
+        print(f"Already run, check log {log} for details")
+        return
+
+    with open(log, "w") as f:
+        print(f"Logging to {log}: {' '.join(cmd)}")
+        if blocking:
+            subprocess.run(cmd, stdout=f, stderr=f, check=True)
+        else:
+            subprocess.Popen(cmd, stdout=f, stderr=f)
+```
+
+```python
+def expand_field(region, field, init_dir="0.000000e+00"):
+    log = f"{init_dir}/{region}/{field}"
+    run(log, ["foamDictionary", f"0.orig/{region}/{field}", "-expand"])    
 ```
 
 ## Generate geometry
@@ -68,24 +101,6 @@ if not Path(mesh).exists():
 ## Prepare mesh
 
 ```python
-def run(log, cmd):
-    if Path(log).exists():
-        print(f"Already run, check log {log} for details")
-        return
-
-    with open(log, "w") as f:
-        print(f"Logging to {log}: {' '.join(cmd)}")
-        subprocess.run(cmd, stdout=f, stderr=f, check=True)
-```
-
-```python
-log1 = "log.1.gmshToFoam"
-log2 = "log.2.renumberMesh"
-log3 = "log.3.createPatch"
-log4 = "log.4.splitMeshRegions"
-log5 = "log.5.checkMeshFluid"
-log6 = "log.6.checkMeshSolid"
-
 run(log1, ["gmshToFoam", mesh])
 run(log2, ["renumberMesh"])
 run(log3, ["createPatch", "-overwrite"])
@@ -102,7 +117,51 @@ if Path("constant/polyMesh").exists():
 
 ```python
 model = ThermoclineModel("dimensioning.yaml")
-model.tabulate()
+make_charging(model)
+# model.tabulate()
+```
+
+```python
+expand_field("fluid", "p")
+expand_field("fluid", "p_rgh")
+expand_field("fluid", "k")
+expand_field("fluid", "omega")
+expand_field("fluid", "nut")
+expand_field("fluid", "alphat")
+expand_field("fluid", "U")
+expand_field("fluid", "T")
+expand_field("solid", "T")
+```
+
+## Simulate charging
+
+```python
+run(log7, ["decomposePar", "-allRegions"])
+run(log8, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
+```
+
+```python
+run(log9, ["foamLog",  log8])
+```
+
+```python
+!tail -20 'log.08.foamMultiRun'
+```
+
+```python
+run(log10, ["reconstructPar", "-allRegions", "-latestTime"])
+```
+
+## Simulate discharging
+
+```python
+# foamDictionary 100/p -entry boundaryField.outlet.type -set zeroGradient
+```
+
+## Post-processing
+
+```python
+(21600*850/0.051) / (3600*24*365)
 ```
 
 ```python

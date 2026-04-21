@@ -69,7 +69,3 @@ h &= c_pG_0\left(\dfrac{c_p\mu}{k}\right)^{-2/3}\left[
 $$
 
 where properties are evaluated at film temperature, $G_0=wS^{-1}$ is the superficial mass flux (with $w$ the mass flow rate and $S$ the column empty cross-section); $\psi$ is a particle-shape factor with defined value 1 for spheres and fitted to 0.92 for cylindrical pellets.
-
-```{=latex}
-\newpage
-```

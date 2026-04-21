@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+rm -rf log.*
+rm -rf logs
+rm -rf postProcessing
+rm -rf processor*
+rm -rf constant/polyMesh/
+rm -rf constant/solid/polyMesh/
+rm -rf constant/fluid/polyMesh/
+rm -rf constant/cellToRegion
+rm -rf 0.000000e+00
+
+#------------------------------------------------------------------------------

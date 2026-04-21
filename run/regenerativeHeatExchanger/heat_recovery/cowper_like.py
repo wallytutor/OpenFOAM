@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 import majordome_simulation.meshing as ms
+from foamlib import FoamFile
 from majordome_simulation.meshing import GmshOCCModel
 from majordome_simulation.meshing import RingBuilder
 from majordome_simulation.meshing import CircularCrossSection
@@ -234,3 +235,23 @@ class CowperLikeGeometry:
 
             if saveas:
                 model.dump(saveas)
+
+
+def make_charging(model):
+    with FoamFile("constant/userParameters") as f:
+        f["fluidTemperature"] = model.num_T_h
+        f["solidTemperature"] = model.num_T_c
+        f["inletVelocity"] = model.fn_U_g(*model.args_charging)
+        f["duration"] = model.num_H_t / model.num_P_c
+        f["nProcs"] = r"$NUM_PROCS"
+
+    def add_property(f, name, value):
+        f[name] = {}
+        f[name]["type"] = "uniform"
+        f[name]["value"] = value
+
+    with FoamFile("constant/solid/physicalProperties") as f:
+        f["thermoType"] = "constSolidThermo"
+        add_property(f, "rho",   model.num_rho_s)
+        add_property(f, "Cv",    model.num_c_ps)
+        add_property(f, "kappa", model.num_k_s)

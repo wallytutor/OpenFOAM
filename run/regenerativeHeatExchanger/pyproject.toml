@@ -15,6 +15,7 @@ dependencies = [
     "gmsh",
     "matplotlib",
     "numpy",
+    "pandas",
     "ruamel.yaml",
     "screeninfo",
     "sympy",

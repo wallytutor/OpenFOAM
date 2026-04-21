@@ -22,13 +22,13 @@ regionSolvers
     solid           solid;
 }
 
-startFrom         startTime;
+startFrom         latestTime;
 
 startTime         0;
 
 stopAt            endTime;
 
-endTime           20;
+endTime           $duration;
 
 deltaT            1.0e-05;
 
