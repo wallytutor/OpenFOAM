@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=80", "wheel>=0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "heat_recovery"
+version = "0.1.0"
+description = "Regenerative heat exchanger models."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "majordome[full] @ https://github.com/wallytutor/python-majordome/releases/download/0.9.4/majordome-0.9.4-cp312-cp312-linux_x86_64.whl",
+    "foamlib",
+    "ruamel.yaml",
+    "screeninfo",
+]
+authors = [
+  {name = "Walter Dal'Maz Silva", email = "walter.dalmazsilva@gmail.com"},
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["heat_recovery"]

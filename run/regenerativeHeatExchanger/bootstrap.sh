@@ -19,7 +19,7 @@ handleOpenFOAM() {
 
 handleUvInstall() {
     if command -v uv >/dev/null 2>&1; then
-        echo "Already installed: uv $(uv --version)"
+        echo "Already installed: $(uv --version)"
     else
         curl -LsSf https://astral.sh/uv/install.sh | sh
         source $HOME/.local/bin/env
@@ -55,7 +55,7 @@ handleEnvironment() {
         echo "Creating new virtual environment with uv"
         uv venv --python 3.12 "$targetEnv"
         source "$targetEnv/bin/activate"
-        uv pip install -r requirements.txt
+        uv pip install -e .
     fi
 }
 
