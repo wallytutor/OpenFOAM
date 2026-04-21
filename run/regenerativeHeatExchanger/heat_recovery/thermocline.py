@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import cantera as ct
-import majordome as mj
 import numpy as np
 import sympy as sp
-
+from majordome_utilities.plotting import MajordomePlot
 from itertools import cycle
 from matplotlib import cm
 
@@ -248,8 +247,8 @@ def air_properties(T):
     return air.density_mass, air.enthalpy_mass, air.viscosity
 
 
-@mj.MajordomePlot.new(size=(5, 4), xlabel="Diameter of holes (cm)",
-                      ylabel="Surface-to-volume ratio (1/m)")
+@MajordomePlot.new(size=(5, 4), xlabel="Diameter of holes (cm)",
+                   ylabel="Surface-to-volume ratio (1/m)")
 def plot_surface_to_volume_ratio(cell_block, *, plot):
     func = cell_block.get_surface_to_volume_ratio()
     D_samples = np.linspace(0.010, 0.050, 100)
@@ -270,8 +269,8 @@ def plot_surface_to_volume_ratio(cell_block, *, plot):
     return plot
 
 
-@mj.MajordomePlot.new(size=(5, 4), xlabel="Diameter of holes (cm)",
-                      ylabel="Pressure drop (mbar)")
+@MajordomePlot.new(size=(5, 4), xlabel="Diameter of holes (cm)",
+                   ylabel="Pressure drop (mbar)")
 def plot_pressure_drop(func, *, plot):
     D_samples = np.linspace(0.010, 0.050, 100)
     m_samples = np.arange(0.5, 2.0+0.001, 0.5)
