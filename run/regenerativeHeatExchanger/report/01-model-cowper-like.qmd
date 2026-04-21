@@ -1,12 +1,28 @@
-# Regenerative heat exchanger model
+---
+title: Regenerative heat exchanger model
+jupyter:
+  jupytext:
+    text_representation:
+      extension: .qmd
+      format_name: quarto
+      format_version: '1.0'
+      jupytext_version: 1.19.1
+  kernelspec:
+    display_name: Python 3 (ipykernel)
+    language: python
+    name: python3
+---
+
+
 
 ```{python}
 %load_ext majordome.magic
 
-import thermocline as tc
+import heat_recovery.thermocline as tc
 import numpy as np
 import sympy as sp
-import yaml
+
+from heat_recovery.thermocline import ThermoclineModel
 ```
 
 In this section we present a simple model for the dimensioning of a thermocline energy storage system similar to a [regenerative heat exchanger](https://en.wikipedia.org/wiki/Regenerative_heat_exchanger). It is based on the use of hexagonal cells with circular holes as the solid matrix for the thermocline. The use of hexagonal cells allows for a high packing density and a large surface area for heat transfer; the calculation of the surface-to-volume ratio for this geometry is straightforward and presented in the end. It also includes the estimation of the number of cells in the cross section, thus the system diameter for a given total height and stored energy.
@@ -16,215 +32,65 @@ Other parameters relevant to the setup of a CFD simulation of the system are als
 Below we present a summary of the parameters considered for the dimensioning of the system.
 
 ```{python}
-tc.SymbolicTracker.clear()
-
-thermocline = tc.ThermoclineDescription()
-cell_block  = tc.HexagonalCell()
-solid       = tc.SolidMaterial()
-fluid       = tc.OperatingFluid()
-
-S_V = cell_block.surface_to_volume_ratio
-A_t = tc.total_cross_sectional_area(solid, thermocline)
-N_c = tc.cells_per_cross_section(A_t, cell_block)
-P_c = tc.power_per_cell(thermocline, N_c)
-U_g = tc.fluid_injection_velocity(P_c, fluid, cell_block)
-Re  = tc.reynolds_number(U_g, cell_block, fluid)
-
-# ---------------------------------------------------------------------
-
-variables = [
-    # ThermoclineDescription
-    tc.SymbolicTracker.get("H_t"),
-    tc.SymbolicTracker.get("h_t"),
-    tc.SymbolicTracker.get("T_h"),
-    tc.SymbolicTracker.get("T_c"),
-    # HexagonalCell
-    tc.SymbolicTracker.get("D_h"),
-    tc.SymbolicTracker.get("m_h"),
-    # SolidMaterial
-    tc.SymbolicTracker.get("rho_s"),
-    tc.SymbolicTracker.get("c_ps"),
-    tc.SymbolicTracker.get("k_s"),
-    # OperatingFluid
-    tc.SymbolicTracker.get("h_g_c"),
-    tc.SymbolicTracker.get("h_g_h"),
-    # Charging/discharging parameters
-    tc.SymbolicTracker.get("P_t"),
-    tc.SymbolicTracker.get("rho_g"),
-    tc.SymbolicTracker.get("mu_g"),
-]
-
-fn_S_V = tc.SymbolicTracker.lambdify(S_V, symbols=variables)
-fn_A_t = tc.SymbolicTracker.lambdify(A_t, symbols=variables)
-fn_N_c = tc.SymbolicTracker.lambdify(N_c, symbols=variables)
-fn_P_c = tc.SymbolicTracker.lambdify(P_c, symbols=variables)
-fn_U_g = tc.SymbolicTracker.lambdify(U_g, symbols=variables)
-fn_Re  = tc.SymbolicTracker.lambdify(Re,  symbols=variables)
-
-# ---------------------------------------------------------------------
-
-MW = 1e6
-MWh = 3600 * MW
-
-with open("../model-cowper-like/dimensioning.yaml", "r") as f:
-    parameters = yaml.safe_load(f)
-
-    num_h_t   = parameters["h_t"]
-    num_H_t   = parameters["H_t"] * MWh
-    num_P_c   = parameters["P_c"] * MW
-    num_P_d   = parameters["P_d"] * MW
-    num_T_h   = parameters["T_h"]
-    num_T_c   = parameters["T_c"]
-    num_m_h   = parameters["m_h"]
-    num_D_h   = parameters["D_h"]
-    num_rho_s = parameters["rho_s"]
-    num_c_ps  = parameters["c_ps"]
-    num_k_s   = parameters["k_s"]
-
-# ---------------------------------------------------------------------
-
-num_rho_g_c, num_h_g_c, num_mu_g_c = tc.air_properties(num_T_c)
-num_rho_g_h, num_h_g_h, num_mu_g_h = tc.air_properties(num_T_h)
-
-# ---------------------------------------------------------------------
-
-args_all = [
-    # ThermoclineDescription
-    num_H_t,
-    num_h_t,
-    num_T_h,
-    num_T_c,
-    # HexagonalCell
-    num_D_h,
-    num_m_h,
-    # SolidMaterial
-    num_rho_s,
-    num_c_ps,
-    num_k_s,
-    # OperatingFluid
-    num_h_g_c,
-    num_h_g_h
-]
-
-args_charging    = (*args_all, num_P_c, num_rho_g_h, num_mu_g_h)
-args_discharging = (*args_all, num_P_d, num_rho_g_c, num_mu_g_c)
-
-# ---------------------------------------------------------------------
-
-# Assume 0.005 as a representative value for the relative roughness of
-# refractory bricks, which have typical relative roughness in the range
-# from 0.001 to 0.01. The friction factor can be estimated using the
-# Swamee-Jain approximation, a simplified version of the implicit
-# Colebrook-White equation given by:
-# f = \dfrac{0.25}{\left[
-# \log_{10}\left(\dfrac{\epsilon}{3.7D} + \dfrac{5.74}{Re^{0.9}}\right)
-# \right]^2}
-# XXX check use, too high for transitional flow!
-# f = tc.swamee_jain_friction_factor(fn_Re(*args), 0.008, num_D_h)
-
-# Surface-to-volume ratio of the hexagonal cell:
-num_S_V = fn_S_V(*args_charging)
-
-# Diameter of the system:
-num_D_sys = np.sqrt(4 * fn_A_t(*args_charging) / np.pi)
+model = ThermoclineModel("../model-cowper-like/dimensioning.yaml")
 
 # m, absolute roughness of the hole wall
 eps = 0.0002
 
 # Relative roughness of the hole wall
-rel = eps / num_D_h
+rel = eps / model.num_D_h
 
 # Friction factor:
 f = 0.05
 
-dp_calc = tc.PressureDropCalculator(num_h_t, num_D_h)
+dp_calc = tc.PressureDropCalculator(model.num_h_t, model.num_D_h)
 
 dp_charging = dp_calc.darcy_weisbach_pressure_drop(
-    rho = num_rho_g_h,
-    v   = fn_U_g(*args_charging),
+    rho = model.num_rho_g_h,
+    v   = model.fn_U_g(*model.args_charging),
     f   = f
 )
 dp_discharging = dp_calc.darcy_weisbach_pressure_drop(
-    rho = num_rho_g_c,
-    v   = fn_U_g(*args_discharging),
+    rho = model.num_rho_g_c,
+    v   = model.fn_U_g(*model.args_discharging),
     f   = f
 )
+
+model.tabulate()
 ```
 
 ```{python}
 %%md
-| Parameter | Value | Units |
-| --- | --- | --- |
-Stored energy in thermocline                | {num_H_t/MWh:.1f}    | MWh
-Target nominal operating power (charge)     | {num_P_c/MW:.1f}     | MW
-Target nominal operating power (discharge)  | {num_P_d/MW:.1f}     | MW
-Height of thermocline                       | {num_h_t:.1f}        | m
-Diameter of system                          | {num_D_sys:.1f}      | m
-Hot working temperature                     | {num_T_h:.1f}        | K
-Cold working temperature                    | {num_T_c:.1f}        | K
-Diameter of holes in hexagonal cell         | {num_D_h*100:.1f}    | cm
-Wall thickness scaling factor               | {num_m_h:.1f}        | -
-Density of solid material                   | {num_rho_s:.0f}      | kg/m³
-Specific heat capacity of solid material    | {num_c_ps:.1f}       | J/kg-K
-Thermal conductivity of solid material      | {num_k_s:.1f}        | W/m-K
-Enthalpy of cold fluid                      | {num_h_g_c/1e6:.3f}  | MJ/kg
-Enthalpy of hot fluid                       | {num_h_g_h/1e6:.3f}  | MJ/kg
-Density of operating fluid (cold)           | {num_rho_g_c:.2f}    | kg/m³
-Density of operating fluid (hot)            | {num_rho_g_h:.2f}    | kg/m³
-Dynamic viscosity of operating fluid        | {num_mu_g_h*1e6:.2f} | uPa-s
-Surface-to-volume ratio of hexagonal cell   | {num_S_V:.3f}        | 1/m
-```
-
-```{python}
-# template_fluid = """
-# INC_TEMPERATURE_INIT   = {T}
-# INC_DENSITY_INIT       = {rho}
-# INC_VELOCITY_INIT      = (0.0, 0.0, {U})
-# MARKER_INLET           = ( fluid_inlet, {T}, {U}, 0.0, 0.0, 1.0 )
-# """
-
-# print(template_fluid.format(
-#     T=num_T_h,
-#     rho=num_rho_g_h,
-#     U=fn_U_g(*args_charging)
-# ))
-```
-
-```{python}
-%%md
-The total required cross-sectional area of solid material in the thermocline $A_t$ is approximately ${fn_A_t(*args_charging):.1f}\:\mathrm{m^2}$.
+The total required cross-sectional area of solid material in the thermocline $A_t$ is approximately ${model.fn_A_t(*model.args_charging):.1f}\:\mathrm{m^2}$.
 
 $$
-A_t = {sp.latex(A_t.simplify()):s}
+A_t = {sp.latex(model.A_t.simplify()):s}
 $$
 
-That requires a system diameter of {num_D_sys:.1f} m for the considered cell geometry and parameters. Dividing this by the cross-section of solid material in each hexagonal cell gives the number of cells per cross section, which allows for calculating the power per unit cell $P_c$ during charging to be ${fn_P_c(*args_charging):.0f}\:\mathrm{W}$ and discharging at ${fn_P_c(*args_discharging):.0f}\:\mathrm{W}$.
+That requires a system diameter of {model.num_D_sys:.1f} m for the considered cell geometry and parameters. Dividing this by the cross-section of solid material in each hexagonal cell gives the number of cells per cross section, which allows for calculating the power per unit cell $P_c$ during charging to be ${model.fn_P_c(*model.args_charging):.0f}\:\mathrm{W}$ and discharging at ${model.fn_P_c(*model.args_discharging):.0f}\:\mathrm{W}$.
 
 $$
-P_c = {sp.latex(P_c.simplify()):s}
+P_c = {sp.latex(model.P_c.simplify()):s}
 $$
 
-That is equivalent to saying that there should be a total of ${fn_N_c(*args_charging):.0f}$ cells, with $N_c$ being given by
+That is equivalent to saying that there should be a total of ${model.fn_N_c(*model.args_charging):.0f}$ cells, with $N_c$ being given by
 
 $$
-N_c = {sp.latex(N_c.simplify()):s}
+N_c = {sp.latex(model.N_c.simplify()):s}
 $$
-```
 
-```{python}
-%%md
-During charging, the fluid injection velocity $U$ through the holes in the hexagonal cell is ${fn_U_g(*args_charging):.1f}\:\mathrm{m\,s^{-1}}$, dropping to barely ${fn_U_g(*args_discharging):.1f}\:\mathrm{m\,s^{-1}}$ during discharging. That allows for calculating the Reynolds number for fluid flow through the holes in the hexagonal cell. For charging its value is estimated to be in the order of $Re_c \approx {fn_Re(*args_charging):.0f}$, while for discharging it drops to around $Re_d \approx {fn_Re(*args_discharging):.0f}$, characterizing a possibly transitional flow regime.
+During charging, the fluid injection velocity $U$ through the holes in the hexagonal cell is ${model.fn_U_g(*model.args_charging):.1f}\:\mathrm{m\,s^{-1}}$, dropping to barely ${model.fn_U_g(*model.args_discharging):.1f}\:\mathrm{m\,s^{-1}}$ during discharging. That allows for calculating the Reynolds number for fluid flow through the holes in the hexagonal cell. For charging its value is estimated to be in the order of $Re_c \approx {model.fn_Re(*model.args_charging):.0f}$, while for discharging it drops to around $Re_d \approx {model.fn_Re(*model.args_discharging):.0f}$, characterizing a possibly transitional flow regime.
 
 $$
-U = {sp.latex(U_g.simplify()):s}
+U = {sp.latex(model.U_g.simplify()):s}
 $$
 
 Assuming a roughness of {eps*1000:.1f} mm, thus a relative roughness of {rel:.3f} for the considered hole diameter. Pressure drop can be estimated using the Darcy-Weisbach equation to be in the order of {dp_charging/100:.0f} mbar during charging and {dp_discharging/100:.1f} mbar during discharging.
 
-With the considered cell geometry, the surface-to-volume ratio $S_V$ of the hexagonal cell is ${fn_S_V(*args_charging):.3f}\:\mathrm{m^{-1}}$.
+With the considered cell geometry, the surface-to-volume ratio $S_V$ of the hexagonal cell is ${model.fn_S_V(*model.args_charging):.3f}\:\mathrm{m^{-1}}$.
 
 $$
-S_V = {sp.latex(S_V.simplify()):s}
+S_V = {sp.latex(model.S_V.simplify()):s}
 $$
 
 Below we display the surface-to-volume ratio of the hexagonal cell as a function of the diameter of holes and the fraction of diameter representing wall thickness.
@@ -234,7 +100,7 @@ Below we display the surface-to-volume ratio of the hexagonal cell as a function
 #| fig-cap: Surface-to-volume ratio of the hexagonal cell
 #| fig-align: center
 #| out-width: 80%
-p = tc.plot_surface_to_volume_ratio(cell_block)
+p = tc.plot_surface_to_volume_ratio(model.cell_block)
 ```
 
 Similarly, the pressure drop across the height of the thermocline can be estimated as a function of the diameter of holes and the fraction of diameter representing wall thickness. Below we display the pressure drop during charging as a function of these parameters.
@@ -247,36 +113,31 @@ def dp_scan(D_h, m_h, f=f):
     # Heating is more critical:
     args = [
         # ThermoclineDescription
-        num_H_t,
-        num_h_t,
-        num_T_h,
-        num_T_c,
+        model.num_H_t,
+        model.num_h_t,
+        model.num_T_h,
+        model.num_T_c,
         # HexagonalCell
         D_h, # Overrides for funtion
         m_h, # Overrides for funtion
         # SolidMaterial
-        num_rho_s,
-        num_c_ps,
-        num_k_s,
+        model.num_rho_s,
+        model.num_c_ps,
+        model.num_k_s,
         # OperatingFluid
-        num_h_g_c,
-        num_h_g_h,
+        model.num_h_g_c,
+        model.num_h_g_h,
         # Charging parameters
-        num_P_c,
-        num_rho_g_h,
-        num_mu_g_h
-
+        model.num_P_c,
+        model.num_rho_g_h,
+        model.num_mu_g_h
     ]
 
     rho = args[-2]
-    v   = fn_U_g(*args)
+    v   = model.fn_U_g(*args)
 
-    calc = tc.PressureDropCalculator(num_h_t, D_h)
+    calc = tc.PressureDropCalculator(model.num_h_t, D_h)
     return calc.darcy_weisbach_pressure_drop(rho, v, f=f)
 
 tc.plot_pressure_drop(dp_scan)
-```
-
-```{=latex}
-\newpage
 ```

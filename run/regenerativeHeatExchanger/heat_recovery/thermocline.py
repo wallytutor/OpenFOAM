@@ -2,9 +2,11 @@
 import cantera as ct
 import numpy as np
 import sympy as sp
-from majordome_utilities.plotting import MajordomePlot
+from majordome.utilities import MajordomePlot
+from IPython.display import Markdown
 from itertools import cycle
 from matplotlib import cm
+from ruamel.yaml import YAML
 
 
 class SymbolicTracker:
@@ -206,6 +208,216 @@ class PressureDropCalculator:
             f = f(rho, v, self._D)
 
         return f * (self._L / self._D) * (rho * v**2 / 2)
+
+
+class ThermoclineModel:
+    def __init__(self, fname):
+        self._load_symbols()
+        self._load_data(fname)
+
+    def _load_symbols(self):
+        SymbolicTracker.clear()
+
+        ###
+        # Define models
+        ###
+
+        self.thermocline = thermocline = ThermoclineDescription()
+        self.cell_block  = cell_block  = HexagonalCell()
+        self.solid       = solid       = SolidMaterial()
+        self.fluid       = fluid       = OperatingFluid()
+
+        ###
+        # General calculations
+        ###
+
+        self.S_V = cell_block.surface_to_volume_ratio
+        self.A_t = total_cross_sectional_area(solid, thermocline)
+        self.N_c = cells_per_cross_section(self.A_t, cell_block)
+        self.P_c = power_per_cell(thermocline, self.N_c)
+        self.U_g = fluid_injection_velocity(self.P_c, fluid, cell_block)
+        self.Re  = reynolds_number(self.U_g, cell_block, fluid)
+
+        ###
+        # Organize symbols
+        ###
+
+        variables = [
+            # ThermoclineDescription
+            SymbolicTracker.get("H_t"),
+            SymbolicTracker.get("h_t"),
+            SymbolicTracker.get("T_h"),
+            SymbolicTracker.get("T_c"),
+            # HexagonalCell
+            SymbolicTracker.get("D_h"),
+            SymbolicTracker.get("m_h"),
+            # SolidMaterial
+            SymbolicTracker.get("rho_s"),
+            SymbolicTracker.get("c_ps"),
+            SymbolicTracker.get("k_s"),
+            # OperatingFluid
+            SymbolicTracker.get("h_g_c"),
+            SymbolicTracker.get("h_g_h"),
+            # Charging/discharging parameters
+            SymbolicTracker.get("P_t"),
+            SymbolicTracker.get("rho_g"),
+            SymbolicTracker.get("mu_g"),
+        ]
+
+        ###
+        # Lambdify functions
+        ###
+
+        def lambdify(expr):
+            return SymbolicTracker.lambdify(expr, symbols=variables)
+
+        self.fn_S_V = lambdify(self.S_V)
+        self.fn_A_t = lambdify(self.A_t)
+        self.fn_N_c = lambdify(self.N_c)
+        self.fn_P_c = lambdify(self.P_c)
+        self.fn_U_g = lambdify(self.U_g)
+        self.fn_Re  = lambdify(self.Re)
+
+    def _load_data(self, fname):
+        MW = 1e6
+        MWh = 3600 * MW
+
+        ###
+        # Load numerical values from YAML file
+        ###
+
+        yaml = YAML()
+        parameters = yaml.load(open(fname))
+
+        self.num_h_t   = parameters["h_t"]
+        self.num_H_t   = parameters["H_t"] * MWh
+        self.num_P_c   = parameters["P_c"] * MW
+        self.num_P_d   = parameters["P_d"] * MW
+        self.num_T_h   = parameters["T_h"]
+        self.num_T_c   = parameters["T_c"]
+        self.num_m_h   = parameters["m_h"]
+        self.num_D_h   = parameters["D_h"]
+        self.num_rho_s = parameters["rho_s"]
+        self.num_c_ps  = parameters["c_ps"]
+        self.num_k_s   = parameters["k_s"]
+
+        args_c = air_properties(self.num_T_c)
+        args_h = air_properties(self.num_T_h)
+
+        self.num_rho_g_c, self.num_h_g_c, self.num_mu_g_c = args_c
+        self.num_rho_g_h, self.num_h_g_h, self.num_mu_g_h = args_h
+
+        ###
+        # Organize argument groups
+        ###
+
+        args_all = [
+            # ThermoclineDescription
+            self.num_H_t,
+            self.num_h_t,
+            self.num_T_h,
+            self.num_T_c,
+            # HexagonalCell
+            self.num_D_h,
+            self.num_m_h,
+            # SolidMaterial
+            self.num_rho_s,
+            self.num_c_ps,
+            self.num_k_s,
+            # OperatingFluid
+            self.num_h_g_c,
+            self.num_h_g_h
+        ]
+
+        self.args_charging = (
+            *args_all, self.num_P_c, self.num_rho_g_h, self.num_mu_g_h)
+
+        self.args_discharging = (
+            *args_all, self.num_P_d, self.num_rho_g_c, self.num_mu_g_c)
+
+        # Assume 0.005 as a representative value for the relative roughness of
+        # refractory bricks, which have typical relative roughness in the range
+        # from 0.001 to 0.01. The friction factor can be estimated using the
+        # Swamee-Jain approximation, a simplified version of the implicit
+        # Colebrook-White equation given by:
+        # f = \dfrac{0.25}{\left[
+        # \log_{10}\left(\dfrac{\epsilon}{3.7D} + \dfrac{5.74}{Re^{0.9}}\right)
+        # \right]^2}
+        # XXX check use, too high for transitional flow!
+        # f = tc.swamee_jain_friction_factor(fn_Re(*args), 0.008, num_D_h)
+
+        # Surface-to-volume ratio of the hexagonal cell:
+        self.num_S_V = self.fn_S_V(*self.args_charging)
+
+        # Diameter of the system:
+        A = self.fn_A_t(*self.args_charging)
+        self.num_D_sys = np.sqrt(4 * A / np.pi)
+
+    def tabulate(self):
+        rows = [
+            ("Parameter",  "Value", "Units"),
+            ("---------",  "-----", "-----"),
+
+            ("Stored energy in thermocline",
+             f"{self.num_H_t/3.6e9:.1f}", "MWh"),
+
+            ("Target nominal operating power (charge)",
+             f"{self.num_P_c/1e6:.1f}", "MW"),
+
+            ("Target nominal operating power (discharge)",
+             f"{self.num_P_d/1e6:.1f}", "MW"),
+
+            ("Height of thermocline",
+             f"{self.num_h_t:.1f}", "m"),
+
+            ("Diameter of system",
+             f"{self.num_D_sys:.1f}", "m"),
+
+            ("Hot working temperature",
+             f"{self.num_T_h:.1f}", "K"),
+
+            ("Cold working temperature",
+             f"{self.num_T_c:.1f}", "K"),
+
+            ("Diameter of holes in hexagonal cell",
+             f"{self.num_D_h*100:.1f}", "cm"),
+
+            ("Wall thickness scaling factor",
+             f"{self.num_m_h:.1f}", "-"),
+
+            ("Density of solid material",
+             f"{self.num_rho_s:.0f}", "kg/m³"),
+
+            ("Specific heat capacity of solid material",
+             f"{self.num_c_ps:.1f}", "J/kg-K"),
+
+            ("Thermal conductivity of solid material",
+             f"{self.num_k_s:.1f}", "W/m-K"),
+
+            ("Enthalpy of cold fluid",
+             f"{self.num_h_g_c/1e6:.3f}", "MJ/kg"),
+
+            ("Enthalpy of hot fluid",
+             f"{self.num_h_g_h/1e6:.3f}", "MJ/kg"),
+
+            ("Density of operating fluid (cold)",
+             f"{self.num_rho_g_c:.2f}", "kg/m³"),
+
+            ("Density of operating fluid (hot)",
+             f"{self.num_rho_g_h:.2f}", "kg/m³"),
+
+            ("Dynamic viscosity of operating fluid",
+             f"{self.num_mu_g_h*1e6:.2f}", "uPa-s"),
+
+            ("Surface-to-volume ratio of hexagonal cell",
+             f"{self.num_S_V:.3f}", "1/m")
+        ]
+
+        def format_row(name, value, units):
+            return f"| {name} | {value} | {units} |\n"
+
+        rows = "".join(format_row(*args) for args in rows)
+        return Markdown(rows)
 
 
 def total_cross_sectional_area(solid, thermocline):

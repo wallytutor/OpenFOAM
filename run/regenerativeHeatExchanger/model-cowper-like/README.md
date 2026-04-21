@@ -30,6 +30,7 @@ import subprocess
 from pathlib import Path
 from ruamel.yaml import YAML
 from heat_recovery.cowper_like import CowperLikeGeometry
+from heat_recovery.thermocline import ThermoclineModel
 ```
 
 ```python
@@ -40,8 +41,9 @@ os.environ["NUM_PROCS"] = "4"
 ## Generate geometry
 
 ```python
-yaml = YAML()
 mesh = "mesh.msh"
+
+yaml = YAML()
 data = yaml.load(open("dimensioning.yaml"))
 
 geom = CowperLikeGeometry(
@@ -97,6 +99,11 @@ if Path("constant/polyMesh").exists():
 ```
 
 ## Initial conditions
+
+```python
+model = ThermoclineModel("dimensioning.yaml")
+model.tabulate()
+```
 
 ```python
 
