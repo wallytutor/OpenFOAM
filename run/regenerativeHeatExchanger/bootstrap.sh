@@ -17,6 +17,19 @@ handleOpenFOAM() {
     source /opt/openfoam13/etc/bashrc
 }
 
+handleQuarto() {
+    if command -v quarto >/dev/null 2>&1; then
+        echo "Already installed: $(quarto --version)"
+    else
+        local version="1.9.37"
+        local releases="https://github.com/quarto-dev/quarto-cli/releases/download"
+        wget "$releases/v$version/quarto-$version-linux-amd64.deb"
+        sudo apt-get install -y ./quarto-$version-linux-amd64.deb
+        rm quarto-$version-linux-amd64.deb
+        quarto install tinytex
+    fi
+}
+
 handleUvInstall() {
     if command -v uv >/dev/null 2>&1; then
         echo "Already installed: $(uv --version)"
@@ -58,6 +71,10 @@ handleEnvironment() {
         uv pip install -e .
     fi
 }
+
+# Handles requiring elevation:
+handleOpenFOAM
+handleQuarto
 
 # Install `uv` if not already installed:
 handleUvInstall
