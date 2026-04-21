@@ -2,34 +2,15 @@
 
 ## Preparing the environment
 
-- Models developed and tested under WSL (Ubuntu 24.04)
+- Models developed and tested under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) running Ubuntu 24.04; if you are working under Windows, you can install the referred distribution with `wsl --install Ubuntu-24.04`.
+
+- Install [OpenFOAM (v13)](https://openfoam.org/download/13-ubuntu/) for your distribution (click link for instructions related to the referenced version).
+
+- Source the bootstrap script `source bootstrap.sh` to set up the environment; alternatively (if you have OpenFOAM and uv installed), you can manually start a virtual environment with `uv`:
 
 ```bash
-wsl --install Ubuntu-24.04
-```
-
-- Install [OpenFOAM (v13)](https://openfoam.org/download/13-ubuntu/)
-
-```bash
-sudo sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
-sudo add-apt-repository http://dl.openfoam.org/ubuntu
-
-sudo apt-get update
-sudo apt-get install -y openfoam13
-
-# Optionally append this to the .bashrc file for automatic sourcing:
-echo ". /opt/openfoam13/etc/bashrc" >> ~/.bashrc
-```
-
-- Start a virtual environment with `uv`:
-
-```bash
-# In WSL, if not working in /home/<user>/, the the following before
-# running `uv` to avoid symlink issues:
-# export UV_LINK_MODE=copy
-
 # Create a virtual environment
-uv venv .venv
+uv venv --python 3.12 .venv
 
 # Activate the virtual environment
 source .venv/bin/activate
