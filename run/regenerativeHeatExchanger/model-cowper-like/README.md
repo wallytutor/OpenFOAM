@@ -75,16 +75,25 @@ log03 = "log.03.createPatch"
 log04 = "log.04.splitMeshRegions"
 log05 = "log.05.checkMeshFluid"
 log06 = "log.06.checkMeshSolid"
+
 log07 = "log.07.decomposePar"
 log08 = "log.08.foamMultiRun"
 log09 = "log.09.foamLog"
 log10 = "log.10.reconstructPar"
+
+log11 = "log.11.decomposePar"
+log12 = "log.12.foamMultiRun"
+log13 = "log.13.foamLog"
+log14 = "log.14.reconstructPar"
 ```
 
 ## Prepare case
 
 ```python
 model = cl.get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh")
+
+# Copy properties of solid to dictionary:
+cl.make_solid(model)
 
 # Defaults for initialization (*all hot*) can be copied directly:
 _ = shutil.copy("constant/userParameters.orig", "constant/userParameters")
@@ -117,6 +126,11 @@ CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"]
 ```
 
 ```python
+# CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False, force=True)
+origin = "1.000000e+00"
+```
+
+```python
 # This is intended to be re-run while following solution:
 CaseManager.run(log09, ["foamLog",  log08], force=True)
 CaseManager.run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
@@ -127,23 +141,59 @@ cl.plot_convergence()
 ```
 
 ```python
-p = cl.plot_temperature("Initialization", origin="0.000000e+00", loc=1)
+p = cl.plot_temperature("Initialization", origin, loc=3)
 ```
 
 ```python
-p = cl.plot_pressure("Initialization", origin="0.000000e+00")
+p = cl.plot_pressure("Initialization", origin)
 ```
 
 ```python
-p = cl.plot_flowrate("Initialization", origin="0.000000e+00", loc=3)
+p = cl.plot_flowrate("Initialization", origin, loc=3)
 ```
 
 ```python
-p = cl.plot_table("solid", "solidTemperature", "volFieldValue")
+p = cl.plot_table("solid", "solidTemperature", "volFieldValue", time=origin)
 ```
 
 ## Simulate discharging
 
+```python
+# Better doing this in the terminal for now:
+# !cp -avr '2.000000e+00' '2.orig'
+# !rm -rf processor*
+```
+
+```python
+# Does not support multiregion, so get the time, and manipulate the file:
+# latest_time["fluid"]["U"].boundary_field["fluidOutlet"].value = [0, 0, 0]
+
+case = foamlib.FoamCase(".")
+latest_time = case[-1]
+
+with foamlib.FoamFile(f"{latest_time.name}/fluid/U") as f:
+    f["boundaryField"]["fluidOutlet"]["value"] = [0, 0, 0]
+
+with foamlib.FoamFile("constant/userParameters") as f:
+    f["duration"] = 3.0
+    f["dumpInterval"] = 0.5
+
+# Decompose case and run initialization (charge stabilization):
+CaseManager.run(log11, ["decomposePar", "-allRegions"])
+CaseManager.run(log12, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
+```
+
+```python
+p = cl.plot_temperature("Initialization", latest_time.name, loc=3)
+```
+
+```python
+p = cl.plot_pressure("Initialization", latest_time.name)
+```
+
+```python
+p = cl.plot_flowrate("Initialization", latest_time.name, loc=3)
+```
 
 ## Simulate charging
 
@@ -193,7 +243,7 @@ opts = post.get_options()
 pl = pv.Plotter(shape=(1, 2), border=False)
 
 pl.subplot(0, 0)
-pl.add_mesh(post.slice_fluid, scalars='p', cmap="jet", **opts)
+pl.add_mesh(post.slice_fluid, scalars='pRel', cmap="jet", **opts)
 FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
 
 pl.subplot(0, 1)
@@ -207,8 +257,8 @@ pl.show()
 opts = post.get_options()
 pl = pv.Plotter()
 
-pl.add_mesh(post.slice_fluid, scalars="Umag", cmap="jet", **opts)
-# pl.add_mesh(post.slice_fluid, scalars="U", component=2, cmap="jet", **opts)
+# pl.add_mesh(post.slice_fluid, scalars="Umag", cmap="jet", **opts)
+pl.add_mesh(post.slice_fluid, scalars="U", component=2, cmap="jet", **opts)
 FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
 
 pl.show()
