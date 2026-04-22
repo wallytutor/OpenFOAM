@@ -30,3 +30,5 @@ cp constant/solid/physicalProperties.orig \
 decomposePar -allRegions
 
 mpiexec -n $NUM_PROCS foamMultiRun -parallel
+
+reconstructPar -allRegions -latestTime
