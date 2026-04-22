@@ -33,13 +33,13 @@ boundaryField
     fluidInlet
     {
         type            inletOutlet;
-        value           uniform $fluidTemperature;
+        value           uniform $solidTemperature;
         inletValue      uniform $fluidTemperature;
     }
     fluid_to_solid
     {
         type            coupledTemperature;
-        value           uniform $fluidTemperature;
+        value           uniform $solidTemperature;
     }
     "cyclicFluid(Left|Right)"
     {
