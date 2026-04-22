@@ -30,7 +30,7 @@ stopAt            endTime;
 
 endTime           $duration;
 
-deltaT            1.0e-03;
+deltaT            5.0e-05;
 
 writeControl      adjustableRunTime;
 
