@@ -42,7 +42,7 @@ import os
 import foamlib
 import numpy as np
 import pandas as pd
-import pyvista as pv
+
 import shutil
 import subprocess
 from pathlib import Path
@@ -54,14 +54,12 @@ import heat_recovery.cowper_like as cl
 from heat_recovery.calculators import SkinFrictionFactor
 from heat_recovery.calculators import WallGradingCalculator
 from heat_recovery.cowper_like import CowperLikeGeometry
-from heat_recovery.cowper_like import CowperLikePost
 from heat_recovery.cowper_like import make_charging
-from heat_recovery.thermocline import ThermoclineModel
 from heat_recovery.manage import CaseManager
 ```
 
 ```python
-pv.set_jupyter_backend("static")
+
 ```
 
 ```python
@@ -127,7 +125,6 @@ CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"]
 
 ```python
 # CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False, force=True)
-origin = "1.000000e+00"
 ```
 
 ```python
@@ -136,27 +133,10 @@ CaseManager.run(log09, ["foamLog",  log08], force=True)
 CaseManager.run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ```
 
-```python
-cl.plot_convergence()
-```
-
-```python
-p = cl.plot_temperature("Initialization", origin, loc=3)
-```
-
-```python
-p = cl.plot_pressure("Initialization", origin)
-```
-
-```python
-p = cl.plot_flowrate("Initialization", origin, loc=3)
-```
-
-```python
-p = cl.plot_table("solid", "solidTemperature", "volFieldValue", time=origin)
-```
-
 ## Simulate discharging
+
+
+### Part 1 - relax state
 
 ```python
 # Better doing this in the terminal for now:
@@ -184,15 +164,33 @@ CaseManager.run(log12, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"]
 ```
 
 ```python
-p = cl.plot_temperature("Initialization", latest_time.name, loc=3)
+# This is intended to be re-run while following solution:
+CaseManager.run(log13, ["foamLog",  log12], force=True)
+CaseManager.run(log14, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
+```
+
+### Part 2 - reverse flow
+
+```python
+# Better doing this in the terminal for now:
+# !cp -avr '3.000000e+00' '3.orig'
+# !rm -rf processor*
 ```
 
 ```python
-p = cl.plot_pressure("Initialization", latest_time.name)
+
 ```
 
 ```python
-p = cl.plot_flowrate("Initialization", latest_time.name, loc=3)
+
+```
+
+```python
+
+```
+
+```python
+
 ```
 
 ## Simulate charging
@@ -203,63 +201,4 @@ p = cl.plot_flowrate("Initialization", latest_time.name, loc=3)
 
 ```python
 # make_charging(model)
-```
-
-## Post-processing
-
-```python
-post = CowperLikePost(scale=(1, 1, model.num_D_h / model.num_h_t))
-post.load_state()
-```
-
-```python
-opts = post.get_options()
-pl = pv.Plotter()
-
-pl.add_mesh(post.slice_fluid, scalars="T", cmap="hot", **opts)
-pl.add_mesh(post.slice_solid, scalars="T", cmap="hot", show_scalar_bar=False)
-FoamPost.align_camera(xc=0.025, zc=0.02, ps=0.017)
-
-pl.show()
-```
-
-```python
-opts = post.get_options()
-pl = pv.Plotter(shape=(1, 2), border=False)
-
-pl.subplot(0, 0)
-pl.add_mesh(post.slice_fluid, scalars="pRel", cmap="jet", **opts)
-FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
-
-pl.subplot(0, 1)
-pl.add_mesh(post.slice_fluid, scalars='p_rgh', cmap="jet", **opts)
-FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
-
-pl.show()
-```
-
-```python
-opts = post.get_options()
-pl = pv.Plotter(shape=(1, 2), border=False)
-
-pl.subplot(0, 0)
-pl.add_mesh(post.slice_fluid, scalars='pRel', cmap="jet", **opts)
-FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
-
-pl.subplot(0, 1)
-pl.add_mesh(post.slice_fluid, scalars='rho', cmap="jet", **opts)
-FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
-
-pl.show()
-```
-
-```python
-opts = post.get_options()
-pl = pv.Plotter()
-
-# pl.add_mesh(post.slice_fluid, scalars="Umag", cmap="jet", **opts)
-pl.add_mesh(post.slice_fluid, scalars="U", component=2, cmap="jet", **opts)
-FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
-
-pl.show()
 ```
