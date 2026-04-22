@@ -34,7 +34,8 @@ deltaT            1.0e-03;
 
 writeControl      adjustableRunTime;
 
-writeInterval     300;
+writeInterval     0.1;
+// writeInterval     300;
 
 purgeWrite        0;
 
@@ -50,7 +51,8 @@ timePrecision     6;
 
 runTimeModifiable true;
 
-maxCo             1.0;
+// Reduce diffusive effects
+maxCo             0.75;
 
 adjustTimeStep    yes;
 

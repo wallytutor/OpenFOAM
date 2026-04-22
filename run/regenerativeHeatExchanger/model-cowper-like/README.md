@@ -40,6 +40,7 @@ import os
 import foamlib
 import numpy as np
 import pandas as pd
+import pyvista as pv
 import shutil
 import subprocess
 from pathlib import Path
@@ -51,6 +52,10 @@ from heat_recovery.calculators import WallGradingCalculator
 from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
+```
+
+```python
+pv.set_jupyter_backend("static")
 ```
 
 ```python
@@ -120,6 +125,10 @@ def load_table(region, function, fname, time="0.000000e+00"):
 
 def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
     df = load_table(region, function, fname, time)
+
+    if function.startswith("pressure"):
+        df[1] -= 101325.0
+        
     p = plot2d(df[0], df[1])
     p.axes[0].set_xlabel("Time [s]")
     p.axes[0].set_ylabel(ylabel or function)
@@ -155,27 +164,26 @@ mesh = "mesh.msh"
 yaml = YAML()
 data = yaml.load(open("dimensioning.yaml"))
 
-geom = CowperLikeGeometry(
-    m_h = data["m_h"],
-    D_h = data["D_h"],
-    h_t = data["h_t"],
-
-    # Use with care based on the above values:
-    num_points_angular = 6,
-    num_points_core    = 4,
-    core_radius_fraction = 0.8,
-    fluid_bl_tot       = 0.005,
-    fluid_bl_ext       = 0.5*y_first,
-    fluid_bl_int       = 1.5*y_first,
-    solid_bl_ext       = 3.0*y_first,
-    solid_bl_int       = 0.5*y_first,
-    rel_layer          = 0.25,
-)
-
 if not Path(mesh).exists():
-    geom.create_model(saveas=mesh, render=True)
+    geom = CowperLikeGeometry(
+        m_h = data["m_h"],
+        D_h = data["D_h"],
+        h_t = data["h_t"],
     
-# geom.create_model(render=True)
+        # Use with care based on the above values:
+        num_points_angular = 6,
+        num_points_core    = 4,
+        core_radius_fraction = 0.8,
+        fluid_bl_tot       = 0.005,
+        fluid_bl_ext       = 0.5*y_first,
+        fluid_bl_int       = 1.5*y_first,
+        solid_bl_ext       = 3.0*y_first,
+        solid_bl_int       = 0.5*y_first,
+        rel_layer          = 0.25,
+    )
+
+    # mesh = None # DEBUG (no write)
+    geom.create_model(saveas=mesh, render=True)
 ```
 
 ## Prepare mesh
@@ -201,7 +209,6 @@ if Path("constant/polyMesh").exists():
 
 ```python
 make_charging(model)
-# model.tabulate()
 ```
 
 ```python
@@ -232,7 +239,7 @@ run(log09, ["foamLog",  log08], force=True)
 ```
 
 ```python
-run(log10, ["reconstructPar", "-allRegions", "-latestTime"])
+run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ```
 
 ## Simulate discharging
@@ -268,11 +275,53 @@ p = plot_table("solid", "solidTemperature", "volFieldValue")
 ```
 
 ```python
-(21600*2141/0.143) / (3600*24*365)
+(21600*593/0.26)/(3600*24)
 ```
 
 ```python
-0.07*0.025
+reader = pv.POpenFOAMReader("case.foam")
+
+latest = reader.time_values[-1]
+reader.set_active_time_value(latest)
+
+# print(f'All patch names: {reader.patch_array_names}')
+# print(f'All patch status: {reader.all_patch_arrays_status}')
+```
+
+```python
+mesh = reader.read()
+fluid_internal = mesh["fluid"]["internalMesh"] 
+solid_internal = mesh["solid"]["internalMesh"] 
+```
+
+```python
+def get_slice(internal_mesh, scale=(1, 1, model.num_D_h / model.num_h_t)):
+    data = internal_mesh.slice("y")
+    return data.scale(scale, inplace=False)
+```
+
+```python
+slice_fluid = get_slice(fluid_internal)
+slice_solid = get_slice(solid_internal)
+
+pl = pv.Plotter()
+pl.add_mesh(slice_fluid, scalars='T')
+pl.add_mesh(slice_solid, scalars='T')
+pl.camera_position = 'xz'
+pl.enable_anti_aliasing()
+pl.show()
+```
+
+```python
+pl = pv.Plotter()
+pl.add_mesh(slice_fluid, scalars='U', component=2)
+pl.camera_position = 'xz'
+pl.enable_anti_aliasing()
+pl.show()
+```
+
+```python
+slice_fluid
 ```
 
 ```python
