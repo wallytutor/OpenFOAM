@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+export NUM_PROCS=4
+
+gmshToFoam mesh.msh
+
+createPatch
+
+renumberMesh
+
+splitMeshRegions -cellZones
+
+checkMesh -region fluid
+
+checkMesh -region solid
+
+rm -rf constant/polyMesh
+
+cp -avr 0.orig/* 0.000000e+00/
+
+cp constant/userParameters.orig constant/userParameters
+
+decomposePar -allRegions
+
+mpiexec -n $NUM_PROCS foamMultiRun -parallel
