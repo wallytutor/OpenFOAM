@@ -81,60 +81,12 @@ log09 = "log.09.foamLog"
 log10 = "log.10.reconstructPar"
 ```
 
-## Turbulence calculations
-
-
-See also [this vanilla JS calculator](https://github.com/ivanpujol0407/yplus-calculator).
+## Prepare case
 
 ```python
-model = ThermoclineModel("dimensioning.yaml")
-sol = SolutionDimless("airish.yaml")
+model = cl.get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh")
 
-y_p = model.num_y_plus
-U_h = model.fn_U_g(*model.args_charging)
-
-sol.set_state(model.num_T_h, 101325, "N2: 0.79, O2: 0.21")
-calc = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_h)
-
-def f_tur(Re):
-    return SkinFrictionFactor.smooth_wall(Re, check=False) / 8
-    
-y_first = calc.first_layer(y_p, skin_factor=f_tur)
-```
-
-## Generate geometry
-
-```python
-mesh = "mesh.msh"
-
-yaml = YAML()
-data = yaml.load(open("dimensioning.yaml"))
-
-if not Path(mesh).exists():
-    geom = CowperLikeGeometry(
-        m_h = data["m_h"],
-        D_h = data["D_h"],
-        h_t = data["h_t"],
-    
-        # Use with care based on the above values:
-        num_points_angular = 6,
-        num_points_core    = 4,
-        core_radius_fraction = 0.8,
-        fluid_bl_tot       = 0.005,
-        fluid_bl_ext       = 0.5*y_first,
-        fluid_bl_int       = 1.5*y_first,
-        solid_bl_ext       = 3.0*y_first,
-        solid_bl_int       = 0.5*y_first,
-        rel_layer          = 0.25,
-    )
-
-    # mesh = None # DEBUG (no write)
-    geom.create_model(saveas=mesh, render=True)
-```
-
-## Prepare mesh
-
-```python
+# Defaults for initialization (*all hot*) can be copied directly:
 _ = shutil.copy("constant/userParameters.orig", "constant/userParameters")
 
 CaseManager.run(log01, ["gmshToFoam", mesh])
@@ -147,15 +99,8 @@ CaseManager.run(log06, ["checkMesh", "-region", "solid"])
 # To avoid any confusion, remove original mesh:
 if Path("constant/polyMesh").exists():
     shutil.rmtree("constant/polyMesh")
-```
 
-## Initial conditions
-
-```python
-# make_charging(model)
-```
-
-```python
+# Copy (or expand) initial conditions from the 0.orig folder:
 CaseManager.handle_field("fluid", "p")
 CaseManager.handle_field("fluid", "p_rgh")
 CaseManager.handle_field("fluid", "k")
@@ -165,27 +110,17 @@ CaseManager.handle_field("fluid", "alphat")
 CaseManager.handle_field("fluid", "U")
 CaseManager.handle_field("fluid", "T")
 CaseManager.handle_field("solid", "T")
-```
 
-## Simulate charging
-
-```python
+# Decompose case and run initialization (charge stabilization):
 CaseManager.run(log07, ["decomposePar", "-allRegions"])
 CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
 ```
 
 ```python
+# This is intended to be re-run while following solution:
 CaseManager.run(log09, ["foamLog",  log08], force=True)
 CaseManager.run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ```
-
-## Simulate discharging
-
-```python
-# foamDictionary 100/p -entry boundaryField.outlet.type -set zeroGradient
-```
-
-## Post-processing
 
 ```python
 cl.plot_convergence()
@@ -206,6 +141,21 @@ p = cl.plot_flowrate("Initialization", origin="0.000000e+00", loc=3)
 ```python
 p = cl.plot_table("solid", "solidTemperature", "volFieldValue")
 ```
+
+## Simulate discharging
+
+
+## Simulate charging
+
+```python
+# foamDictionary 100/p -entry boundaryField.outlet.type -set zeroGradient
+```
+
+```python
+# make_charging(model)
+```
+
+## Post-processing
 
 ```python
 post = CowperLikePost(scale=(1, 1, model.num_D_h / model.num_h_t))
