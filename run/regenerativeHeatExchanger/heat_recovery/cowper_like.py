@@ -295,6 +295,20 @@ def get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh"):
     return model
 
 
+def make_solid(model):
+    """ Create the solid physical properties file. """
+    def add_property(f, name, value):
+        f[name] = {}
+        f[name]["type"] = "uniform"
+        f[name]["value"] = value
+
+    with FoamFile("constant/solid/physicalProperties") as f:
+        f["thermoType"] = "constSolidThermo"
+        add_property(f, "rho",   model.num_rho_s)
+        add_property(f, "Cv",    model.num_c_ps)
+        add_property(f, "kappa", model.num_k_s)
+
+
 def make_charging(model):
     """ Create the charging inputs file.
 
@@ -308,17 +322,6 @@ def make_charging(model):
         f["inletVelocity"] = -1.0 * model.fn_U_g(*model.args_charging)
         f["duration"] = model.num_H_t / model.num_P_c
         f["nProcs"] = r"$NUM_PROCS"
-
-    def add_property(f, name, value):
-        f[name] = {}
-        f[name]["type"] = "uniform"
-        f[name]["value"] = value
-
-    with FoamFile("constant/solid/physicalProperties") as f:
-        f["thermoType"] = "constSolidThermo"
-        add_property(f, "rho",   model.num_rho_s)
-        add_property(f, "Cv",    model.num_c_ps)
-        add_property(f, "kappa", model.num_k_s)
 
 
 #region: tabular post-processing
