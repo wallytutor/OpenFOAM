@@ -17,6 +17,7 @@ FoamFile
 ddtSchemes
 {
     default         Euler;
+    // default         localEuler;
 
     // No sample case comes with this, and I went into trouble with it...
     // default         backward;

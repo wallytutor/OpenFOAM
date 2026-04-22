@@ -30,6 +30,8 @@ Boundary conditions:
 
 - Check the possibility of using `prghTotalPressure`, as it would make the intent clearer; see example in the `wallBoiling` case.
 
+- Finally it was concluded that a `zeroGradient` should be applied at outlet pressure, otherwise flow reverses due to incompatible forces.
+
 - For turbulence, the inlet value of `k` has been set through a small value of [turbulenceIntensity](https://cpp.openfoam.org/v13/classFoam_1_1turbulentIntensityKineticEnergyInletFvPatchScalarField.html), as low Reynold's number dominate the problem; for `omega`, a [turbulentMixingLengthFrequencyInlet](https://cpp.openfoam.org/v13/classFoam_1_1turbulentMixingLengthFrequencyFvScalarFieldSource.html) has been applied (manually change the length scale to ~7% the diameter, if geometry is modified), and walls are treated with [omegaWallFunction](https://cpp.openfoam.org/v13/classFoam_1_1omegaWallFunctionFvPatchScalarField.html) to avoid fine resolution of y+.
 
 
@@ -133,6 +135,107 @@ def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
     p.axes[0].set_xlabel("Time [s]")
     p.axes[0].set_ylabel(ylabel or function)
     return p
+```
+
+```python
+class FoamPost:
+    __slots__ = (
+        "_reader",
+        "_scale",
+        "_time",
+        "_fluid_internal",
+        "_solid_internal",
+        "_slice_fluid",
+        "_slice_solid",
+    )
+    def __init__(self, scale=(1, 1, 1)):
+        self._reader = pv.POpenFOAMReader("case.foam")
+        self._scale = scale
+
+    def _get_slice(self, internal_mesh):
+        data = internal_mesh.slice("y")
+    
+        if "U" in data.cell_data:
+            Umag = np.linalg.norm(data.cell_data["U"], axis=1)
+            data.cell_data["Umag"] = Umag
+            
+        return data.scale(self._scale, inplace=False)
+        
+    @property
+    def time_values(self):
+        return self._reader.time_values
+
+    @property
+    def slice_fluid(self):
+        return self._slice_fluid.copy()
+
+    @property
+    def slice_solid(self):
+        return self._slice_solid.copy()
+
+    @staticmethod
+    def camera_position_xz(w: float, h: float) -> tuple:
+        """ Get camera position for XZ plane view (top-down). """
+        x = w / 2
+        z = h / 2
+    
+        # Camera position above the geometry
+        pos = (x, 2 * max(w, h), z)
+    
+        # Looking at the center
+        focal = (x, 0, z)
+    
+        # View up: (0, 1, 0) - Y axis points up
+        viewup = (0, 0, 1)
+
+        return (pos, focal, viewup)
+
+    @staticmethod
+    def align_camera(xc=0.025, zc=0.02, ps=0.017):
+        pl.renderer.set_background("#FFFFFF")
+        pl.camera_position = FoamPost.camera_position_xz(xc, zc)
+        pl.camera.parallel_projection = True
+        pl.camera.parallel_scale = ps
+
+    def load_state(self, time=None):
+        if time is None:
+            time = self.time_values[-1]
+
+        self._time = time
+        self._reader.set_active_time_value(time)
+        
+        mesh = self._reader.read()
+        self._fluid_internal = mesh["fluid"]["internalMesh"] 
+        self._solid_internal = mesh["solid"]["internalMesh"]
+        
+        self._slice_fluid = self._get_slice(self._fluid_internal)
+        self._slice_solid = self._get_slice(self._solid_internal)
+
+        pRel = self._slice_fluid.cell_data["p"] - 101325.0
+        self._slice_fluid.cell_data["pRel"] = pRel
+
+    def get_options(self, **kws) -> dict:
+        fn_title = kws.pop("fn_title", lambda t: f"At t = {t:.0f} s\n")
+    
+        opts = {
+            "pbr": False,
+            "show_edges": False,
+            "scalar_bar_args": {
+                "title": fn_title(self._time),
+                "vertical": False,
+                "title_font_size": 16,
+                "label_font_size": 12,
+                "position_x": 0.1,
+                "position_y": 0.05,
+                "color": "k",
+                "n_colors": 10,
+                "width": 0.8,
+                "height": 0.1,
+                "fmt": "%.0f"
+            }
+        }
+        opts.update(kws)
+        return opts
 ```
 
 ## Turbulence calculations
@@ -275,55 +378,57 @@ p = plot_table("solid", "solidTemperature", "volFieldValue")
 ```
 
 ```python
-(21600*593/0.26)/(3600*24)
+post = FoamPost(scale=(1, 1, model.num_D_h / model.num_h_t))
+post.load_state()
 ```
 
 ```python
-reader = pv.POpenFOAMReader("case.foam")
-
-latest = reader.time_values[-1]
-reader.set_active_time_value(latest)
-
-# print(f'All patch names: {reader.patch_array_names}')
-# print(f'All patch status: {reader.all_patch_arrays_status}')
-```
-
-```python
-mesh = reader.read()
-fluid_internal = mesh["fluid"]["internalMesh"] 
-solid_internal = mesh["solid"]["internalMesh"] 
-```
-
-```python
-def get_slice(internal_mesh, scale=(1, 1, model.num_D_h / model.num_h_t)):
-    data = internal_mesh.slice("y")
-    return data.scale(scale, inplace=False)
-```
-
-```python
-slice_fluid = get_slice(fluid_internal)
-slice_solid = get_slice(solid_internal)
-
+opts = post.get_options()
 pl = pv.Plotter()
-pl.add_mesh(slice_fluid, scalars='T')
-pl.add_mesh(slice_solid, scalars='T')
-pl.camera_position = 'xz'
-pl.enable_anti_aliasing()
+
+pl.add_mesh(post.slice_fluid, scalars="T", cmap="hot", **opts)
+pl.add_mesh(post.slice_solid, scalars="T", cmap="hot", show_scalar_bar=False)
+FoamPost.align_camera(xc=0.025, zc=0.02, ps=0.017)
+
 pl.show()
 ```
 
 ```python
-pl = pv.Plotter()
-pl.add_mesh(slice_fluid, scalars='U', component=2)
-pl.camera_position = 'xz'
-pl.enable_anti_aliasing()
+opts = post.get_options()
+pl = pv.Plotter(shape=(1, 2), border=False)
+
+pl.subplot(0, 0)
+pl.add_mesh(post.slice_fluid, scalars="pRel", cmap="jet", **opts)
+FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
+
+pl.subplot(0, 1)
+pl.add_mesh(post.slice_fluid, scalars='p_rgh', cmap="jet", **opts)
+FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
+
 pl.show()
 ```
 
 ```python
-slice_fluid
+opts = post.get_options()
+pl = pv.Plotter(shape=(1, 2), border=False)
+
+pl.subplot(0, 0)
+pl.add_mesh(post.slice_fluid, scalars='p', cmap="jet", **opts)
+FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
+
+pl.subplot(0, 1)
+pl.add_mesh(post.slice_fluid, scalars='rho', cmap="jet", **opts)
+FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
+
+pl.show()
 ```
 
 ```python
+opts = post.get_options()
+pl = pv.Plotter()
 
+pl.add_mesh(post.slice_fluid, scalars="Umag", component=2, cmap="jet", **opts)
+FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
+
+pl.show()
 ```
