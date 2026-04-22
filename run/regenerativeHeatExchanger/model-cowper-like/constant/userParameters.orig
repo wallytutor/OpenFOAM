@@ -20,7 +20,7 @@ solidTemperature  873.15;
 
 inletVelocity     -10.5;
 
-duration          1.0;
+duration          2.0;
 
 nProcs            $NUM_PROCS;
 

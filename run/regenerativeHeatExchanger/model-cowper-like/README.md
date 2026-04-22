@@ -49,11 +49,15 @@ from pathlib import Path
 from ruamel.yaml import YAML
 from majordome_engineering.transport import SolutionDimless
 from majordome_utilities.plotting import plot2d
+
+import heat_recovery.cowper_like as cl
 from heat_recovery.calculators import SkinFrictionFactor
 from heat_recovery.calculators import WallGradingCalculator
 from heat_recovery.cowper_like import CowperLikeGeometry
+from heat_recovery.cowper_like import CowperLikePost
 from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
+from heat_recovery.manage import CaseManager
 ```
 
 ```python
@@ -75,172 +79,6 @@ log07 = "log.07.decomposePar"
 log08 = "log.08.foamMultiRun"
 log09 = "log.09.foamLog"
 log10 = "log.10.reconstructPar"
-```
-
-```python
-def run(log, cmd, blocking=True, force=False):
-    if Path(log).exists() and not force:
-        print(f"Already run, check log {log} for details")
-        return
-
-    with open(log, "w") as f:
-        print(f"Logging to {log}: {' '.join(cmd)}")
-        if blocking:
-            subprocess.run(cmd, stdout=f, stderr=f, check=True)
-        else:
-            subprocess.Popen(cmd, stdout=f, stderr=f)
-```
-
-```python
-def expand_field(region, field, init_dir="0.000000e+00", copy=True):
-    log = f"{init_dir}/{region}/{field}"
-    src = f"0.orig/{region}/{field}"
-
-    if copy:
-        shutil.copy(src, log)
-    else:
-        run(log, ["foamDictionary", src, "-expand"])    
-```
-
-```python
-def plot_convergence():
-    final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0", 
-             "eFinalRes_0", "hFinalRes_0",
-             "kFinalRes_0", "omegaFinalRes_0"]
-
-    p = plot2d(0, 0)
-
-    for fname in final:
-        try:
-            df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
-            p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
-        except FileNotFoundError as err:
-            print(err)
-
-    p.axes[0].set_xlabel("Time step")
-    p.axes[0].set_ylabel("log10(residual)")
-    p.axes[0].legend(loc=1, fontsize="small", ncol=2)
-```
-
-```python
-def get_post(region, function, fname, time="0.000000e+00"):
-    return "/".join(["postProcessing", region, function, time, f"{fname}.dat"])
-
-def load_table(region, function, fname, time="0.000000e+00"):
-    fname = get_post(region, function, fname, time)
-    return pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
-
-def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
-    df = load_table(region, function, fname, time)
-
-    if function.startswith("pressure"):
-        df[1] -= 101325.0
-        
-    p = plot2d(df[0], df[1])
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel(ylabel or function)
-    return p
-```
-
-```python
-class FoamPost:
-    __slots__ = (
-        "_reader",
-        "_scale",
-        "_time",
-        "_fluid_internal",
-        "_solid_internal",
-        "_slice_fluid",
-        "_slice_solid",
-    )
-    def __init__(self, scale=(1, 1, 1)):
-        self._reader = pv.POpenFOAMReader("case.foam")
-        self._scale = scale
-
-    def _get_slice(self, internal_mesh):
-        data = internal_mesh.slice("y")
-    
-        if "U" in data.cell_data:
-            Umag = np.linalg.norm(data.cell_data["U"], axis=1)
-            data.cell_data["Umag"] = Umag
-            
-        return data.scale(self._scale, inplace=False)
-        
-    @property
-    def time_values(self):
-        return self._reader.time_values
-
-    @property
-    def slice_fluid(self):
-        return self._slice_fluid.copy()
-
-    @property
-    def slice_solid(self):
-        return self._slice_solid.copy()
-
-    @staticmethod
-    def camera_position_xz(w: float, h: float) -> tuple:
-        """ Get camera position for XZ plane view (top-down). """
-        x = w / 2
-        z = h / 2
-    
-        # Camera position above the geometry
-        pos = (x, 2 * max(w, h), z)
-    
-        # Looking at the center
-        focal = (x, 0, z)
-    
-        # View up: (0, 1, 0) - Y axis points up
-        viewup = (0, 0, 1)
-
-        return (pos, focal, viewup)
-
-    @staticmethod
-    def align_camera(xc=0.025, zc=0.02, ps=0.017):
-        pl.renderer.set_background("#FFFFFF")
-        pl.camera_position = FoamPost.camera_position_xz(xc, zc)
-        pl.camera.parallel_projection = True
-        pl.camera.parallel_scale = ps
-
-    def load_state(self, time=None):
-        if time is None:
-            time = self.time_values[-1]
-
-        self._time = time
-        self._reader.set_active_time_value(time)
-        
-        mesh = self._reader.read()
-        self._fluid_internal = mesh["fluid"]["internalMesh"] 
-        self._solid_internal = mesh["solid"]["internalMesh"]
-        
-        self._slice_fluid = self._get_slice(self._fluid_internal)
-        self._slice_solid = self._get_slice(self._solid_internal)
-
-        pRel = self._slice_fluid.cell_data["p"] - 101325.0
-        self._slice_fluid.cell_data["pRel"] = pRel
-
-    def get_options(self, **kws) -> dict:
-        fn_title = kws.pop("fn_title", lambda t: f"At t = {t:.0f} s\n")
-    
-        opts = {
-            "pbr": False,
-            "show_edges": False,
-            "scalar_bar_args": {
-                "title": fn_title(self._time),
-                "vertical": False,
-                "title_font_size": 16,
-                "label_font_size": 12,
-                "position_x": 0.1,
-                "position_y": 0.05,
-                "color": "k",
-                "n_colors": 10,
-                "width": 0.8,
-                "height": 0.1,
-                "fmt": "%.0f"
-            }
-        }
-        opts.update(kws)
-        return opts
 ```
 
 ## Turbulence calculations
@@ -297,16 +135,14 @@ if not Path(mesh).exists():
 ## Prepare mesh
 
 ```python
-!cp 'constant/userParameters.orig' 'constant/userParameters'
-```
+_ = shutil.copy("constant/userParameters.orig", "constant/userParameters")
 
-```python
-run(log01, ["gmshToFoam", mesh])
-run(log02, ["renumberMesh"])
-run(log03, ["createPatch", "-overwrite"])
-run(log04, ["splitMeshRegions", "-cellZones"])
-run(log05, ["checkMesh", "-region", "fluid"])
-run(log06, ["checkMesh", "-region", "solid"])
+CaseManager.run(log01, ["gmshToFoam", mesh])
+CaseManager.run(log02, ["renumberMesh"])
+CaseManager.run(log03, ["createPatch", "-overwrite"])
+CaseManager.run(log04, ["splitMeshRegions", "-cellZones"])
+CaseManager.run(log05, ["checkMesh", "-region", "fluid"])
+CaseManager.run(log06, ["checkMesh", "-region", "solid"])
 
 # To avoid any confusion, remove original mesh:
 if Path("constant/polyMesh").exists():
@@ -320,34 +156,27 @@ if Path("constant/polyMesh").exists():
 ```
 
 ```python
-expand_field("fluid", "p")
-expand_field("fluid", "p_rgh")
-expand_field("fluid", "k")
-expand_field("fluid", "omega")
-expand_field("fluid", "nut")
-expand_field("fluid", "alphat")
-expand_field("fluid", "U")
-expand_field("fluid", "T")
-expand_field("solid", "T")
+CaseManager.handle_field("fluid", "p")
+CaseManager.handle_field("fluid", "p_rgh")
+CaseManager.handle_field("fluid", "k")
+CaseManager.handle_field("fluid", "omega")
+CaseManager.handle_field("fluid", "nut")
+CaseManager.handle_field("fluid", "alphat")
+CaseManager.handle_field("fluid", "U")
+CaseManager.handle_field("fluid", "T")
+CaseManager.handle_field("solid", "T")
 ```
 
 ## Simulate charging
 
 ```python
-run(log07, ["decomposePar", "-allRegions"])
-run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
+CaseManager.run(log07, ["decomposePar", "-allRegions"])
+CaseManager.run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=False)
 ```
 
 ```python
-run(log09, ["foamLog",  log08], force=True)
-```
-
-```python
-# !tail -20 'log.08.foamMultiRun'
-```
-
-```python
-run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
+CaseManager.run(log09, ["foamLog",  log08], force=True)
+CaseManager.run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ```
 
 ## Simulate discharging
@@ -359,31 +188,27 @@ run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ## Post-processing
 
 ```python
-# plot_convergence()
+cl.plot_convergence()
 ```
 
 ```python
-p = plot_table("fluid", "pressureInlet", "surfaceFieldValue")
+p = cl.plot_temperature("Initialization", origin="0.000000e+00", loc=1)
 ```
 
 ```python
-p = plot_table("fluid", "flowRateInlet", "surfaceFieldValue")
+p = cl.plot_pressure("Initialization", origin="0.000000e+00")
 ```
 
 ```python
-p = plot_table("fluid", "flowRateOutlet", "surfaceFieldValue")
+p = cl.plot_flowrate("Initialization", origin="0.000000e+00", loc=3)
 ```
 
 ```python
-p = plot_table("fluid", "temperatureOutlet", "surfaceFieldValue")
+p = cl.plot_table("solid", "solidTemperature", "volFieldValue")
 ```
 
 ```python
-p = plot_table("solid", "solidTemperature", "volFieldValue")
-```
-
-```python
-post = FoamPost(scale=(1, 1, model.num_D_h / model.num_h_t))
+post = CowperLikePost(scale=(1, 1, model.num_D_h / model.num_h_t))
 post.load_state()
 ```
 
@@ -432,7 +257,8 @@ pl.show()
 opts = post.get_options()
 pl = pv.Plotter()
 
-pl.add_mesh(post.slice_fluid, scalars="Umag", component=2, cmap="jet", **opts)
+pl.add_mesh(post.slice_fluid, scalars="Umag", cmap="jet", **opts)
+# pl.add_mesh(post.slice_fluid, scalars="U", component=2, cmap="jet", **opts)
 FoamPost.align_camera(xc=0.0125, zc=0.02, ps=0.017)
 
 pl.show()
