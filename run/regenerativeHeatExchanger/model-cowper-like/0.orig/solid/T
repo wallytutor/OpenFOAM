@@ -18,7 +18,7 @@ dimensions      [ 0 0 0 1 0 0 0 ];
 
 #include "../../constant/userParameters"
 
-internalField   uniform $solidTemperature;
+internalField   uniform $fluidTemperature;
 
 boundaryField
 {
@@ -27,10 +27,10 @@ boundaryField
     "solid(Top|Bottom)"
     {
         type            externalTemperature;
-        Ta              constant 300.0;
-        h               uniform 10.0;
-        thicknessLayers (0.25);
-        kappaLayers     (2.0);
+        Ta              constant $envTemperature;
+        h               uniform $envCoefficient;
+        thicknessLayers ($wallThickness);
+        kappaLayers     ($wallConductivity);
         value           $internalField;
     }
     solidSymmetry
@@ -42,7 +42,7 @@ boundaryField
         type            coupledTemperature;
         value           $internalField;
     }
-    "cyclic.*"
+    "cyclicSolid(Left|Right)"
     {
         type            cyclic;
     }

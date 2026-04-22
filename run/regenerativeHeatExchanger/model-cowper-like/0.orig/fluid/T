@@ -14,33 +14,32 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-
 dimensions      [ 0 0 0 1 0 0 0 ];
 
 #include "../../constant/userParameters"
 
-internalField    uniform $solidTemperature;
-// internalField    uniform $fluidTemperature;
+internalField    uniform $fluidTemperature;
 
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    fluidInlet
+    // XXX outlet is the inlet for hot gas and vice-versa!
+    fluidOutlet
     {
         type            fixedValue;
         value           uniform $fluidTemperature;
     }
-    fluidOutlet
+    fluidInlet
     {
         type            inletOutlet;
-        value           uniform $solidTemperature;
+        value           uniform $fluidTemperature;
         inletValue      uniform $fluidTemperature;
     }
     fluid_to_solid
     {
         type            coupledTemperature;
-        value           uniform $solidTemperature;
+        value           uniform $fluidTemperature;
     }
     "cyclicFluid(Left|Right)"
     {

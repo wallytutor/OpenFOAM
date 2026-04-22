@@ -92,9 +92,14 @@ def run(log, cmd, blocking=True, force=False):
 ```
 
 ```python
-def expand_field(region, field, init_dir="0.000000e+00"):
+def expand_field(region, field, init_dir="0.000000e+00", copy=True):
     log = f"{init_dir}/{region}/{field}"
-    run(log, ["foamDictionary", f"0.orig/{region}/{field}", "-expand"])    
+    src = f"0.orig/{region}/{field}"
+
+    if copy:
+        shutil.copy(src, log)
+    else:
+        run(log, ["foamDictionary", src, "-expand"])    
 ```
 
 ```python
@@ -311,7 +316,7 @@ if Path("constant/polyMesh").exists():
 ## Initial conditions
 
 ```python
-make_charging(model)
+# make_charging(model)
 ```
 
 ```python
@@ -354,7 +359,7 @@ run(log10, ["reconstructPar", "-allRegions", "-latestTime"], force=True)
 ## Post-processing
 
 ```python
-plot_convergence()
+# plot_convergence()
 ```
 
 ```python

@@ -245,10 +245,16 @@ class CowperLikeGeometry:
 
 
 def make_charging(model):
+    """ Create the charging inputs file.
+
+    Notice:
+    - The inlet velocity is negative because the fluid enters from the
+      *outlet* side (top) of the geometry, poiting downwards.
+    """
     with FoamFile("constant/userParameters") as f:
         f["fluidTemperature"] = model.num_T_h
         f["solidTemperature"] = model.num_T_c
-        f["inletVelocity"] = model.fn_U_g(*model.args_charging)
+        f["inletVelocity"] = -1.0 * model.fn_U_g(*model.args_charging)
         f["duration"] = model.num_H_t / model.num_P_c
         f["nProcs"] = r"$NUM_PROCS"
 

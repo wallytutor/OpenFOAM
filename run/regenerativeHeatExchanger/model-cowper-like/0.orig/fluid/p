@@ -22,18 +22,33 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    ".*"
+    // XXX outlet is the inlet for hot gas and vice-versa!
+    fluidOutlet
     {
         type            calculated;
         value           $internalField;
     }
+    fluidInlet
+    {
+        type            calculated;
+        value           $internalField;
+    }
+    fluid_to_solid
+    {
+        type            calculated;
+        value           $internalField;
+    }
+    "cyclicFluid(Left|Right)"
+    {
+        type            cyclic;
+    }
 
     // For pressure only
-    // fluidInlet
+    // fluidOutlet
     // {
     //     type            zeroGradient;
     // }
-    // fluidOutlet
+    // fluidInlet
     // {
     //     type            fixedValue;
     //     value           $internalField;
@@ -44,12 +59,12 @@ boundaryField
     // }
 
     // Common buoyancy coupled flow
-    // fluidInlet
+    // fluidOutlet
     // {
     //     type            calculated;
     //     value           $internalField;
     // }
-    // fluidOutlet
+    // fluidInlet
     // {
     //     // type            fixedValue;
     //     type            calculated;
@@ -62,10 +77,7 @@ boundaryField
     //     value           $internalField;
     // }
 
-    "cyclicFluid(Left|Right)"
-    {
-        type            cyclic;
-    }
+
 }
 
 // ************************************************************************* //

@@ -25,6 +25,8 @@ FoamFile
     fields = (e)
 )
 
+// ------------------------------------------------------------------------- //
+
 #includeFunc patchFlowRate
 (
     name   = flowRateInlet,
@@ -41,6 +43,16 @@ FoamFile
     field  = phi
 )
 
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = temperatureInlet,
+    region = fluid,
+    patch  = fluidInlet,
+    field  = T
+)
+
 #includeFunc patchAverage
 (
     name   = temperatureOutlet,
@@ -48,6 +60,8 @@ FoamFile
     patch  = fluidOutlet,
     field  = T
 )
+
+// ------------------------------------------------------------------------- //
 
 #includeFunc patchAverage
 (
@@ -57,12 +71,24 @@ FoamFile
     field  = p
 )
 
+#includeFunc patchAverage
+(
+    name   = pressureOutlet,
+    region = fluid,
+    patch  = fluidOutlet,
+    field  = p
+)
+
+// ------------------------------------------------------------------------- //
+
 #includeFunc volAverage
 (
     name   = solidTemperature,
     region = solid,
     field  = T
 )
+
+// ------------------------------------------------------------------------- //
 
 #includeFunc wallHeatFlux
 (
@@ -77,6 +103,8 @@ FoamFile
     region = solid,
     patch  = solid_to_fluid
 )
+
+// ------------------------------------------------------------------------- //
 
 #includeFunc yPlus
 (

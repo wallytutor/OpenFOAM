@@ -16,12 +16,20 @@ FoamFile
 
 fluidTemperature  873.15;
 
-solidTemperature  298.15;
+solidTemperature  873.15;
 
-inletVelocity     10.5;
+inletVelocity     -10.5;
 
 duration          1.0;
 
 nProcs            $NUM_PROCS;
+
+envTemperature    298.15;
+
+envCoefficient    10.0;
+
+wallThickness     0.25;
+
+wallConductivity  2.0;
 
 // ************************************************************************* //
