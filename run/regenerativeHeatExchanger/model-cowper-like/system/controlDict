@@ -30,11 +30,12 @@ stopAt            endTime;
 
 endTime           $duration;
 
-deltaT            5.0e-05;
+deltaT            1.0e-04;
 
 writeControl      adjustableRunTime;
 
 writeInterval     $dumpInterval;
+// writeInterval     0.1;
 
 purgeWrite        0;
 
@@ -55,6 +56,7 @@ maxCo             0.75;
 
 maxDeltaT         0.01;
 
-adjustTimeStep    $updateTimeStep;
+// adjustTimeStep    $updateTimeStep;
+adjustTimeStep    yes;
 
 // ************************************************************************* //
