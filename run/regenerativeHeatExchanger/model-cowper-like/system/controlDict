@@ -34,12 +34,11 @@ deltaT            1.0e-03;
 
 writeControl      adjustableRunTime;
 
-writeInterval     0.1;
-// writeInterval     300;
+writeInterval     $dumpInterval;
 
 purgeWrite        0;
 
-writeFormat       binary;
+writeFormat       ascii;
 
 writePrecision    6;
 

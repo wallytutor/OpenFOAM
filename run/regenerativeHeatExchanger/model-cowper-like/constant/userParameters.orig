@@ -22,6 +22,8 @@ inletVelocity     -10.5;
 
 duration          2.0;
 
+dumpInterval      0.5;
+
 nProcs            $NUM_PROCS;
 
 envTemperature    298.15;
