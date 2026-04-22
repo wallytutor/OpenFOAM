@@ -19,7 +19,7 @@ handleOpenFOAM() {
 
 handleQuarto() {
     if command -v quarto >/dev/null 2>&1; then
-        echo "Already installed: $(quarto --version)"
+        echo "Already installed: quarto $(quarto --version)"
     else
         local version="1.9.37"
         local releases="https://github.com/quarto-dev/quarto-cli/releases/download"
