@@ -178,19 +178,43 @@ CaseManager.run(log14, ["reconstructPar", "-allRegions", "-latestTime"], force=T
 ```
 
 ```python
+# IMPORTANT: inlet (bottom) injects cold fluid from now
+#
+# alphat: reset to calculated
+# k:      reverse inlet/outlet
+# nut:    reset to calculated
+# omega:  reverse inlet/outlet
+# p:      ok
+# p_rgh:  reverse inlet/outlet (types)
+# T:      reverse inlet/outlet (types, set proper values)
+# U:      reverse inlet/outlet (types, set proper values)
+case = foamlib.FoamCase(".")
+latest_time = case[-1]
 
+latest_fluid = f"{latest_time.name}/fluid"
+latest_fluid
 ```
 
 ```python
-
+model
 ```
 
 ```python
-
+# with foamlib.FoamFile(f"{latest_fluid}/U") as f:
+#     f["boundaryField"]["fluidOutlet"]["value"] = [0, 0, 0]
 ```
 
 ```python
-
+    # fluidOutlet
+    # {
+    #     type            fixedValue;
+    #     value           uniform (0 0 $inletVelocity);
+    # }
+    # fluidInlet
+    # {
+    #     type            pressureInletOutletVelocity;
+    #     value           $internalField;
+    # }
 ```
 
 ## Simulate charging
