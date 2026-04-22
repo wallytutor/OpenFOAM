@@ -23,7 +23,7 @@ boundaryField
     fluidInlet
     {
         type            turbulentMixingLengthFrequencyInlet;
-        mixingLength    0.001;
+        mixingLength    0.00175;
         value           $internalField;
     }
     fluidOutlet

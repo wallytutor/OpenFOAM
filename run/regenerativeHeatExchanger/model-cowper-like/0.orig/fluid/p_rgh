@@ -23,7 +23,17 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    ".*"
+    fluidInlet
+    {
+        type            fixedFluxPressure;
+        value           $internalField;
+    }
+    fluidOutlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+    fluid_to_solid
     {
         type            fixedFluxPressure;
         value           $internalField;

@@ -57,10 +57,12 @@ mixture
             4.43259
         );
     }
+
+    // from heatExchanger case:
     transport
     {
-        As  1.6853581850699974e-06;
-        Ts  227.72854078370528;
+        As              1.67212e-06;
+        Ts              170.672;
     }
 }
 

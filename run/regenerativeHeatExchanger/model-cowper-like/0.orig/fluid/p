@@ -22,13 +22,20 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    fluidOutlet
+    fluidInlet
     {
-        type            fixedValue;
+        type            calculated;
         value           $internalField;
     }
-    ".*"
+    fluidOutlet
     {
+        // type            fixedValue;
+        type            calculated;
+        value           $internalField;
+    }
+    fluid_to_solid
+    {
+        // type           zeroGradient;
         type            calculated;
         value           $internalField;
     }
