@@ -17,7 +17,16 @@ limitp
 {
     type       limitPressure;
 
-    min        1e4;
+    min        9e4;
+    max        1.1e5;
+}
+
+limitt
+{
+    type       limitTemperature;
+    cellZone   fluid;
+    min        290.0;
+    max        900.0;
 }
 
 // ************************************************************************* //
