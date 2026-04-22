@@ -21,7 +21,11 @@ rm -rf constant/polyMesh
 
 cp -avr 0.orig/* 0.000000e+00/
 
-cp constant/userParameters.orig constant/userParameters
+cp constant/userParameters.orig \
+   constant/userParameters
+
+cp constant/solid/physicalProperties.orig \
+   constant/solid/physicalProperties
 
 decomposePar -allRegions
 
