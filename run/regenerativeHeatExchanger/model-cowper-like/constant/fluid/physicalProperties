@@ -14,12 +14,15 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+// heRhoThermo: p(rho, T) weakly compressible flows
+// hePsiThermo: rho(p, T) compressible flows
+
 thermoType
 {
-    type            hePsiThermo;
+    type            heRhoThermo;
     mixture         pureMixture;
     transport       sutherland;
-    thermo          janaf;
+    thermo          hConst;
     equationOfState perfectGas;
     specie          specie;
     energy          sensibleEnthalpy;
@@ -33,38 +36,67 @@ mixture
     }
     thermodynamics
     {
-        Tlow            200;
-        Thigh           3000;
-        Tcommon         1000;
-        highCpCoeffs
-        (
-            3.05809
-            0.00133634
-            -4.73394e-07
-            7.38653e-11
-            -3.34205e-15
-            -972.89
-            6.09034
-        );
-        lowCpCoeffs
-        (
-            3.393
-            0.000544363
-            -1.24622e-06
-            2.65579e-09
-            -1.35538e-12
-            -1029.28
-            4.43259
-        );
+        Cp              1004.4;
+        hf              0;
     }
-
-    // from heatExchanger case:
     transport
     {
         As              1.67212e-06;
         Ts              170.672;
     }
 }
+
+// thermoType
+// {
+//     type            hePsiThermo;
+//     mixture         pureMixture;
+//     transport       sutherland;
+//     thermo          janaf;
+//     equationOfState perfectGas;
+//     specie          specie;
+//     energy          sensibleEnthalpy;
+// }
+//
+// mixture
+// {
+//     specie
+//     {
+//         molWeight       28.85097;
+//     }
+//     thermodynamics
+//     {
+//         Tlow            200;
+//         Thigh           3000;
+//         Tcommon         1000;
+//         highCpCoeffs
+//         (
+//             3.05809
+//             0.00133634
+//             -4.73394e-07
+//             7.38653e-11
+//             -3.34205e-15
+//             -972.89
+//             6.09034
+//         );
+//         lowCpCoeffs
+//         (
+//             3.393
+//             0.000544363
+//             -1.24622e-06
+//             2.65579e-09
+//             -1.35538e-12
+//             -1029.28
+//             4.43259
+//         );
+//     }
+//
+//     // from heatExchanger case:
+//     transport
+//     {
+//         As              1.67212e-06;
+//         Ts              170.672;
+//     }
+// }
 
 // Constant properties for debugging purposes
 //
