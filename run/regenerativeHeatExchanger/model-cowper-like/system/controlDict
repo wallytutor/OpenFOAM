@@ -55,6 +55,6 @@ maxCo             0.75;
 
 maxDeltaT         0.01;
 
-adjustTimeStep    yes;
+adjustTimeStep    $updateTimeStep;
 
 // ************************************************************************* //
