@@ -19,8 +19,8 @@ dimensions      [ 0 0 0 1 0 0 0 ];
 
 #include "../../constant/userParameters"
 
-// internalField    uniform $solidTemperature;
-internalField    uniform $fluidTemperature;
+internalField    uniform $solidTemperature;
+// internalField    uniform $fluidTemperature;
 
 boundaryField
 {
@@ -34,13 +34,13 @@ boundaryField
     fluidOutlet
     {
         type            inletOutlet;
-        value           uniform $fluidTemperature;
+        value           uniform $solidTemperature;
         inletValue      uniform $fluidTemperature;
     }
     fluid_to_solid
     {
         type            coupledTemperature;
-        value           uniform $fluidTemperature;
+        value           uniform $solidTemperature;
     }
     "cyclicFluid(Left|Right)"
     {

@@ -30,6 +30,7 @@ boundaryField
     }
     fluidOutlet
     {
+        // type            zeroGradient;
         type            fixedValue;
         value           $internalField;
     }
