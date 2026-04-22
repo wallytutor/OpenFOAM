@@ -84,3 +84,6 @@ handleUvMode
 
 # Handle virtual environment:
 handleEnvironment
+
+alias jlab='jupyter lab --no-browser'
+alias rprt='quarto render report/'
