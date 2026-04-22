@@ -25,6 +25,19 @@ solvers
         relTol          0;
     }
 
+    p
+    {
+        solver          PBiCGStab;
+        preconditioner  DIC;
+        tolerance       1e-8;
+        relTol          0.001;
+    }
+
+    pFinal
+    {
+        $p;
+        relTol          0;
+    }
 
     p_rgh
     {
