@@ -20,6 +20,19 @@ About the conception:
 - After conversion, the mesh is renumbered with `renumberMesh` for fixing face orientation (to be verified). Finally, mesh is split into regions with `splitMeshRegions` utility, and the original `constant/polyMesh` directory is removed to avoid confusion.
 
 
+Boundary conditions:
+
+- Convective losses [externalTemperature](https://cpp.openfoam.org/v13/classFoam_1_1externalTemperatureFvPatchScalarField.html) applied to the extremities of solid body.
+
+- Pairing the pressure and bouyancy conditions might be tricky; the `heatExchanger` and `heatDuct` cases use calculated pressure over all patches and fixed flux pressure for all but the outlet (fixed) `p_rgh` values. This approach seems reasonable for the present case.
+
+- Notice that `heatExchanger` uses ideal gas air, thus an absolute pressure is provided in `p` internal field; a file `pRef` has been added to the constants dictionary (needs to be verified); for the `heatDuct`, the apparently incompressible approach by using zero pressure comes from the use of water as working fluid.
+
+- Check the possibility of using `prghTotalPressure`, as it would make the intent clearer; see example in the `wallBoiling` case.
+
+- For turbulence, the inlet value of `k` has been set through a small value of [turbulenceIntensity](https://cpp.openfoam.org/v13/classFoam_1_1turbulentIntensityKineticEnergyInletFvPatchScalarField.html), as low Reynold's number dominate the problem; for `omega`, a [turbulentMixingLengthFrequencyInlet](https://cpp.openfoam.org/v13/classFoam_1_1turbulentMixingLengthFrequencyFvScalarFieldSource.html) has been applied (manually change the length scale to ~7% the diameter, if geometry is modified), and walls are treated with [omegaWallFunction](https://cpp.openfoam.org/v13/classFoam_1_1omegaWallFunctionFvPatchScalarField.html) to avoid fine resolution of y+.
+
+
 ## Import tools
 
 ```python
@@ -31,7 +44,10 @@ import shutil
 import subprocess
 from pathlib import Path
 from ruamel.yaml import YAML
+from majordome_engineering.transport import SolutionDimless
 from majordome_utilities.plotting import plot2d
+from heat_recovery.calculators import SkinFrictionFactor
+from heat_recovery.calculators import WallGradingCalculator
 from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
@@ -55,8 +71,8 @@ log10 = "log.10.reconstructPar"
 ```
 
 ```python
-def run(log, cmd, blocking=True):
-    if Path(log).exists():
+def run(log, cmd, blocking=True, force=False):
+    if Path(log).exists() and not force:
         print(f"Already run, check log {log} for details")
         return
 
@@ -74,6 +90,63 @@ def expand_field(region, field, init_dir="0.000000e+00"):
     run(log, ["foamDictionary", f"0.orig/{region}/{field}", "-expand"])    
 ```
 
+```python
+def plot_convergence():
+    final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0", 
+             "eFinalRes_0", "hFinalRes_0",
+             "kFinalRes_0", "omegaFinalRes_0"]
+
+    p = plot2d(0, 0)
+
+    for fname in final:
+        try:
+            df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
+            p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+        except FileNotFoundError as err:
+            print(err)
+
+    p.axes[0].set_xlabel("Time step")
+    p.axes[0].set_ylabel("log10(residual)")
+    p.axes[0].legend(loc=1, fontsize="small", ncol=2)
+```
+
+```python
+def get_post(region, function, fname, time="0.000000e+00"):
+    return "/".join(["postProcessing", region, function, time, f"{fname}.dat"])
+
+def load_table(region, function, fname, time="0.000000e+00"):
+    fname = get_post(region, function, fname, time)
+    return pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
+
+def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
+    df = load_table(region, function, fname, time)
+    p = plot2d(df[0], df[1])
+    p.axes[0].set_xlabel("Time [s]")
+    p.axes[0].set_ylabel(ylabel or function)
+    return p
+```
+
+## Turbulence calculations
+
+
+See also [this vanilla JS calculator](https://github.com/ivanpujol0407/yplus-calculator).
+
+```python
+model = ThermoclineModel("dimensioning.yaml")
+sol = SolutionDimless("airish.yaml")
+
+y_p = model.num_y_plus
+U_h = model.fn_U_g(*model.args_charging)
+
+sol.set_state(model.num_T_h, 101325, "N2: 0.79, O2: 0.21")
+calc = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_h)
+
+def f_tur(Re):
+    return SkinFrictionFactor.smooth_wall(Re, check=False) / 8
+    
+y_first = calc.first_layer(y_p, skin_factor=f_tur)
+```
+
 ## Generate geometry
 
 ```python
@@ -89,16 +162,20 @@ geom = CowperLikeGeometry(
 
     # Use with care based on the above values:
     num_points_angular = 6,
-    fluid_bl_tot = 0.003,
-    fluid_bl_ext = 0.0002,
-    fluid_bl_int = 0.0006,
-    solid_bl_ext = 0.0050,
-    solid_bl_int = 0.0001,
-    rel_layer    = 0.25,
+    num_points_core    = 4,
+    core_radius_fraction = 0.8,
+    fluid_bl_tot       = 0.005,
+    fluid_bl_ext       = 0.5*y_first,
+    fluid_bl_int       = 1.5*y_first,
+    solid_bl_ext       = 3.0*y_first,
+    solid_bl_int       = 0.5*y_first,
+    rel_layer          = 0.25,
 )
 
 if not Path(mesh).exists():
     geom.create_model(saveas=mesh, render=True)
+    
+# geom.create_model(render=True)
 ```
 
 ## Prepare mesh
@@ -123,7 +200,6 @@ if Path("constant/polyMesh").exists():
 ## Initial conditions
 
 ```python
-model = ThermoclineModel("dimensioning.yaml")
 make_charging(model)
 # model.tabulate()
 ```
@@ -148,7 +224,7 @@ run(log08, ["mpiexec", "-n", NUM_PROCS, "foamMultiRun", "-parallel"], blocking=F
 ```
 
 ```python
-run(log09, ["foamLog",  log08])
+run(log09, ["foamLog",  log08], force=True)
 ```
 
 ```python
@@ -166,43 +242,6 @@ run(log10, ["reconstructPar", "-allRegions", "-latestTime"])
 ```
 
 ## Post-processing
-
-```python
-def plot_convergence():
-    final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0", 
-             "eFinalRes_0", "hFinalRes_0",
-             "kFinalRes_0", "omegaFinalRes_0"]
-
-    p = plot2d(0, 0)
-
-    for fname in final:
-        try:
-            df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
-            p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
-        except FileNotFoundError as err:
-            print(err)
-
-    p.axes[0].set_xlabel("Time step")
-    p.axes[0].set_ylabel("log10(residual)")
-    p.axes[0].legend(loc=1, fontsize="small", ncol=2)
-
-
-def get_post(region, function, fname, time="0.000000e+00"):
-    return "/".join(["postProcessing", region, function, time, f"{fname}.dat"])
-
-
-def load_table(region, function, fname, time="0.000000e+00"):
-    fname = get_post(region, function, fname, time)
-    return pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
-
-
-def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
-    df = load_table(region, function, fname, time)
-    p = plot2d(df[0], df[1])
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel(ylabel or function)
-    return p
-```
 
 ```python
 plot_convergence()
@@ -230,4 +269,12 @@ p = plot_table("solid", "solidTemperature", "volFieldValue")
 
 ```python
 (21600*2141/0.143) / (3600*24*365)
+```
+
+```python
+0.07*0.025
+```
+
+```python
+
 ```

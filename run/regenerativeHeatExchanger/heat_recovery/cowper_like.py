@@ -62,6 +62,9 @@ class CowperLikeGeometry:
     rel_layer: float
         Relative thickness of each layer in the extrusion direction, as a
         fraction of the diameter of the fluid hole.
+    num_points_core: int
+        Number of points along the core line in the radial direction for
+        mesh structuring.
     """
     def __init__(self, *,
             m_h: float,
@@ -74,6 +77,8 @@ class CowperLikeGeometry:
             solid_bl_ext: float = 0.0050,
             solid_bl_int: float = 0.0001,
             rel_layer: float    = 0.15,
+            core_radius_fraction: float = 0.75,
+            num_points_core: int = 2,
         ) -> None:
         self.m_h = m_h
         self.D_h = D_h
@@ -84,6 +89,8 @@ class CowperLikeGeometry:
         self.fluid_bl_int = fluid_bl_int
         self.solid_bl_ext = solid_bl_ext
         self.solid_bl_int = solid_bl_int
+        self.core_radius_fraction = core_radius_fraction
+        self.num_points_core = num_points_core
 
         # Six-fold symmetry of the system:
         self.num_splits = 6
@@ -112,7 +119,7 @@ class CowperLikeGeometry:
             num_splits         = self.num_splits,
             core_unstructured  = False,
             core_polygonal     = True,
-            radius_fraction    = 0.5,
+            radius_fraction    = self.core_radius_fraction,
             rotation           = self.rotation
         )
         return fluid_hole
@@ -170,8 +177,8 @@ class CowperLikeGeometry:
         model.remove([(2, item) for item in removes])
         model.synchronize()
 
-        model.set_transfinite_curve(l1, 5)
-        model.set_transfinite_curve(l2, 5)
+        model.set_transfinite_curve(l1, self.num_points_core)
+        model.set_transfinite_curve(l2, self.num_points_core)
 
         opts = dict(numElements=[self.n_layers], recombine=True)
         tags = model.extrude(base, 0, 0, self.h_t, **opts)

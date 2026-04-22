@@ -289,17 +289,18 @@ class ThermoclineModel:
         yaml = YAML()
         parameters = yaml.load(open(fname))
 
-        self.num_h_t   = parameters["h_t"]
-        self.num_H_t   = parameters["H_t"] * MWh
-        self.num_P_c   = parameters["P_c"] * MW
-        self.num_P_d   = parameters["P_d"] * MW
-        self.num_T_h   = parameters["T_h"]
-        self.num_T_c   = parameters["T_c"]
-        self.num_m_h   = parameters["m_h"]
-        self.num_D_h   = parameters["D_h"]
-        self.num_rho_s = parameters["rho_s"]
-        self.num_c_ps  = parameters["c_ps"]
-        self.num_k_s   = parameters["k_s"]
+        self.num_h_t    = parameters["h_t"]
+        self.num_H_t    = parameters["H_t"] * MWh
+        self.num_P_c    = parameters["P_c"] * MW
+        self.num_P_d    = parameters["P_d"] * MW
+        self.num_T_h    = parameters["T_h"]
+        self.num_T_c    = parameters["T_c"]
+        self.num_m_h    = parameters["m_h"]
+        self.num_D_h    = parameters["D_h"]
+        self.num_rho_s  = parameters["rho_s"]
+        self.num_c_ps   = parameters["c_ps"]
+        self.num_k_s    = parameters["k_s"]
+        self.num_y_plus = parameters["y_plus"]
 
         args_c = air_properties(self.num_T_c)
         args_h = air_properties(self.num_T_h)

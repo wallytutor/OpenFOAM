@@ -7,6 +7,9 @@ import heat_recovery.thermocline as tc
 import numpy as np
 import sympy as sp
 
+from majordome_engineering.transport import SolutionDimless
+from heat_recovery.calculators import SkinFrictionFactor
+from heat_recovery.calculators import WallGradingCalculator
 from heat_recovery.thermocline import ThermoclineModel
 ```
 
@@ -18,6 +21,8 @@ Below we present a summary of the parameters considered for the dimensioning of 
 
 ```{python}
 model = ThermoclineModel("../model-cowper-like/dimensioning.yaml")
+
+# ---------------------------------------------------------------------------
 
 # m, absolute roughness of the hole wall
 eps = 0.0002
@@ -41,8 +46,40 @@ dp_discharging = dp_calc.darcy_weisbach_pressure_drop(
     f   = f
 )
 
+# ---------------------------------------------------------------------------
+
+sol = SolutionDimless("airish.yaml")
+
+y_p = model.num_y_plus
+U_h = model.fn_U_g(*model.args_charging)
+U_c = model.fn_U_g(*model.args_discharging)
+
+sol.set_state(model.num_T_h, 101325, "N2: 0.79, O2: 0.21")
+calc_h = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_h)
+
+sol.set_state(model.num_T_c, 101325, "N2: 0.79, O2: 0.21")
+calc_c = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_c)
+
+def f_lam(Re):
+    return SkinFrictionFactor.laminar(Re) / 8
+
+def f_tur(Re):
+    return SkinFrictionFactor.smooth_wall(Re, check=False) / 8
+
+def evaluate_calc(calc):
+    y_lam = 1000 * calc.first_layer(y_p, skin_factor=f_lam)
+    y_tur = 1000 * calc.first_layer(y_p, skin_factor=f_tur)
+    # print(f"Laminar {y_lam:.2f} mm | Turbulent {y_tur:.2f}")
+    return y_lam, y_tur
+
+evaluate_calc(calc_c)
+y_cell = evaluate_calc(calc_h)[1] / 2
+
+# ---------------------------------------------------------------------------
+
 model.tabulate()
 ```
+
 
 ```{python}
 %%md
@@ -64,7 +101,7 @@ $$
 N_c = {sp.latex(model.N_c.simplify()):s}
 $$
 
-During charging, the fluid injection velocity $U$ through the holes in the hexagonal cell is ${model.fn_U_g(*model.args_charging):.1f}\:\mathrm{m\,s^{-1}}$, dropping to barely ${model.fn_U_g(*model.args_discharging):.1f}\:\mathrm{m\,s^{-1}}$ during discharging. That allows for calculating the Reynolds number for fluid flow through the holes in the hexagonal cell. For charging its value is estimated to be in the order of $Re_c \approx {model.fn_Re(*model.args_charging):.0f}$, while for discharging it drops to around $Re_d \approx {model.fn_Re(*model.args_discharging):.0f}$, characterizing a possibly transitional flow regime.
+During charging, the fluid injection velocity $U$ through the holes in the hexagonal cell is ${U_h:.1f}\:\mathrm{m\,s^{-1}}$, dropping to barely ${U_c:.1f}\:\mathrm{m\,s^{-1}}$ during discharging. That allows for calculating the Reynolds number for fluid flow through the holes in the hexagonal cell. For charging its value is estimated to be in the order of $Re_c \approx {model.fn_Re(*model.args_charging):.0f}$, while for discharging it drops to around $Re_d \approx {model.fn_Re(*model.args_discharging):.0f}$, characterizing a transitional flow regime that should transition to turbulent due to buoyancy effects. Assuming a $y_{+}={model.num_y_plus:.0f}$, one can estimate the first cell center to be at ${y_cell:.2f}\:\mathrm{mm}$, what would be adequate for use with a $k-\omega$ SST model.
 
 $$
 U = {sp.latex(model.U_g.simplify()):s}
@@ -124,5 +161,5 @@ def dp_scan(D_h, m_h, f=f):
     calc = tc.PressureDropCalculator(model.num_h_t, D_h)
     return calc.darcy_weisbach_pressure_drop(rho, v, f=f)
 
-tc.plot_pressure_drop(dp_scan)
+p = tc.plot_pressure_drop(dp_scan)
 ```
