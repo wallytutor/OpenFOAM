@@ -3,25 +3,44 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
-gmshToFoam ../mesh_layers_101600um.msh
+MESH_FILE=../mesh_layers_101600um.msh
+
+# ---------------------------------------------------------------------
+# Convert gmsh mesh to OpenFOAM format
+# ---------------------------------------------------------------------
+
+gmshToFoam $MESH_FILE > log.1.gmshToFoam 2>&1
+
+# ---------------------------------------------------------------------
+# Fix patches that are over directions not used by solution
+# ---------------------------------------------------------------------
 
 foamDictionary constant/polyMesh/boundary \
   -entry entry0/sides_block/type \
-  -set empty
+  -set empty > log.2.setBoundaryType 2>&1
 
 foamDictionary constant/polyMesh/boundary \
   -entry entry0/sides_media/type \
-  -set empty
+  -set empty >> log.2.setBoundaryType 2>&1
 
-renumberMesh
+# ---------------------------------------------------------------------
+# Prepare and check the mesh for use with region coupling
+# ---------------------------------------------------------------------
 
-splitMeshRegions -cellZones
-
-checkMesh -region block
-checkMesh -region media
-
+renumberMesh > log.3.renumberMesh 2>&1
+splitMeshRegions -cellZones > log.4.splitMeshRegions 2>&1
 rm -rf constant/polyMesh/
 
-cp -avr 0.orig/* 0.00000000e+00/
+checkMesh -region block > log.5.checkMeshBlock 2>&1
+checkMesh -region media > log.6.checkMeshMedia 2>&1
 
-foamMultiRun
+# ---------------------------------------------------------------------
+# Copy conditions and run the case
+# ---------------------------------------------------------------------
+
+cp -avr 0.orig/* 0.00000000e+00/
+foamMultiRun > log.7.foamMultiRun 2>&1
+
+# ---------------------------------------------------------------------
+# EOF
+# ---------------------------------------------------------------------
