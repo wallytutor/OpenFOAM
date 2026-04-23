@@ -1,0 +1,59 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      controlDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#include "../constant/userParameters"
+
+regionSolvers
+{
+    block           solid;
+    media           solid;
+}
+
+startFrom         latestTime;
+
+startTime         0;
+
+stopAt            endTime;
+
+endTime           $duration;
+
+deltaT            1.0e-03;
+
+writeControl      adjustableRunTime;
+
+writeInterval     $dumpInterval;
+
+purgeWrite        0;
+
+writeFormat       ascii;
+
+writePrecision    6;
+
+writeCompression  off;
+
+timeFormat        scientific;
+
+timePrecision     8;
+
+runTimeModifiable true;
+
+maxCo             0.75;
+
+maxDeltaT         0.01;
+
+adjustTimeStep    yes;
+
+// ************************************************************************* //

@@ -1,0 +1,2 @@
+majordome[full] @ https://github.com/wallytutor/python-majordome/releases/download/0.9.4/majordome-0.9.4-cp312-cp312-linux_x86_64.whl
+screeninfo

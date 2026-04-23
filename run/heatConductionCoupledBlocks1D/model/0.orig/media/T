@@ -1,0 +1,44 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       volScalarField;
+    location    "0/media";
+    object      T;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [ 0 0 0 1 0 0 0 ];
+
+#include "../../constant/userParameters"
+
+internalField   uniform $ambientTemperature;
+
+boundaryField
+{
+    #includeEtc "caseDicts/setConstraintTypes"
+
+    infinite
+    {
+        type            fixedValue;
+        value           uniform $ambientTemperature;
+    }
+    media_to_block
+    {
+        type            coupledTemperature;
+        value           $internalField;
+    }
+    sides_media
+    {
+        type            symmetryPlane;
+    }
+}
+
+
+// ************************************************************************* //

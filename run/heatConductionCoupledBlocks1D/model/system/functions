@@ -1,0 +1,86 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      functions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeFunc residuals (
+    name   = residualsBlock,
+    region = block,
+    fields = (e)
+)
+
+#includeFunc residuals (
+    name   = residualsMedia,
+    region = media,
+    fields = (e)
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = interfaceTemperature,
+    region = block,
+    patch  = block_to_media,
+    field  = T
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc volAverage
+(
+    name   = blockTemperature,
+    region = block,
+    field  = T
+)
+
+#includeFunc volAverage
+(
+    name   = mediaTemperature,
+    region = media,
+    field  = T
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc wallHeatFlux
+(
+    name   = blockToMediaHeatFlux,
+    region = block,
+    patch  = block_to_media
+)
+
+#includeFunc wallHeatFlux
+(
+    name   = mediaToBlockHeatFlux,
+    region = media,
+    patch  = media_to_block
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc volIntegrate
+(
+    name   = blockEnergy,
+    region = block,
+    field  = e
+)
+
+#includeFunc volIntegrate
+(
+    name   = mediaEnergy,
+    region = media,
+    field  = e
+)
+
+// ************************************************************************* //

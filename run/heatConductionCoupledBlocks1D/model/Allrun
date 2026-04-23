@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+gmshToFoam ../mesh_layers_101600um.msh
+
+# createPatch
+
+# renumberMesh
+
+splitMeshRegions -cellZones
