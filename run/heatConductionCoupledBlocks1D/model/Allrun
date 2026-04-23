@@ -6,8 +6,8 @@ cd ${0%/*} || exit 1
 FORCE=0
 
 # MESH_FILE=../mesh_layers_101600um.msh
-MESH_FILE=../mesh_layers_127000um.msh
-# MESH_FILE=../mesh_layers_152400um.msh
+# MESH_FILE=../mesh_layers_127000um.msh
+MESH_FILE=../mesh_layers_152400um.msh
 
 # ---------------------------------------------------------------------
 # Mesh preparation
