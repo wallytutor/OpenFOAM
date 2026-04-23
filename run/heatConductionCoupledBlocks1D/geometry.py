@@ -92,6 +92,7 @@ def generate_domain(
         # )
         # model.synchronize()
 
+        previous   = vol1
         to_extrude = (2, tag_inter)
         vol2   = []
         sides2 = []
@@ -107,12 +108,17 @@ def generate_domain(
             )
             model.synchronize()
 
+            model.fragment([(3, previous)], [vol])
+            model.synchronize()
+            previous = vol[1]
+
             to_extrude = tag_inter
             vol2.append(vol[1])
             sides2.extend([side[1] for side in sides])
         #endregion: extrude2
 
         #region: physical groups
+
         surface     = [tag_base]
         sides_block = sides1
         sides_media = sides2
@@ -128,10 +134,11 @@ def generate_domain(
                 {"tags": infinite,    "name": "infinite",    "tag_id": 4},
             ],
             volumes = [
-                {"tags": block, "name": "block", "tag_id": 1},
-                {"tags": media, "name": "media", "tag_id": 2},
+                {"tags": block, "name": "block", "tag_id": 10},
+                {"tags": media, "name": "media", "tag_id": 20},
             ],
         )
+        model.synchronize()
         #endregion: physical groups
 
         model.generate_mesh(dim=2)
@@ -143,7 +150,9 @@ def generate_domain(
 
 
 if __name__ == "__main__":
+    here = Path(__file__).parent
+
     for layer in [4, 5, 6]:
         micron = f"{layer * 25.4:05.3f}".replace(".", "")
-        saveas = f"mesh_layers_{micron}um.msh"
+        saveas = str(here / f"mesh_layers_{micron}um.msh")
         generate_domain(layer, saveas=saveas, overwrite=False)

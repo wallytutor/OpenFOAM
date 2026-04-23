@@ -1,3 +1,4 @@
 # Mesh files:
 *.msh
 **/polyMesh/*
+cellToRegion

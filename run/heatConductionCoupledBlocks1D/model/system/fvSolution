@@ -8,37 +8,14 @@
 FoamFile
 {
     format      ascii;
-    class       volScalarField;
-    location    "0/block";
-    object      T;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [ 0 0 0 1 0 0 0 ];
-
-#include "../../constant/userParameters"
-
-internalField   uniform $ambientTemperature;
-
-boundaryField
+PIMPLE
 {
-    #includeEtc "caseDicts/setConstraintTypes"
-
-    surface
-    {
-        type            fixedValue;
-        value           uniform $surfaceTemperature;
-    }
-    block_to_media
-    {
-        type            coupledTemperature;
-        value           $internalField;
-    }
-    sides_block
-    {
-        type            empty;
-    }
 }
-
 
 // ************************************************************************* //

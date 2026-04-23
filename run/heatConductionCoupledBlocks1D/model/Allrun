@@ -5,8 +5,23 @@ cd ${0%/*} || exit 1
 
 gmshToFoam ../mesh_layers_101600um.msh
 
-# createPatch
+foamDictionary constant/polyMesh/boundary \
+  -entry entry0/sides_block/type \
+  -set empty
 
-# renumberMesh
+foamDictionary constant/polyMesh/boundary \
+  -entry entry0/sides_media/type \
+  -set empty
+
+renumberMesh
 
 splitMeshRegions -cellZones
+
+checkMesh -region block
+checkMesh -region media
+
+rm -rf constant/polyMesh/
+
+cp -avr 0.orig/* 0.00000000e+00/
+
+foamMultiRun
