@@ -14,58 +14,79 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-thermoType  constSolidThermo;
-
-rho
+thermoType
 {
-    type        uniform;
-    value       2800.0;
+    type            heSolidThermo;
+    mixture         pureMixture;
+    specie          specie;
+    energy          sensibleInternalEnergy;
+    equationOfState rhoConst;
+    thermo          eIcoTabulated;
+    transport       tabulatedSolid;
+    // thermo          eConst;
+    // transport       constIsoSolid;
 }
 
-Cv
+mixture
 {
-    type        uniform;
-    value       1000.0;
-}
+    specie
+    {
+        // Dummy, I am not sure where this is used in this case...
+        molWeight       101.6;
+    }
 
-kappa
-{
-    type        uniform;
-    value       2.0;
-}
+    equationOfState
+    {
+        rho             2500;
+    }
 
-// If temperature dependent properties are required, the following can be
-// used instead of the above uniform definitions.
-// thermoType
-// {
-//     type            heSolidThermo;
-//     mixture         pureMixture;
-//     transport       constIsoSolid;
-//     thermo          eConst;
-//     equationOfState rhoConst;
-//     specie          specie;
-//     energy          sensibleInternalEnergy;
-// }
-//
-// mixture
-// {
-//     specie
-//     {
-//         molWeight       101.6;
-//     }
-//     equationOfState
-//     {
-//         rho             2800;
-//     }
-//     thermodynamics
-//     {
-//         hf              0;
-//         Cv              1000;
-//     }
-//     transport
-//     {
-//         kappa           2.0;
-//     }
-// }
+    thermodynamics
+    {
+        hf              0;
+        sf              0;
+        // Cv              1000;
+        Cv
+        {
+            values
+            (
+                ( 200.0  921.0)
+                ( 300.0  922.4)
+                ( 400.0  944.9)
+                ( 500.0  967.5)
+                ( 600.0  989.6)
+                ( 700.0 1010.2)
+                ( 800.0 1030.9)
+                ( 900.0 1047.2)
+                (1000.0 1047.9)
+                (1100.0 1048.6)
+                (1200.0 1049.4)
+                (1300.0 1050.1)
+            );
+        }
+    }
+
+    transport
+    {
+        // kappa           1.0;
+        kappa
+        {
+            values
+            (
+                ( 200.0    1.5)
+                ( 300.0    1.4)
+                ( 400.0    1.2)
+                ( 500.0    1.1)
+                ( 600.0    1.0)
+                ( 700.0    0.9)
+                ( 800.0    0.9)
+                ( 900.0    0.9)
+                (1000.0    0.9)
+                (1100.0    0.9)
+                (1200.0    1.0)
+                (1300.0    1.1)
+            );
+        }
+    }
+}
 
 // ************************************************************************* //
