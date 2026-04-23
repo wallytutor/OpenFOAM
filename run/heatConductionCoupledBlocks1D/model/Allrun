@@ -5,7 +5,9 @@ cd ${0%/*} || exit 1
 
 FORCE=0
 
-MESH_FILE=../mesh_layers_101600um.msh
+# MESH_FILE=../mesh_layers_101600um.msh
+MESH_FILE=../mesh_layers_127000um.msh
+# MESH_FILE=../mesh_layers_152400um.msh
 
 # ---------------------------------------------------------------------
 # Mesh preparation
@@ -40,8 +42,13 @@ fi
 # Copy conditions and run the case
 # ---------------------------------------------------------------------
 
-cp -avr 0.orig/* 0.00000000e+00/ > /dev/null 2>&1
-foamMultiRun > log.7.foamMultiRun 2>&1 &
+if [ ! -f log.7.foamMultiRun ] || [ $FORCE -ne 0 ]; then
+    echo "Case not run or force enabled, preparing case and running..."
+    cp -avr 0.orig/* 0.00000000e+00/ > /dev/null 2>&1
+    foamMultiRun > log.7.foamMultiRun 2>&1 &
+else
+    echo "Case already run, skipping case preparation and run."
+fi
 
 # ---------------------------------------------------------------------
 # EOF
