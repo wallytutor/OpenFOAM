@@ -19,53 +19,19 @@ thermoType  constSolidThermo;
 rho
 {
     type        uniform;
-    value       2800.0;
+    value       2010.0;
 }
 
 Cv
 {
     type        uniform;
-    value       1000.0;
+    value       736.0;
 }
 
 kappa
 {
     type        uniform;
-    value       2.0;
+    value       0.53;
 }
-
-// If temperature dependent properties are required, the following can be
-// used instead of the above uniform definitions.
-// thermoType
-// {
-//     type            heSolidThermo;
-//     mixture         pureMixture;
-//     transport       constIsoSolid;
-//     thermo          eConst;
-//     equationOfState rhoConst;
-//     specie          specie;
-//     energy          sensibleInternalEnergy;
-// }
-//
-// mixture
-// {
-//     specie
-//     {
-//         molWeight       101.6;
-//     }
-//     equationOfState
-//     {
-//         rho             2800;
-//     }
-//     thermodynamics
-//     {
-//         hf              0;
-//         Cv              1000;
-//     }
-//     transport
-//     {
-//         kappa           2.0;
-//     }
-// }
 
 // ************************************************************************* //
