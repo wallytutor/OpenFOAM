@@ -3,43 +3,45 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
+FORCE=0
+
 MESH_FILE=../mesh_layers_101600um.msh
 
 # ---------------------------------------------------------------------
-# Convert gmsh mesh to OpenFOAM format
+# Mesh preparation
 # ---------------------------------------------------------------------
 
-gmshToFoam $MESH_FILE > log.1.gmshToFoam 2>&1
+if [ ! -d constant/block/polyMesh ] || [ ! -d constant/media/polyMesh ] || [ $FORCE -ne 0 ]; then
+    echo "Mesh not found or force enabled, preparing mesh..."
+    # Convert gmsh mesh to OpenFOAM format
+    gmshToFoam $MESH_FILE > log.1.gmshToFoam 2>&1
 
-# ---------------------------------------------------------------------
-# Fix patches that are over directions not used by solution
-# ---------------------------------------------------------------------
+    # Fix patches that are over directions not used by solution
+    foamDictionary constant/polyMesh/boundary \
+    -entry entry0/sides_block/type \
+    -set empty > log.2.setBoundaryType 2>&1
 
-foamDictionary constant/polyMesh/boundary \
-  -entry entry0/sides_block/type \
-  -set empty > log.2.setBoundaryType 2>&1
+    foamDictionary constant/polyMesh/boundary \
+    -entry entry0/sides_media/type \
+    -set empty >> log.2.setBoundaryType 2>&1
 
-foamDictionary constant/polyMesh/boundary \
-  -entry entry0/sides_media/type \
-  -set empty >> log.2.setBoundaryType 2>&1
+    # Prepare and check the mesh for use with region coupling
+    renumberMesh > log.3.renumberMesh 2>&1
+    splitMeshRegions -cellZones > log.4.splitMeshRegions 2>&1
+    rm -rf constant/polyMesh/ > /dev/null 2>&1
 
-# ---------------------------------------------------------------------
-# Prepare and check the mesh for use with region coupling
-# ---------------------------------------------------------------------
-
-renumberMesh > log.3.renumberMesh 2>&1
-splitMeshRegions -cellZones > log.4.splitMeshRegions 2>&1
-rm -rf constant/polyMesh/
-
-checkMesh -region block > log.5.checkMeshBlock 2>&1
-checkMesh -region media > log.6.checkMeshMedia 2>&1
+    checkMesh -region block > log.5.checkMeshBlock 2>&1
+    checkMesh -region media > log.6.checkMeshMedia 2>&1
+else
+    echo "Mesh already prepared, skipping mesh preparation."
+fi
 
 # ---------------------------------------------------------------------
 # Copy conditions and run the case
 # ---------------------------------------------------------------------
 
-cp -avr 0.orig/* 0.00000000e+00/
-foamMultiRun > log.7.foamMultiRun 2>&1
+cp -avr 0.orig/* 0.00000000e+00/ > /dev/null 2>&1
+foamMultiRun > log.7.foamMultiRun 2>&1 &
 
 # ---------------------------------------------------------------------
 # EOF

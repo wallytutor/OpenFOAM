@@ -23,7 +23,7 @@ surfaceTemperature  810.93;
 // 10 min
 duration            600.0;
 
-// 100 time points:
-dumpInterval        6.0;
+// 50 time points:
+dumpInterval        12.0;
 
 // ************************************************************************* //
