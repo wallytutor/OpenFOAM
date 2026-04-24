@@ -79,11 +79,15 @@ function preinitialize_alpha() {
         decomposePar -allRegions > log.7.decomposePar 2>&1
 
         foamDictionary system/controlDict \
-            -entry endTime -set '1.0' > /dev/null 2>&1
-        foamDictionary system/controlDict \
-            -entry deltaT -set '1.0e-05' > /dev/null 2>&1
+            -entry endTime       -set '1.0' > /dev/null 2>&1
 
-        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.8.foamMultiRun 2>&1 &
+        foamDictionary system/controlDict \
+            -entry writeInterval -set '1.0' > /dev/null 2>&1
+
+        foamDictionary system/controlDict \
+            -entry deltaT        -set '1.0e-05' > /dev/null 2>&1
+
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.8.foamMultiRun 2>&1
     else
         echo "Pre-initialization (alpha) already done, skipping."
     fi
@@ -99,11 +103,15 @@ function preinitialize_beta() {
         echo "Case not run or force enabled, preparing case and running..."
 
         foamDictionary system/controlDict \
-            -entry endTime -set '2.0' > /dev/null 2>&1
-        foamDictionary system/controlDict \
-            -entry deltaT -set '1.0e-04' > /dev/null 2>&1
+            -entry endTime       -set '2.0' > /dev/null 2>&1
 
-        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.9.foamMultiRun 2>&1 &
+        foamDictionary system/controlDict \
+            -entry writeInterval -set '1.0' > /dev/null 2>&1
+
+        foamDictionary system/controlDict \
+            -entry deltaT        -set '1.0e-04' > /dev/null 2>&1
+
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.9.foamMultiRun 2>&1
     else
         echo "Pre-initialization (beta) already done, skipping."
     fi
@@ -114,24 +122,37 @@ function simulation() {
         echo "Case not run or force enabled, preparing case and running..."
 
         foamDictionary system/controlDict \
-            -entry endTime -set '$duration' > /dev/null 2>&1
+            -entry endTime        -set '$duration' > /dev/null 2>&1
+
+        foamDictionary system/controlDict \
+            -entry writeInterval  -set '$dumpInterval' > /dev/null 2>&1
+
         foamDictionary system/controlDict \
             -entry adjustTimeStep -set 'yes' > /dev/null 2>&1
 
-        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.10.foamMultiRun 2>&1 &
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.10.foamMultiRun 2>&1
     else
         echo "Simulation already done, skipping..."
     fi
+}
+
+function schedule_pipeline_background() {
+    (
+        preliminaries
+        preinitialize_alpha
+        preinitialize_beta
+        simulation
+    ) > log.pipeline 2>&1 &
+
+    echo "Scheduled alpha -> beta -> simulation in background (PID: $!)."
+    echo "Monitor with: tail -f log.pipeline"
 }
 
 # ---------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------
 
-preliminaries
-preinitialize_alpha
-# preinitialize_beta
-# simulation
+schedule_pipeline_background
 
 # foamLog log.8.foamMultiRun > log.9.foamLog 2>&1 &
 # reconstructPar -allRegions -latestTime
