@@ -10,9 +10,9 @@ os.chdir("model-cowper-like")
 #
 # ----------------------------------------------------------------------------
 
-origin = "0.000000e+00"
-origin = "3.800000e-01"
-origin = "2.000000e+00"
+origin = "0.00000000e+00"
+# origin = "3.800000e-01"
+# origin = "2.000000e+00"
 
 p = cl.plot_temperature("Initialization", origin, loc=3)
 
@@ -21,6 +21,8 @@ p = cl.plot_pressure("Initialization", origin)
 p = cl.plot_flowrate("Initialization", origin, loc=3)
 
 p = cl.plot_table("solid", "solidTemperature", "volFieldValue", time=origin)
+
+p = cl.plot_table("solid", "solidEnergy", "volFieldValue", time=origin)
 
 # ----------------------------------------------------------------------------
 #
