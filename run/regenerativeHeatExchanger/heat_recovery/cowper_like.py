@@ -4,18 +4,11 @@ import pandas as pd
 import pyvista as pv
 import majordome_simulation.meshing as ms
 from foamlib import FoamFile
-from pathlib import Path
-from majordome_engineering.transport import SolutionDimless
-from majordome_engineering.transport import SkinFrictionFactor
-from majordome_engineering.transport import WallGradingCalculator
 from majordome_simulation.meshing import GmshOCCModel
 from majordome_simulation.meshing import RingBuilder
 from majordome_simulation.meshing import CircularCrossSection
 from majordome_utilities.plotting import plot2d
-from ruamel.yaml import YAML
 from screeninfo import get_monitors
-
-from .thermocline import ThermoclineModel
 
 DEFAULT_OPTIONS = {
     "General.Verbosity": 5,
@@ -257,50 +250,6 @@ class CowperLikeGeometry:
 
             if saveas:
                 model.dump(saveas)
-
-
-def get_model_dump_mesh(config="dimensioning.yaml", **kw):
-    model = ThermoclineModel(config)
-    sol = SolutionDimless("airish.yaml")
-
-    y_p = model.num_y_plus
-    U_h = model.fn_U_g(*model.args_charging)
-
-    sol.set_state(model.num_T_h, 101325, "N2: 0.79, O2: 0.21")
-    calc = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_h)
-
-    def f_tur(Re):
-        return SkinFrictionFactor.smooth_wall(Re, check=False) / 8
-
-    y_first = calc.first_layer(y_p, skin_factor=f_tur)
-
-    yaml = YAML()
-    data = yaml.load(open("dimensioning.yaml"))
-
-    mesh = kw.get("mesh", "mesh.msh")
-
-    if not Path(mesh).exists():
-        geom = CowperLikeGeometry(
-            m_h = data["m_h"],
-            D_h = data["D_h"],
-            h_t = data["h_t"],
-
-            # Use with care based on the above values:
-            num_points_angular = 6,
-            num_points_core    = 4,
-            core_radius_fraction = 0.8,
-            fluid_bl_tot       = 0.005,
-            fluid_bl_ext       = 0.5 * y_first,
-            fluid_bl_int       = 1.5 * y_first,
-            solid_bl_ext       = 3.0 * y_first,
-            solid_bl_int       = 0.5 * y_first,
-            rel_layer          = 0.25,
-        )
-
-        # mesh = None # DEBUG (no write)
-        geom.create_model(saveas=mesh, render=kw.get("render", True))
-
-    return model
 
 
 def make_solid(model):

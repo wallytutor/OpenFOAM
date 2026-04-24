@@ -1,22 +1,15 @@
-# Automatically generated initial conditions and results:
-*[0-9].[0-9]*e[+-][0-9]*/
-constant/solid/physicalProperties
-constant/userParameters
-
-# Helper to launch ParaView:
-*.foam
-
-# Any generated mesh
-**/polyMesh/*
+case.foam
+mesh.msh
 cellToRegion
-*.msh
-
-# Logs:
-log.*
-logs/
-
-# Parallel processing:
+constant/polyMesh/
+constant/cellToRegion
+constant/userParameters
+constant/solid/physicalProperties
+constant/solid/polyMesh/
+constant/media/polyMesh/
+postProcessing
 processor*/
-
-# Results:
-VTK/
+log.*
+logs
+*[0-9].[0-9]*e[+-][0-9][0-9]*/
+*.png

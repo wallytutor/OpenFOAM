@@ -46,11 +46,10 @@ writeCompression  off;
 
 timeFormat        scientific;
 
-timePrecision     6;
+timePrecision     8;
 
 runTimeModifiable true;
 
-// Reduce diffusive effects
 maxCo             0.75;
 
 maxDeltaT         0.01;

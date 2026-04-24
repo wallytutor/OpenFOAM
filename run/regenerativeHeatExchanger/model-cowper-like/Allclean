@@ -3,15 +3,31 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
-rm -rf log.*
-rm -rf logs
-rm -rf postProcessing
-rm -rf processor*
+# ---------------------------------------------------------------------
+# Remove top-level time directories like 0.00000000e+00
+# ---------------------------------------------------------------------
+find . \
+    -mindepth 1 -maxdepth 1 -type d \
+	-regextype posix-extended \
+	-regex './[0-9]+\.[0-9]+e[+-][0-9]+' \
+	-exec rm -rf -- {} +
+
+# ---------------------------------------------------------------------
+# Specific files
+# ---------------------------------------------------------------------
+
+rm -rf case.foam
+rm -rf mesh.msh
 rm -rf constant/userParameters
 rm -rf constant/polyMesh/
-rm -rf constant/solid/polyMesh/
-rm -rf constant/fluid/polyMesh/
 rm -rf constant/cellToRegion
-rm -rf 0.000000e+00
+rm -rf constant/solid/
+rm -rf constant/fluid/polyMesh/
+rm -rf postProcessing
+rm -rf processor*
+rm -rf log.*
+rm -rf logs
 
-#------------------------------------------------------------------------------
+# ---------------------------------------------------------------------
+# EOF
+# ---------------------------------------------------------------------
