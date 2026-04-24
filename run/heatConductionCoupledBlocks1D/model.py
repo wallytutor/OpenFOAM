@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 import numpy as np
+import pandas as pd
 import pyvista as pv
 from majordome_simulation.meshing import GmshOCCModel
 from majordome_simulation.meshing import GeometricProgression
+from majordome_utilities.plotting import plot2d
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from pathlib import Path
