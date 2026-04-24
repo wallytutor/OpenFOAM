@@ -17,29 +17,23 @@ FoamFile
 ddtSchemes
 {
     default         Euler;
-    // default         steadyState;
 }
-
 gradSchemes
 {
     default         Gauss linear;
 }
-
 divSchemes
 {
     default         none;
 }
-
 laplacianSchemes
 {
     default         Gauss linear corrected;
 }
-
 interpolationSchemes
 {
     default         linear;
 }
-
 snGradSchemes
 {
     default         corrected;

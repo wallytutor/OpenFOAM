@@ -18,8 +18,7 @@ solvers
 {
     "(rho|rhoFinal)"
     {
-        // solver          diagonal;
-        solver          PCG
+        solver          PCG;
         preconditioner  DIC;
         tolerance       1e-7;
         relTol          0;
@@ -44,8 +43,6 @@ solvers
         solver           GAMG;
         tolerance        1e-7;
         relTol           0.01;
-
-        // smoother         symGaussSeidel;
         smoother         DIC;
         maxIter          100;
     }
@@ -73,7 +70,6 @@ solvers
 
 PIMPLE
 {
-    // maxDeltaT                0.01;
     momentumPredictor        yes;
     nCorrectors              1;
     nNonOrthogonalCorrectors 1;
