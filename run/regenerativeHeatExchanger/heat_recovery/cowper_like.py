@@ -6,6 +6,8 @@ import majordome_simulation.meshing as ms
 from foamlib import FoamFile
 from pathlib import Path
 from majordome_engineering.transport import SolutionDimless
+from majordome_engineering.transport import SkinFrictionFactor
+from majordome_engineering.transport import WallGradingCalculator
 from majordome_simulation.meshing import GmshOCCModel
 from majordome_simulation.meshing import RingBuilder
 from majordome_simulation.meshing import CircularCrossSection
@@ -13,15 +15,9 @@ from majordome_utilities.plotting import plot2d
 from ruamel.yaml import YAML
 from screeninfo import get_monitors
 
-from .calculators import SkinFrictionFactor
-from .calculators import WallGradingCalculator
 from .thermocline import ThermoclineModel
 
-MONITOR = get_monitors()[0]
-
 DEFAULT_OPTIONS = {
-    "General.GraphicsWidth": int(MONITOR.width*0.8),
-    "General.GraphicsHeight": int(MONITOR.height*0.8),
     "General.Verbosity": 5,
     "Geometry.Points": True,
     "Geometry.Lines": True,
@@ -229,9 +225,19 @@ class CowperLikeGeometry:
 
     def create_model(self,
             saveas: str | None = None,
-            render: bool=True,
+            render: bool = True,
             options: dict = DEFAULT_OPTIONS
         ) -> None:
+
+        try:
+            # Can this fail in HPC mode? "try block just in case"...
+            # Monitor information for rendering the Gmsh GUI.
+            monitor = get_monitors()[0]
+            options["General.GraphicsWidth"]  = int(monitor.width * 0.8)
+            options["General.GraphicsHeight"] = int(monitor.height * 0.8)
+        except Exception:
+            pass
+
         with GmshOCCModel(render=render, **options) as model:
             fluid_hole = self._create_fluid(model)
             model.synchronize()
@@ -253,7 +259,7 @@ class CowperLikeGeometry:
                 model.dump(saveas)
 
 
-def get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh"):
+def get_model_dump_mesh(config="dimensioning.yaml", **kw):
     model = ThermoclineModel(config)
     sol = SolutionDimless("airish.yaml")
 
@@ -271,6 +277,8 @@ def get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh"):
     yaml = YAML()
     data = yaml.load(open("dimensioning.yaml"))
 
+    mesh = kw.get("mesh", "mesh.msh")
+
     if not Path(mesh).exists():
         geom = CowperLikeGeometry(
             m_h = data["m_h"],
@@ -282,15 +290,15 @@ def get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh"):
             num_points_core    = 4,
             core_radius_fraction = 0.8,
             fluid_bl_tot       = 0.005,
-            fluid_bl_ext       = 0.5*y_first,
-            fluid_bl_int       = 1.5*y_first,
-            solid_bl_ext       = 3.0*y_first,
-            solid_bl_int       = 0.5*y_first,
+            fluid_bl_ext       = 0.5 * y_first,
+            fluid_bl_int       = 1.5 * y_first,
+            solid_bl_ext       = 3.0 * y_first,
+            solid_bl_int       = 0.5 * y_first,
             rel_layer          = 0.25,
         )
 
         # mesh = None # DEBUG (no write)
-        geom.create_model(saveas=mesh, render=True)
+        geom.create_model(saveas=mesh, render=kw.get("render", True))
 
     return model
 

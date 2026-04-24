@@ -88,7 +88,7 @@ log14 = "log.14.reconstructPar"
 ## Prepare case
 
 ```python
-model = cl.get_model_dump_mesh(config="dimensioning.yaml", mesh="mesh.msh")
+
 
 # Copy properties of solid to dictionary:
 cl.make_solid(model)
