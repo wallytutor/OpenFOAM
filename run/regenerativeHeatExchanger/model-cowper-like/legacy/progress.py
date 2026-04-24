@@ -94,3 +94,49 @@ fluid.plot(scalars="U", cmap="jet", component=2)
 # pl.add_mesh(post.slice_fluid, scalars="U", component=2, cmap="jet", **opts)
 # CowperLikePost.align_camera(pl, xc=0.0125, zc=0.02, ps=0.017)
 # pl.show()
+
+
+
+from pathlib import Path
+
+
+class DomainPostprocessing:
+    def __init__(self, domain):
+        self.domain = domain
+        self.reports = self._get_domain_reports()
+
+    @property
+    def domain_dir(self):
+        if not hasattr(self, "_domain_dir"):
+            self._domain_dir = Path("postProcessing") / self.domain
+        return self._domain_dir
+
+    def _get_domain_reports(self):
+        if not self.domain_dir.is_dir():
+            raise ValueError(
+                f"Domain '{self.domain}' not found in postProcessing directory."
+            )
+
+        return [d.name for d in self.domain_dir.iterdir() if d.is_dir()]
+
+    # def load_report(self, report):
+    #     report_dir = self.domain_dir / report
+
+    #     if not report_dir.is_dir():
+    #         raise ValueError(f"Report '{report}' not found for domain '{self.domain}'.")
+
+    #     # Implement loading logic here (e.g., read data files, parse results, etc.)
+    #     print(f"Loading report '{report}' for domain '{self.domain}' from {report_dir}")
+    #     # Placeholder: return the path to the report directory
+    #     return report_dir
+
+
+
+
+post = DomainPostprocessing("fluid")
+
+# report = "flowRateInlet"
+# post = Path("postProcessing")
+
+# root_dir = post / domain / report
+# sub_dirs = [d for d in root_dir.iterdir() if d.is_dir()]
