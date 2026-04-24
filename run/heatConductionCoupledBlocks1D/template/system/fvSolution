@@ -9,40 +9,44 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "system/block";
-    object      fvSchemes;
+    location    "system/REGION_NAME";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-ddtSchemes
+solvers
 {
-    // default         Euler;
-    default         backward;
+    e
+    {
+        solver           PCG;
+        preconditioner   DIC;
+        tolerance        1.0e-06;
+        relTol           0.01;
+    }
+
+    eFinal
+    {
+        $e;
+        relTol           0;
+    }
 }
 
-gradSchemes
+PIMPLE
 {
-    default         Gauss linear;
+    nNonOrthogonalCorrectors 0;
+
+    residualControl
+    {
+        e                 1.0e-08;
+    }
 }
 
-divSchemes
+relaxationFactors
 {
-    default         none;
-}
-
-laplacianSchemes
-{
-    default         Gauss linear corrected;
-}
-
-interpolationSchemes
-{
-    default         linear;
-}
-
-snGradSchemes
-{
-    default         corrected;
+    equations
+    {
+        e                 0.8;
+    }
 }
 
 // ************************************************************************* //

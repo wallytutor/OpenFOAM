@@ -22,6 +22,7 @@ tutorials/multicomponentFluid/*
 # Time/iteration directories.
 [0-9]*
 [0-9]*.[0-9]*
+*[0-9].[0-9]*e[+-][0-9][0-9]*/
 
 # For legacy reasons keep 0.orig, but don't use it in new cases!
 !0.orig

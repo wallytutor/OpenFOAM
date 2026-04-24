@@ -2,4 +2,10 @@
 
 - Start the project by sourcing `source bootstrap.sh` in the terminal.
 
-- Create all meshes by running `python geometry.py` in the terminal. This will create three meshes with different layer thicknesses (4, 5, and 6 inches).
+- Run the case with `./Allrun`, this will handle the whole workflow.
+
+- Once finished, run `python3 model.py` for post-processing of the results.
+
+---
+
+![Temperature evolution](evolution.png)

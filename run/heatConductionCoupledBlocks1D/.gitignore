@@ -1,4 +1,16 @@
-# Mesh files:
-*.msh
-**/polyMesh/*
+case.foam
+mesh.msh
 cellToRegion
+constant/polyMesh/
+constant/cellToRegion
+constant/block/physicalProperties
+constant/block/polyMesh/
+constant/media/polyMesh/
+system/block/
+system/media/
+postProcessing
+log.*
+logs
+*[0-9].[0-9]*e[+-][0-9][0-9]*/
+*.png
+!evolution.png

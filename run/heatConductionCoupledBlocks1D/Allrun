@@ -5,18 +5,27 @@ cd ${0%/*} || exit 1
 
 FORCE=0
 
-# MESH_FILE=../mesh_layers_101600um.msh
-# MESH_FILE=../mesh_layers_127000um.msh
-MESH_FILE=../mesh_layers_152400um.msh
+# PROPS can be "constant" or "tables"
+PROPS="tables"
+
+touch case.foam
 
 # ---------------------------------------------------------------------
 # Mesh preparation
 # ---------------------------------------------------------------------
 
-if [ ! -d constant/block/polyMesh ] || [ ! -d constant/media/polyMesh ] || [ $FORCE -ne 0 ]; then
+if [ ! -d constant/block/polyMesh ] ||
+   [ ! -d constant/media/polyMesh ] ||
+   [ $FORCE -ne 0 ]; then
     echo "Mesh not found or force enabled, preparing mesh..."
+
+    if [ ! -f mesh.msh ] || [ $FORCE -ne 0 ]; then
+        echo "Mesh file not found or force enabled, generating mesh..."
+        python3 model.py > log.0.meshPy 2>&1
+    fi
+
     # Convert gmsh mesh to OpenFOAM format
-    gmshToFoam $MESH_FILE > log.1.gmshToFoam 2>&1
+    gmshToFoam mesh.msh > log.1.gmshToFoam 2>&1
 
     # Fix patches that are over directions not used by solution
     foamDictionary constant/polyMesh/boundary \
@@ -44,7 +53,30 @@ fi
 
 if [ ! -f log.7.foamMultiRun ] || [ $FORCE -ne 0 ]; then
     echo "Case not run or force enabled, preparing case and running..."
-    cp -avr 0.orig/* 0.00000000e+00/ > /dev/null 2>&1
+
+    # Expand initial conditions (so that we can plot them):
+    foamDictionary 0.orig/block/T -expand > 0.00000000e+00/block/T 2>&1
+    foamDictionary 0.orig/media/T -expand > 0.00000000e+00/media/T 2>&1
+
+    # Copy numerical settings for each region:
+    if [ ! -d system/block ] || [ $FORCE -ne 0 ]; then
+        cp -r template/system system/block/                    > /dev/null 2>&1
+        sed -i "s/REGION_NAME/block/g" system/block/fvSolution > /dev/null 2>&1
+        sed -i "s/REGION_NAME/block/g" system/block/fvSchemes  > /dev/null 2>&1
+
+    fi
+
+    if [ ! -d system/media ] || [ $FORCE -ne 0 ]; then
+        cp -r template/system system/media/                    > /dev/null 2>&1
+        sed -i "s/REGION_NAME/media/g" system/media/fvSolution > /dev/null 2>&1
+        sed -i "s/REGION_NAME/media/g" system/media/fvSchemes  > /dev/null 2>&1
+    fi
+
+    # Copy selected physical properties:
+    mkdir -p constant/block/ > /dev/null 2>&1
+    properties="constant/block/physicalProperties.${PROPS}"
+    cp template/$properties constant/block/physicalProperties > /dev/null 2>&1
+
     foamMultiRun > log.7.foamMultiRun 2>&1 &
 else
     echo "Case already run, skipping case preparation and run."

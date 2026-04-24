@@ -16,10 +16,14 @@ find . \
 # Specific files
 # ---------------------------------------------------------------------
 
+rm -rf case.foam
+rm -rf mesh.msh
 rm -rf constant/polyMesh/
 rm -rf constant/cellToRegion
-rm -rf constant/block/polyMesh/
+rm -rf constant/block/
 rm -rf constant/media/polyMesh/
+rm -rf system/block/
+rm -rf system/media/
 rm -rf postProcessing
 rm -rf log.*
 rm -rf logs

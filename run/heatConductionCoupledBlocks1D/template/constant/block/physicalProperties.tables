@@ -23,15 +23,12 @@ thermoType
     equationOfState rhoConst;
     thermo          eIcoTabulated;
     transport       tabulatedSolid;
-    // thermo          eConst;
-    // transport       constIsoSolid;
 }
 
 mixture
 {
     specie
     {
-        // Dummy, I am not sure where this is used in this case...
         molWeight       101.6;
     }
 
@@ -44,7 +41,6 @@ mixture
     {
         hf              0;
         sf              0;
-        // Cv              1000;
         Cv
         {
             values
@@ -67,7 +63,6 @@ mixture
 
     transport
     {
-        // kappa           1.0;
         kappa
         {
             values

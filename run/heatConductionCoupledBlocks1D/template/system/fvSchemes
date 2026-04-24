@@ -9,29 +9,40 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant/solid";
-    object      physicalProperties;
+    location    "system/REGION_NAME";
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-thermoType  constSolidThermo;
-
-rho
+ddtSchemes
 {
-    type        uniform;
-    value       2010.0;
+    // default         Euler;
+    default         backward;
 }
 
-Cv
+gradSchemes
 {
-    type        uniform;
-    value       736.0;
+    default         Gauss linear;
 }
 
-kappa
+divSchemes
 {
-    type        uniform;
-    value       0.53;
+    default         none;
+}
+
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+
+interpolationSchemes
+{
+    default         linear;
+}
+
+snGradSchemes
+{
+    default         corrected;
 }
 
 // ************************************************************************* //
