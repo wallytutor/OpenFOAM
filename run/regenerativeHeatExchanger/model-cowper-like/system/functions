@@ -88,6 +88,13 @@ FoamFile
     field  = T
 )
 
+#includeFunc volIntegrate
+(
+    name   = solidEnergy,
+    region = solid,
+    field  = e
+)
+
 // ------------------------------------------------------------------------- //
 
 #includeFunc wallHeatFlux
