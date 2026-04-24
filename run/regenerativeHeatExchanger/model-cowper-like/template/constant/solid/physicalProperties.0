@@ -34,38 +34,4 @@ kappa
     value       2.0;
 }
 
-// If temperature dependent properties are required, the following can be
-// used instead of the above uniform definitions.
-// thermoType
-// {
-//     type            heSolidThermo;
-//     mixture         pureMixture;
-//     transport       constIsoSolid;
-//     thermo          eConst;
-//     equationOfState rhoConst;
-//     specie          specie;
-//     energy          sensibleInternalEnergy;
-// }
-//
-// mixture
-// {
-//     specie
-//     {
-//         molWeight       101.6;
-//     }
-//     equationOfState
-//     {
-//         rho             2800;
-//     }
-//     thermodynamics
-//     {
-//         hf              0;
-//         Cv              1000;
-//     }
-//     transport
-//     {
-//         kappa           2.0;
-//     }
-// }
-
 // ************************************************************************* //

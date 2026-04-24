@@ -9,45 +9,58 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant/fluid";
+    location    "constant/solid";
     object      physicalProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Conservative choice: this allows for a reasonable run time and provides a
-// reasonable approximation of the transport properties. Nonetheless, the
-// thermodynamic properties are constant, which is not ideal (but otherwise
-// the simulation can take a *long* time to run, like years). Recommended.
-//
-// XXX: change Cp for heating/cooling accordingly, if needed.
-
 thermoType
 {
-    type            heRhoThermo;
+    type            heSolidThermo;
     mixture         pureMixture;
-    transport       sutherland;
-    thermo          hConst;
-    equationOfState perfectGas;
     specie          specie;
-    energy          sensibleEnthalpy;
+    energy          sensibleInternalEnergy;
+    equationOfState rhoConst;
+    thermo          eIcoTabulated;
+    transport       tabulatedSolid;
 }
 
 mixture
 {
     specie
     {
-        molWeight       28.85097;
+        molWeight       101.6;
     }
+
+    equationOfState
+    {
+        rho             2800;
+    }
+
     thermodynamics
     {
-        // Cp              1004.4; // Cooling
-        Cp              1100.0; // Heating
         hf              0;
+        sf              0;
+        Cv
+        {
+            values
+            (
+                (  200.0    1000.0 )
+                ( 2000.0    1000.0 )
+            );
+        }
     }
+
     transport
     {
-        As              1.67212e-06;
-        Ts              170.672;
+        kappa
+        {
+            values
+            (
+                (  200.0    2.0 )
+                ( 2000.0    2.0 )
+            );
+        }
     }
 }
 

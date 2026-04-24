@@ -14,19 +14,14 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Conservative choice: this allows for a reasonable run time and provides a
-// reasonable approximation of the transport properties. Nonetheless, the
-// thermodynamic properties are constant, which is not ideal (but otherwise
-// the simulation can take a *long* time to run, like years). Recommended.
-//
-// XXX: change Cp for heating/cooling accordingly, if needed.
+// Full-temperature depdendent, unable to run in a reasonable time.
 
 thermoType
 {
-    type            heRhoThermo;
+    type            hePsiThermo;
     mixture         pureMixture;
     transport       sutherland;
-    thermo          hConst;
+    thermo          janaf;
     equationOfState perfectGas;
     specie          specie;
     energy          sensibleEnthalpy;
@@ -40,9 +35,29 @@ mixture
     }
     thermodynamics
     {
-        // Cp              1004.4; // Cooling
-        Cp              1100.0; // Heating
-        hf              0;
+        Tlow            200;
+        Thigh           3000;
+        Tcommon         1000;
+        highCpCoeffs
+        (
+            3.05809
+            0.00133634
+            -4.73394e-07
+            7.38653e-11
+            -3.34205e-15
+            -972.89
+            6.09034
+        );
+        lowCpCoeffs
+        (
+            3.393
+            0.000544363
+            -1.24622e-06
+            2.65579e-09
+            -1.35538e-12
+            -1029.28
+            4.43259
+        );
     }
     transport
     {

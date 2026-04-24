@@ -14,10 +14,7 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Conservative choice: this allows for a reasonable run time and provides a
-// reasonable approximation of the transport properties. Nonetheless, the
-// thermodynamic properties are constant, which is not ideal (but otherwise
-// the simulation can take a *long* time to run, like years). Recommended.
+// Constant properties for debugging purposes: do not use in production!
 //
 // XXX: change Cp for heating/cooling accordingly, if needed.
 
@@ -46,8 +43,8 @@ mixture
     }
     transport
     {
-        As              1.67212e-06;
-        Ts              170.672;
+        mu              3.0e-05;
+        Pr              0.705;
     }
 }
 
