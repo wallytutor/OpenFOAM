@@ -34,6 +34,4 @@ wallThickness     0.25;
 
 wallConductivity  2.0;
 
-updateTimeStep    no;
-
 // ************************************************************************* //
