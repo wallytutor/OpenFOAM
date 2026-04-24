@@ -3,7 +3,7 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
-export NUM_PROCS=20
+export NUM_PROCS=6
 
 FORCE=0
 
@@ -144,8 +144,12 @@ function schedule_pipeline_background() {
         simulation
     ) > log.pipeline 2>&1 &
 
-    echo "Scheduled alpha -> beta -> simulation in background (PID: $!)."
+    local pipeline_pid=$!
+    echo "Scheduled in background (PID: $pipeline_pid)."
     echo "Monitor with: tail -f log.pipeline"
+
+    echo "kill -9 $pipeline_pid" > stop.sh
+    chmod +x stop.sh
 }
 
 # ---------------------------------------------------------------------

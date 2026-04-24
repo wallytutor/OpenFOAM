@@ -1,5 +1,6 @@
 case.foam
 mesh.msh
+stop.sh
 cellToRegion
 constant/polyMesh/
 constant/cellToRegion
