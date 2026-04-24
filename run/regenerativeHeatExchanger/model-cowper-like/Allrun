@@ -9,6 +9,45 @@ FORCE=0
 
 touch case.foam
 
+function preliminaries() {
+    if [ ! -d constant/fluid/polyMesh ] ||
+       [ ! -d constant/solid/polyMesh ] ||
+       [ $FORCE -ne 0 ]; then
+        echo "Mesh not found or force enabled, preparing mesh..."
+
+        # XXX: these files must be available before mesh generation!
+        cp template/system/controlDict system/controlDict > /dev/null 2>&1
+
+        cp constant/userParameters.orig \
+            constant/userParameters > /dev/null 2>&1
+
+        mkdir -p constant/solid/ > /dev/null 2>&1
+        cp template/constant/solid/physicalProperties.0 \
+            constant/solid/physicalProperties > /dev/null 2>&1
+
+        if [ ! -f mesh.msh ] || [ $FORCE -ne 0 ]; then
+            echo "Mesh file not found or force enabled, generating mesh..."
+            python3 model.py > log.0.meshPy 2>&1
+        fi
+
+        # Convert gmsh mesh to OpenFOAM format
+        gmshToFoam mesh.msh > log.1.gmshToFoam 2>&1
+
+        # Fix matching patches
+        createPatch > log.2.createPatch 2>&1
+
+        # Prepare and check the mesh for use with region coupling
+        renumberMesh > log.3.renumberMesh 2>&1
+        splitMeshRegions -cellZones > log.4.splitMeshRegions 2>&1
+        rm -rf constant/polyMesh/ > /dev/null 2>&1
+
+        checkMesh -region fluid > log.5.checkMeshFluid 2>&1
+        checkMesh -region solid > log.6.checkMeshSolid 2>&1
+    else
+        echo "Mesh already prepared, skipping mesh preparation."
+    fi
+}
+
 function expand_condition() {
     local region=$1
     local field=$2
@@ -16,103 +55,83 @@ function expand_condition() {
     foamDictionary 0.orig/$region/$field -expand > $initial 2>&1
 }
 
-# ---------------------------------------------------------------------
-# Mesh preparation
-# ---------------------------------------------------------------------
-
-if [ ! -d constant/fluid/polyMesh ] ||
-   [ ! -d constant/solid/polyMesh ] ||
-   [ $FORCE -ne 0 ]; then
-    echo "Mesh not found or force enabled, preparing mesh..."
-
-    # XXX: these files must be available before mesh generation!
-    cp constant/userParameters.orig \
-       constant/userParameters > /dev/null 2>&1
-
-    mkdir -p constant/solid/ > /dev/null 2>&1
-    cp template/constant/solid/physicalProperties.0 \
-       constant/solid/physicalProperties > /dev/null 2>&1
-
-    if [ ! -f mesh.msh ] || [ $FORCE -ne 0 ]; then
-        echo "Mesh file not found or force enabled, generating mesh..."
-        python3 model.py > log.0.meshPy 2>&1
+function preinitialize_alpha() {
+    if compgen -G "processor*" > /dev/null 2>&1; then
+        echo "Processor directories found, skipping pre-initialization (alpha)."
+        return
     fi
 
-    # Convert gmsh mesh to OpenFOAM format
-    gmshToFoam mesh.msh > log.1.gmshToFoam 2>&1
+    if [ ! -f log.8.foamMultiRun ] || [ $FORCE -ne 0 ]; then
+        echo "Case not run or force enabled, preparing case and running..."
 
-    # Fix matching patches
-    createPatch > log.2.createPatch 2>&1
+        # Expand initial conditions (so that we can plot them):
+        expand_condition  "fluid"  "p"
+        expand_condition  "fluid"  "p_rgh"
+        expand_condition  "fluid"  "k"
+        expand_condition  "fluid"  "omega"
+        expand_condition  "fluid"  "nut"
+        expand_condition  "fluid"  "alphat"
+        expand_condition  "fluid"  "U"
+        expand_condition  "fluid"  "T"
+        expand_condition  "solid"  "T"
 
-    # Prepare and check the mesh for use with region coupling
-    renumberMesh > log.3.renumberMesh 2>&1
-    splitMeshRegions -cellZones > log.4.splitMeshRegions 2>&1
-    rm -rf constant/polyMesh/ > /dev/null 2>&1
+        # Domain decomposition must come after initial conditions:
+        decomposePar -allRegions > log.7.decomposePar 2>&1
 
-    checkMesh -region fluid > log.5.checkMeshFluid 2>&1
-    checkMesh -region solid > log.6.checkMeshSolid 2>&1
-else
-    echo "Mesh already prepared, skipping mesh preparation."
-fi
+        foamDictionary system/controlDict \
+            -entry endTime -set '1.0' > /dev/null 2>&1
+        foamDictionary system/controlDict \
+            -entry deltaT -set '1.0e-05' > /dev/null 2>&1
+
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.8.foamMultiRun 2>&1 &
+    else
+        echo "Pre-initialization (alpha) already done, skipping."
+    fi
+}
+
+function preinitialize_beta() {
+    if compgen -G "processor*/1.00000000e+00" > /dev/null 2>&1; then
+        echo "Processor directories found, skipping pre-initialization (beta)."
+        return
+    fi
+
+    if [ ! -f log.9.foamMultiRun ] || [ $FORCE -ne 0 ]; then
+        echo "Case not run or force enabled, preparing case and running..."
+
+        foamDictionary system/controlDict \
+            -entry endTime -set '2.0' > /dev/null 2>&1
+        foamDictionary system/controlDict \
+            -entry deltaT -set '1.0e-04' > /dev/null 2>&1
+
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.9.foamMultiRun 2>&1 &
+    else
+        echo "Pre-initialization (beta) already done, skipping."
+    fi
+}
+
+function simulation() {
+    if [ ! -f log.10.foamMultiRun ] || [ $FORCE -ne 0 ]; then
+        echo "Case not run or force enabled, preparing case and running..."
+
+        foamDictionary system/controlDict \
+            -entry endTime -set '$duration' > /dev/null 2>&1
+        foamDictionary system/controlDict \
+            -entry adjustTimeStep -set 'yes' > /dev/null 2>&1
+
+        mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.10.foamMultiRun 2>&1 &
+    else
+        echo "Simulation already done, skipping..."
+    fi
+}
 
 # ---------------------------------------------------------------------
-# Copy conditions and run the case
+# Main
 # ---------------------------------------------------------------------
 
-cp template/system/controlDict system/controlDict > /dev/null 2>&1
-
-if [ ! -f log.8.foamMultiRun ] || [ $FORCE -ne 0 ]; then
-    echo "Case not run or force enabled, preparing case and running..."
-
-    # Expand initial conditions (so that we can plot them):
-    expand_condition  "fluid"  "p"
-    expand_condition  "fluid"  "p_rgh"
-    expand_condition  "fluid"  "k"
-    expand_condition  "fluid"  "omega"
-    expand_condition  "fluid"  "nut"
-    expand_condition  "fluid"  "alphat"
-    expand_condition  "fluid"  "U"
-    expand_condition  "fluid"  "T"
-    expand_condition  "solid"  "T"
-
-    # Domain decomposition must come after initial conditions:
-    decomposePar -allRegions > log.7.decomposePar 2>&1
-
-    foamDictionary system/controlDict \
-        -entry endTime -set '1.0' > /dev/null 2>&1
-    foamDictionary system/controlDict \
-        -entry deltaT -set '1.0e-05' > /dev/null 2>&1
-
-    mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.8.foamMultiRun 2>&1 &
-else
-    echo "Case already run, skipping case preparation and run."
-fi
-
-if [ ! -f log.9.foamMultiRun ] || [ $FORCE -ne 0 ]; then
-    echo "Case not run or force enabled, preparing case and running..."
-
-    foamDictionary system/controlDict \
-        -entry endTime -set '2.0' > /dev/null 2>&1
-    foamDictionary system/controlDict \
-        -entry deltaT -set '1.0e-04' > /dev/null 2>&1
-
-    mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.9.foamMultiRun 2>&1 &
-else
-    echo "Case already run, skipping case preparation and run."
-fi
-
-if [ ! -f log.10.foamMultiRun ] || [ $FORCE -ne 0 ]; then
-    echo "Case not run or force enabled, preparing case and running..."
-
-    foamDictionary system/controlDict \
-        -entry endTime -set '$duration' > /dev/null 2>&1
-    foamDictionary system/controlDict \
-        -entry adjustTimeStep -set 'yes' > /dev/null 2>&1
-
-    mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.10.foamMultiRun 2>&1 &
-else
-    echo "Case already run, skipping case preparation and run."
-fi
+preliminaries
+preinitialize_alpha
+# preinitialize_beta
+# simulation
 
 # foamLog log.8.foamMultiRun > log.9.foamLog 2>&1 &
 # reconstructPar -allRegions -latestTime

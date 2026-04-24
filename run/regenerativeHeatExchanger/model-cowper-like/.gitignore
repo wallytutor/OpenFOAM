@@ -6,7 +6,8 @@ constant/cellToRegion
 constant/userParameters
 constant/solid/physicalProperties
 constant/solid/polyMesh/
-constant/media/polyMesh/
+constant/fluid/polyMesh/
+system/controlDict
 postProcessing
 processor*/
 log.*

@@ -23,6 +23,7 @@ rm -rf constant/polyMesh/
 rm -rf constant/cellToRegion
 rm -rf constant/solid/
 rm -rf constant/fluid/polyMesh/
+rm -rf system/controlDict
 rm -rf postProcessing
 rm -rf processor*
 rm -rf log.*
