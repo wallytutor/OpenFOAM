@@ -56,7 +56,9 @@ function expand_condition() {
 }
 
 function preinitialize_alpha() {
-    if compgen -G "processor*" > /dev/null 2>&1; then
+    echo "*** Pre-initialization (alpha) starting..."
+
+    if compgen -G "processor*/1.00000000e+00" > /dev/null 2>&1; then
         echo "Processor directories found, skipping pre-initialization (alpha)."
         return
     fi
@@ -94,7 +96,9 @@ function preinitialize_alpha() {
 }
 
 function preinitialize_beta() {
-    if compgen -G "processor*/1.00000000e+00" > /dev/null 2>&1; then
+    echo "*** Pre-initialization (beta) starting..."
+
+    if compgen -G "processor*/2.00000000e+00" > /dev/null 2>&1; then
         echo "Processor directories found, skipping pre-initialization (beta)."
         return
     fi
@@ -118,6 +122,8 @@ function preinitialize_beta() {
 }
 
 function simulation() {
+    echo "*** Simulation starting..."
+
     if [ ! -f log.10.foamMultiRun ] || [ $FORCE -ne 0 ]; then
         echo "Case not run or force enabled, preparing case and running..."
 
