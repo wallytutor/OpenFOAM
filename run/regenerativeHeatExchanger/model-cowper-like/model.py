@@ -4,9 +4,9 @@ from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import make_solid
 from heat_recovery.cowper_like import make_charging
 from heat_recovery.thermocline import ThermoclineModel
-from majordome_engineering.transport import SolutionDimless
-from majordome_engineering.transport import SkinFrictionFactor
-from majordome_engineering.transport import WallGradingCalculator
+from majordome.engineering import SolutionDimless
+from majordome.engineering import SkinFrictionFactor
+from majordome.engineering import WallGradingCalculator
 from ruamel.yaml import YAML
 
 RENDER: bool = False

@@ -3,7 +3,7 @@ import cantera as ct
 import numpy as np
 import sympy as sp
 
-from majordome_utilities.plotting import MajordomePlot
+from majordome.utilities import MajordomePlot
 from itertools import cycle
 from matplotlib import cm
 

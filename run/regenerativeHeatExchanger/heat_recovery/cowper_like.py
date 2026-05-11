@@ -2,12 +2,9 @@
 import numpy as np
 import pandas as pd
 import pyvista as pv
-import majordome_simulation.meshing as ms
+import majordome.simulation as ms
 from foamlib import FoamFile
-from majordome_simulation.meshing import GmshOCCModel
-from majordome_simulation.meshing import RingBuilder
-from majordome_simulation.meshing import CircularCrossSection
-from majordome_utilities.plotting import plot2d
+from majordome.utilities import plot2d
 from screeninfo import get_monitors
 
 DEFAULT_OPTIONS = {
@@ -107,7 +104,7 @@ class CowperLikeGeometry:
         self.R_out_fluid = D_h / 2
 
     def _create_fluid(self, model):
-        fluid_hole = CircularCrossSection(
+        fluid_hole = ms.CircularCrossSection(
             model              = model,
             radius             = self.R_out_fluid,
             boundary_thickness = self.fluid_bl_tot,
@@ -125,7 +122,7 @@ class CowperLikeGeometry:
     def _create_hexagon(self, model, fluid_hole):
         solid_bl_tot = self.R_out_solid - self.R_out_fluid
 
-        callbacks = RingBuilder.get_progression_callbacks(
+        callbacks = ms.RingBuilder.get_progression_callbacks(
             model,
             self.num_points_angular,
             solid_bl_tot,
@@ -135,7 +132,7 @@ class CowperLikeGeometry:
 
         callback_lines, callback_surfaces = callbacks
 
-        hexa = RingBuilder(
+        hexa = ms.RingBuilder(
             model              = model,
             splits             = self.num_splits,
             radius_out         = self.R_out_solid,
@@ -231,7 +228,7 @@ class CowperLikeGeometry:
         except Exception:
             pass
 
-        with GmshOCCModel(render=render, **options) as model:
+        with ms.GmshOCCModel(render=render, **options) as model:
             fluid_hole = self._create_fluid(model)
             model.synchronize()
 
