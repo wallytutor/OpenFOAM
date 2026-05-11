@@ -97,47 +97,41 @@ fluid.plot(scalars="U", cmap="jet", component=2)
 
 
 
-import pandas as pd
-from pathlib import Path
 
 
-class DomainPostprocessing:
-    def __init__(self, domain):
-        self.domain = domain
-        self.reports = self._get_domain_reports()
-
-    @property
-    def domain_dir(self):
-        if not hasattr(self, "_domain_dir"):
-            self._domain_dir = Path("postProcessing") / self.domain
-        return self._domain_dir
-
-    def _get_domain_reports(self):
-        if not self.domain_dir.is_dir():
-            raise ValueError(
-                f"Domain '{self.domain}' not found in postProcessing directory."
-            )
-
-        return [d.name for d in self.domain_dir.iterdir() if d.is_dir()]
-
-    # def load_report(self, report):
-    #     report_dir = self.domain_dir / report
-
-    #     if not report_dir.is_dir():
-    #         raise ValueError(f"Report '{report}' not found for domain '{self.domain}'.")
-
-    #     # Implement loading logic here (e.g., read data files, parse results, etc.)
-    #     print(f"Loading report '{report}' for domain '{self.domain}' from {report_dir}")
-    #     # Placeholder: return the path to the report directory
-    #     return report_dir
+from majordome.utilities import plot_xy
+from majordome.simulation import FoamPostProcessingLoader
 
 
+def pressure_drop_charging(fluid):
+    df_i = fluid.load_report("pressureInlet")
+    df_o = fluid.load_report("pressureOutlet")
+
+    df = df_i.copy()
+    df["Pressure"] = df_i.iloc[:, 1] - df_o.iloc[:, 1]
+
+    return df[["Time", "Pressure"]]
 
 
-post = DomainPostprocessing("fluid")
+fluid = FoamPostProcessingLoader("fluid")
+solid = FoamPostProcessingLoader("solid")
 
-# report = "flowRateInlet"
-# post = Path("postProcessing")
+# df = fluid.load_report("flowRateInlet")
+# df = fluid.load_report("flowRateOutlet")
+# df = fluid.load_report("fluidToSolidHeatFlux")
+# df = fluid.load_report("residualsFluid")
+# df = fluid.load_report("temperatureInlet")
+# df = fluid.load_report("temperatureOutlet")
+# df = fluid.load_report("yPlusFluid")
+# df = solid.load_report("residualsSolid")
+# df = solid.load_report("solidEnergy")
+# df = solid.load_report("solidTemperature")
+# df = solid.load_report("solidToFluidHeatFlux")
 
-# root_dir = post / domain / report
-# sub_dirs = [d for d in root_dir.iterdir() if d.is_dir()]
+df = pressure_drop_charging(fluid)
+sel = df.loc[df["Time"] >= 10]
+x = sel.iloc[:, 0]
+y = sel.iloc[:, 1]
+
+p = plot_xy(x, y)
+p.show()
