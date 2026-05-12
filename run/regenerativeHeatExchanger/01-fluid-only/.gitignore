@@ -7,6 +7,7 @@ constant/solid/
 constant/fluid/
 postProcessing
 processor*/
+VTK/
 log.*
 logs
 *[0-9].[0-9]*e[+-][0-9][0-9]*/

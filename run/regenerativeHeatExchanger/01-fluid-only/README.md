@@ -51,6 +51,12 @@ cp -avr 0.orig 0.00000000e+00
 foamRun
 ```
 
+Optionally, initialize velocity field by potentialFoam:
+
+```bash
+potentialFoam -initialiseUBCs
+```
+
 Create handle for ParaView and run in parallel:
 
 ```bash
@@ -60,4 +66,9 @@ decomposePar
 rm -rf 0.00000000e+00
 
 mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun &
+
+reconstructPar -latestTime
+
+# XXX only if VTK rendering is required/bugs with PyVista
+foamToVTK -latestTime
 ```
