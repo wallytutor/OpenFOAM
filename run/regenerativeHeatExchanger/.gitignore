@@ -5,3 +5,4 @@ __pycache__/
 .ipynb_checkpoints/
 
 !01-fluid-only/
+!02-fluid-only/

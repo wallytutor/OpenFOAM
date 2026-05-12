@@ -25,7 +25,7 @@ from pathlib import Path
 try:
     HERE = Path(__file__).parent
 except NameError:
-    HERE = Path(os.getcwd()) / "01-fluid-only"
+    HERE = Path(os.getcwd()) / "02-fluid-only"
     os.chdir(HERE)
 
 RESULTS_DIR = HERE / "postProcessing"

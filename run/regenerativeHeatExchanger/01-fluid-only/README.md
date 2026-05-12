@@ -59,27 +59,14 @@ foamDictionary 0.orig/U -expand > 0.00000000e+00/U
 foamRun
 ```
 
-<!--
-XXX this is worse than doing nothing!
-Optionally, initialize velocity field by potentialFoam:
-
-```bash
-potentialFoam -initialiseUBCs
-```
--->
-
 Create handle for ParaView and run in parallel:
 
 ```bash
 touch case.foam
 
 decomposePar
-rm -rf 0.00000000e+00
 
 mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun &
 
 reconstructPar -latestTime
-
-# XXX only if VTK rendering is required/bugs with PyVista
-foamToVTK -latestTime
 ```
