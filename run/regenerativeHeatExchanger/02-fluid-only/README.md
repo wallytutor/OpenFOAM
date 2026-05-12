@@ -12,7 +12,10 @@ cp -avr ../01-fluid-only/constant/polyMesh constant/polyMesh
 
 # Create initial conditions by one of the following options:
 mkdir -p 0.00000000e+00
+
+# ... if copying, remove the time directory under uniform:
 cp -avr ../01-fluid-only/2.00000000e+00 0.00000000e+00
+rm -rf 0.00000000e+00/uniform/
 
 # If a directory was created, expand original conditions to actual mesh:
 foamDictionary 0.orig/p -expand > 0.00000000e+00/p
