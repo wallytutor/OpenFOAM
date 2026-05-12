@@ -17,7 +17,7 @@ FoamFile
 dimensions      [ 1 -1 -2 0 0 0 0 ];
 
 // p - rho*g*h ~ 0
-internalField   uniform 0.0;
+internalField   uniform 101325.0;
 
 boundaryField
 {
@@ -31,9 +31,7 @@ boundaryField
     }
     fluidInlet
     {
-        // type            zeroGradient;
-        type            fixedValue;
-        value           $internalField;
+        type            zeroGradient;
     }
     fluid_to_solid
     {
