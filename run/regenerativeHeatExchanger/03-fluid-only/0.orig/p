@@ -8,19 +8,38 @@
 FoamFile
 {
     format      ascii;
-    class       dictionary;
-    location    "constant/fluid";
-    object      momentumTransport;
+    class       volScalarField;
+    location    "0/fluid";
+    object      p;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  RAS;
+dimensions      [ 1 -1 -2 0 0 0 0 ];
 
-RAS
+internalField   uniform 101325.0;
+
+boundaryField
 {
-    model    kOmegaSST;
+    #includeEtc "caseDicts/setConstraintTypes"
 
-    turbulence      on;
+    // XXX outlet is the inlet for hot gas and vice-versa!
+    fluidOutlet
+    {
+        type            zeroGradient;
+    }
+    fluidInlet
+    {
+        type            fixedValue;
+        value           $internalField;
+    }
+    fluid_to_solid
+    {
+        type           zeroGradient;
+    }
+    "cyclicFluid(Left|Right)"
+    {
+        type            cyclic;
+    }
 }
 
 // ************************************************************************* //

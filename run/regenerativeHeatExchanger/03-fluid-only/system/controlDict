@@ -9,18 +9,47 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant/fluid";
-    object      momentumTransport;
+    location    "system";
+    object      controlDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  RAS;
+#include "../constant/userParameters"
 
-RAS
-{
-    model    kOmegaSST;
+solver            fluid;
 
-    turbulence      on;
-}
+startFrom         latestTime;
+
+startTime         0;
+
+stopAt            endTime;
+
+endTime           2.0;
+
+deltaT            1.0e-04;
+
+writeControl      adjustableRunTime;
+
+writeInterval     0.1;
+
+purgeWrite        0;
+
+writeFormat       ascii;
+
+writePrecision    6;
+
+writeCompression  off;
+
+timeFormat        scientific;
+
+timePrecision     8;
+
+runTimeModifiable true;
+
+maxCo             0.75;
+
+maxDeltaT         0.01;
+
+adjustTimeStep    no;
 
 // ************************************************************************* //

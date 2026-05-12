@@ -25,6 +25,7 @@ rm -rf postProcessing
 rm -rf processor*
 rm -rf log.*
 rm -rf logs
+rm -rf __pycache__/
 
 # ---------------------------------------------------------------------
 # EOF

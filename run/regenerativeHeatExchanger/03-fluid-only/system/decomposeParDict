@@ -9,18 +9,23 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant/fluid";
-    object      momentumTransport;
+    note        "mesh decomposition control dictionary";
+    location    "system";
+    object      decomposeParDict;
 }
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  RAS;
+#include "../constant/userParameters"
 
-RAS
+numberOfSubdomains $nProcs;
+
+method          hierarchical;
+
+hierarchicalCoeffs
 {
-    model    kOmegaSST;
-
-    turbulence      on;
+    n           (1 1 $nProcs);
+    order       xyz;
 }
 
 // ************************************************************************* //
