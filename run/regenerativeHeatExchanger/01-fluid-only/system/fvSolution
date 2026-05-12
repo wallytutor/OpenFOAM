@@ -40,7 +40,12 @@ solvers
 
     Phi
     {
-        $p;
+        // $p;
+        solver          GAMG;
+        smoother        DIC;
+
+        tolerance       1e-06;
+        relTol          0.01;
     }
 
     p_rgh
@@ -82,7 +87,7 @@ PIMPLE
 
 potentialFlow
 {
-    nNonOrthogonalCorrectors 10;
+    nNonOrthogonalCorrectors 3;
 }
 
 relaxationFactors

@@ -45,17 +45,28 @@ Clean automatically generated initial conditions and replace by actual ones:
 
 ```bash
 rm -rf 0.00000000e+00
+
+# (option 1): hard copy of original conditions
 cp -avr 0.orig 0.00000000e+00
+
+# (option 2): expand original conditions to actual mesh
+mkdir -p 0.00000000e+00
+foamDictionary 0.orig/p -expand > 0.00000000e+00/p
+foamDictionary 0.orig/T -expand > 0.00000000e+00/T
+foamDictionary 0.orig/U -expand > 0.00000000e+00/U
 
 # XXX just for test, then stop and run in parallel
 foamRun
 ```
 
+<!--
+XXX this is worse than doing nothing!
 Optionally, initialize velocity field by potentialFoam:
 
 ```bash
 potentialFoam -initialiseUBCs
 ```
+-->
 
 Create handle for ParaView and run in parallel:
 

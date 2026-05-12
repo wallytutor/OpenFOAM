@@ -18,7 +18,7 @@ dimensions      [ 0 1 -1 0 0 0 0 ];
 
 #include "../constant/userParameters"
 
-internalField   uniform (0 0 $inletVelocity);
+internalField   uniform (0 0 0);
 
 boundaryField
 {
@@ -32,8 +32,9 @@ boundaryField
     }
     fluidInlet
     {
-        type            pressureInletOutletVelocity;
-        value           $internalField;
+        type            zeroGradient;
+        // type            pressureInletOutletVelocity;
+        // value           $internalField;
     }
     fluid_to_solid
     {
