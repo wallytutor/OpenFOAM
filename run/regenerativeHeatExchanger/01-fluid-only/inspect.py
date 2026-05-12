@@ -13,6 +13,7 @@ where the flow enters through the outlet and exits through the *inlet*.
 - [ ] Temperature profile
 
 """
+import os
 import numpy as np
 import pyvista as pv
 from heat_recovery.thermocline import ThermoclineModel
@@ -21,7 +22,15 @@ from majordome.simulation import FoamPostProcessingLoader
 from majordome.utilities import plot_xy
 from pathlib import Path
 
-RESULTS_DIR = Path("postProcessing")
+try:
+    HERE = Path(__file__).parent
+except NameError:
+    HERE = Path(os.getcwd())
+
+RESULTS_DIR = HERE / "postProcessing"
+
+if "NUM_PROCS" not in os.environ:
+    os.environ["NUM_PROCS"] = "4"
 
 
 def plot_inlet_mass_flow_rate(post):
@@ -153,6 +162,10 @@ def align_camera(plot, xc=0.025, zc=0.02, ps=0.017):
 
 
 def load_prepare_fields():
+    if not (HERE / "case.foam").exists():
+        with open(HERE / "case.foam", "w") as f:
+            f.write("dummy")
+
     model = ThermoclineModel("../dimensioning.yaml")
     reader = pv.POpenFOAMReader("case.foam")
     scale = (1, 1, model.num_D_h / model.num_h_t)
@@ -165,7 +178,9 @@ def load_prepare_fields():
     data = mesh.slice("y")[0]
     data.points *= scale
 
-    data.cell_data["rhoG"] = data.cell_data["rho"] * 1000.0
+    if "rho" in data.cell_data:
+        data.cell_data["rhoG"] = data.cell_data["rho"] * 1000.0
+
     data.cell_data["pRel"] = data.cell_data["p"] - constants.P_NORMAL
     data = data.cell_data_to_point_data()
     return data, time
