@@ -84,7 +84,7 @@ function preinitialize_alpha() {
             -entry endTime       -set '1.0' > /dev/null 2>&1
 
         foamDictionary system/controlDict \
-            -entry writeInterval -set '1.0' > /dev/null 2>&1
+            -entry writeInterval -set '0.1' > /dev/null 2>&1
 
         foamDictionary system/controlDict \
             -entry deltaT        -set '1.0e-05' > /dev/null 2>&1
@@ -133,8 +133,8 @@ function simulation() {
         foamDictionary system/controlDict \
             -entry writeInterval  -set '$dumpInterval' > /dev/null 2>&1
 
-        foamDictionary system/controlDict \
-            -entry adjustTimeStep -set 'yes' > /dev/null 2>&1
+        # foamDictionary system/controlDict \
+        #     -entry adjustTimeStep -set 'yes' > /dev/null 2>&1
 
         mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.10.foamMultiRun 2>&1
     else
