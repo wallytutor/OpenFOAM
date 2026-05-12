@@ -1,0 +1,16 @@
+case.foam
+mesh.msh
+stop.sh
+cellToRegion
+constant/cellToRegion
+constant/solid/
+constant/fluid/
+postProcessing
+processor*/
+log.*
+logs
+*[0-9].[0-9]*e[+-][0-9][0-9]*/
+*.png
+
+# For this case keep the mesh!
+!constant/polyMesh/
