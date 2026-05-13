@@ -75,11 +75,6 @@ PIMPLE
     nNonOrthogonalCorrectors 1;
 }
 
-potentialFlow
-{
-    nNonOrthogonalCorrectors 3;
-}
-
 relaxationFactors
 {
     equations
