@@ -2,10 +2,15 @@
 import numpy as np
 import pandas as pd
 import pyvista as pv
+import warnings
 import majordome.simulation as ms
 from foamlib import FoamFile
-from majordome.utilities import plot2d
+from majordome import constants
+from majordome.simulation import FoamPostProcessingLoader
+from majordome.utilities import plot_xy
 from screeninfo import get_monitors
+
+from .thermocline import ThermoclineModel
 
 DEFAULT_OPTIONS = {
     "General.Verbosity": 5,
@@ -197,8 +202,8 @@ class CowperLikeGeometry:
 
         model.add_physical_groups(
             surfaces=[
-                {"tags": inlet,      "name": "fluidInlet",    "tag_id": 10},
-                {"tags": outlet,     "name": "fluidOutlet",   "tag_id": 20},
+                {"tags": inlet,      "name": "fluidCold",    "tag_id": 10},
+                {"tags": outlet,     "name": "fluidHot",   "tag_id": 20},
                 {"tags": bottom,     "name": "solidBottom",   "tag_id": 30},
                 {"tags": top,        "name": "solidTop",      "tag_id": 40},
                 {"tags": symmetry,   "name": "solidSymmetry", "tag_id": 50},
@@ -278,124 +283,285 @@ def make_charging(model):
         f["nProcs"] = r"$NUM_PROCS"
 
 
-#region: tabular post-processing
-def get_post(region, function, fname, time="0.000000e+00"):
-    """ Get the path to a post-processing table. """
-    return "/".join(["postProcessing", region, function, time, f"{fname}.dat"])
+class PostProcessing:
+    """ Unified post-processing for the heat exchanger case. """
+    def __init__(self, root, mode, domain=None):
+        self.post = FoamPostProcessingLoader(domain=domain, root=root)
+        self.root = self.post.root_directory
+        self.mode = mode.lower()
+        self.logs = self.root.parent / "logs"
 
+        fields, time = self.load_prepare_fields(case_dir=root)
+        self.fields = fields
+        self.time   = time
 
-def load_table(region, function, fname, time="0.000000e+00"):
-    """ Load a table from the post-processing directory. """
-    fname = get_post(region, function, fname, time)
-    return pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
+    #region: postProcessing
+    def plot_inlet_mass_flow_rate(self):
+        """ Plot the inlet mass flow rate over time. """
+        df1 = self.post.load_report("flowRateHot")
+        df2 = self.post.load_report("flowRateCold")
 
+        n = min(len(df1), len(df2))
 
-def plot_table(region, function, fname, time="0.000000e+00", ylabel=None):
-    """ Quick plotting of a table from the post-processing directory.
+        x = df1.iloc[:n, 0]
+        m1 = df1.iloc[:n, 1] * (-1000)
+        m2 = df2.iloc[:n, 1] * (-1000)
 
-    This is for debugging, please consider using the next functions.
-    """
-    df = load_table(region, function, fname, time)
+        p = plot_xy()
+        p.axes[0].plot(x, m1, label="Hot Side")
+        p.axes[0].plot(x, m2, label="Cold Side")
+        p.axes[0].legend(loc="best", fontsize="small")
+        p.axes[0].set_title(f"Inlet mass flow rate during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Mass flow rate [g/s]")
+        p.resize(6, 5)
+        p.savefig(self.root / "01-inlet_mass_flow_rate.png")
 
-    if function.startswith("pressure"):
-        df[1] -= 101325.0
+    def plot_imbalance_mass_flow_rate(self):
+        """ Plot the imbalance of mass flow rate over time. """
+        df1 = self.post.load_report("flowRateHot")
+        df2 = self.post.load_report("flowRateCold")
 
-    p = plot2d(df[0], df[1])
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel(ylabel or function)
-    return p
+        n = min(len(df1), len(df2))
 
+        x = df1.iloc[:n, 0]
+        m1 = df1.iloc[:n, 1] * (-1000)
+        m2 = df2.iloc[:n, 1] * (-1000)
+        imbalance = (m1 + m2) / m1 * 100
 
-def plot_temperature(title, origin="0.000000e+00", **kws):
-    """ Plot the temperature from the post-processing directory. """
-    def loader(fname, kind="surfaceFieldValue"):
-        return load_table("fluid", fname,  kind, time=origin)
+        p = plot_xy(x, imbalance)
+        p.axes[0].set_title(f"Mass flow imbalance during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Mass flow imbalance [%]")
+        p.resize(6, 5)
+        p.savefig(self.root / "02-imbalance_mass_flow_rate.png")
 
-    dfi = loader("temperatureInlet")
-    dfo = loader("temperatureOutlet")
+    def plot_total_pressure(self):
+        """ Plot the total pressure over time. """
+        df1 = self.post.load_report("pressureCold")
+        df2 = self.post.load_report("pressureHot")
 
-    t1 = dfi[0].to_numpy()
-    t2 = dfo[0].to_numpy()
-    p1 = dfi[1].to_numpy() - 273.15
-    p2 = dfo[1].to_numpy() - 273.15
+        n = min(len(df1), len(df2))
 
-    p = plot2d(t1, p1, color="b", label="Cold side")
-    p.axes[0].plot(t2, p2, color="r", label="Hot side")
-    p.axes[0].set_title(title)
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel("Temperature [°C]")
-    p.axes[0].legend(loc=kws.get("loc", 4), fontsize="small")
-    return p
+        x = df1.iloc[:n, 0]
+        p1 = (df1.iloc[:n, 1] - constants.P_NORMAL) / 100
+        p2 = (df2.iloc[:n, 1] - constants.P_NORMAL) / 100
 
+        p = plot_xy()
+        p.axes[0].plot(x, p1, label="Cold Side")
+        p.axes[0].plot(x, p2, label="Hot Side")
+        p.axes[0].legend(loc="best", fontsize="small")
+        p.axes[0].set_title(f"Total pressure during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Total pressure [mbar]")
+        p.resize(6, 5)
+        p.savefig(self.root / "03-total_pressure.png")
 
-def plot_pressure(title, origin="0.000000e+00", **kws):
-    """ Plot the pressure from the post-processing directory. """
-    def loader(fname, kind="surfaceFieldValue"):
-        return load_table("fluid", fname,  kind, time=origin)
+    def plot_pressure_drop(self):
+        """ Plot the pressure drop over time. """
+        df1 = self.post.load_report("pressureCold")
+        df2 = self.post.load_report("pressureHot")
 
-    dfi = loader("pressureInlet")
-    dfo = loader("pressureOutlet")
+        n = min(len(df1), len(df2))
 
-    t1 = dfi[0].to_numpy()
-    t2 = dfo[0].to_numpy()
-    p1 = (dfi[1].to_numpy() - 101325.0) / 100.0
-    p2 = (dfo[1].to_numpy() - 101325.0) / 100.0
+        x = df1.iloc[:n, 0]
+        p1 = (df1.iloc[:n, 1] - constants.P_NORMAL) / 100
+        p2 = (df2.iloc[:n, 1] - constants.P_NORMAL) / 100
+        dp = p2 - p1 if self.mode == "charging" else p1 - p2
 
-    p = plot2d(t1, p1, color="b", label="Cold side")
-    p.axes[0].plot(t2, p2, color="r", label="Hot side")
-    p.axes[0].set_title(title)
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel("Pressure [mbar]")
-    p.axes[0].legend(loc=kws.get("loc", 4), fontsize="small")
-    return p
+        p = plot_xy(x, dp)
+        p.axes[0].set_title(f"Pressure drop during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Pressure drop [mbar]")
+        p.resize(6, 5)
+        p.savefig(self.root / "04-pressure_drop.png")
 
+    def plot_total_temperature(self):
+        """ Plot the total temperature over time. """
+        df1 = self.post.load_report("temperatureCold")
+        df2 = self.post.load_report("temperatureHot")
 
-def plot_flowrate(title, origin="0.000000e+00", **kws):
-    """ Plot the flow rate from the post-processing directory. """
-    def loader(fname, kind="surfaceFieldValue"):
-        return load_table("fluid", fname,  kind, time=origin)
+        n = min(len(df1), len(df2))
 
-    dfi = loader("flowRateInlet")
-    dfo = loader("flowRateOutlet")
+        x = df1.iloc[:n, 0]
+        p1 = df1.iloc[:n, 1] - constants.T_NORMAL
+        p2 = df2.iloc[:n, 1] - constants.T_NORMAL
 
-    t1 = dfi[0].to_numpy()
-    t2 = dfo[0].to_numpy()
-    p1 = dfi[1].to_numpy() * 6 * 1000
-    p2 = dfo[1].to_numpy() * 6 * 1000
+        p = plot_xy()
+        p.axes[0].plot(x, p1, label="Cold Side")
+        p.axes[0].plot(x, p2, label="Hot Side")
+        p.axes[0].legend(loc="best", fontsize="small")
+        p.axes[0].set_title(f"Total temperature during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Total temperature [°C]")
+        p.resize(6, 5)
+        p.savefig(self.root / "05-total_temperature.png")
+    #endregion: postProcessing
 
-    s = min(len(t1), len(t2))
-    tb = t1[:s]
-    pb = p1[:s] + p2[:s]
+    #region: foamLog
+    def plot_convergence(self, ymin=-10, ymax=-6):
+        """ Plot the convergence from the log files. """
+        final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0",
+                 "eFinalRes_0", "hFinalRes_0",
+                 "kFinalRes_0", "omegaFinalRes_0"]
 
-    p = plot2d(t1, p1, color="b", label="Cold side")
-    p.axes[0].plot(t2, p2, color="r", label="Hot side")
-    p.axes[0].plot(tb, pb, color="k", label="Balance")
-    p.axes[0].set_title(title)
-    p.axes[0].set_xlabel("Time [s]")
-    p.axes[0].set_ylabel("Flow rate [g/s]")
-    p.axes[0].legend(loc=kws.get("loc", 4), fontsize="small")
-    return p
+        p = plot_xy()
 
+        for fname in final:
+            try:
+                df = pd.read_csv(self.logs / fname, sep=r"\s+", header=None)
+                p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+            except FileNotFoundError as err:
+                print(err)
 
-def plot_convergence():
-    """ Plot the convergence from the log files. """
-    final = ["UxFinalRes_0", "UyFinalRes_0", "UzFinalRes_0",
-             "eFinalRes_0", "hFinalRes_0",
-             "kFinalRes_0", "omegaFinalRes_0"]
+        p.axes[0].set_ylim(ymin, ymax)
+        p.axes[0].set_title(f"Convergence during {self.mode}")
+        p.axes[0].set_xlabel("Time step")
+        p.axes[0].set_ylabel("log10(residual)")
+        p.axes[0].legend(loc=1, fontsize="small", ncol=2)
+        p.resize(6, 5)
+        p.savefig(self.root / "convergence.png")
+    #endregion: foamLog
 
-    p = plot2d(0, 0)
+    #region: fields
+    @staticmethod
+    def get_options(time, scalar_bar={}, **kws) -> dict:
+        fn_title = kws.pop("fn_title", lambda t: f"At t = {t:.0f} s\n")
 
-    for fname in final:
-        try:
-            df = pd.read_csv(f"logs/{fname}", sep=r"\s+", header=None)
-            p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
-        except FileNotFoundError as err:
-            print(err)
+        scalar_bar_args = {
+            "title": fn_title(time),
+            "vertical": False,
+            "title_font_size": 16,
+            "label_font_size": 12,
+            "position_x": 0.1,
+            "position_y": 0.05,
+            "color": "k",
+            "n_colors": 10,
+            "width": 0.8,
+            "height": 0.1,
+            "fmt": "%.0f"
+        }
+        scalar_bar_args.update(scalar_bar)
 
-    p.axes[0].set_xlabel("Time step")
-    p.axes[0].set_ylabel("log10(residual)")
-    p.axes[0].legend(loc=1, fontsize="small", ncol=2)
-#endregion: tabular post-processing
+        opts = {
+            "pbr": False,
+            "show_edges": False,
+            "scalar_bar_args": scalar_bar_args,
+        }
+        opts.update(kws)
+
+        return opts
+
+    @staticmethod
+    def camera_position_xz(w: float, h: float) -> tuple:
+        """ Get camera position for XZ plane view (top-down). """
+        x = w / 2
+        z = h / 2
+
+        # Camera position above the geometry
+        pos = (x, 2 * max(w, h), z)
+
+        # Looking at the center
+        focal = (x, 0, z)
+
+        # View up: (0, 1, 0) - Y axis points up
+        viewup = (0, 0, 1)
+
+        return (pos, focal, viewup)
+
+    @staticmethod
+    def align_camera(plot, xc=0.025, zc=0.02, ps=0.017):
+        plot.renderer.set_background("#FFFFFF")
+        plot.camera_position = PostProcessing.camera_position_xz(xc, zc)
+        plot.camera.parallel_projection = True
+        plot.camera.parallel_scale = ps
+
+    @staticmethod
+    def load_prepare_fields(case_dir, config="../dimensioning.yaml"):
+        if not (case_dir / "case.foam").exists():
+            with open(case_dir / "case.foam", "w") as f:
+                f.write("dummy")
+
+        model = ThermoclineModel(config)
+        reader = pv.POpenFOAMReader(case_dir / "case.foam")
+        scale = (1, 1, model.num_D_h / model.num_h_t)
+
+        time = reader.time_values[-1]
+        reader.set_active_time_value(time)
+
+        mesh = reader.read()
+
+        data = mesh.slice("y")[0]
+        data.points *= scale
+
+        if "rho" in data.cell_data:
+            data.cell_data["rho"] = data.cell_data["rho"] * 1000.0
+
+        if "p" in data.cell_data:
+            data.cell_data["p"] = data.cell_data["p"] - constants.P_NORMAL
+
+        return data.cell_data_to_point_data(), time
+
+    def plot_field_temperature(self):
+        if "T" not in self.fields.point_data:
+            warnings.warn("Temperature field 'T' not found in the data.")
+            return
+
+        opts = self.get_options(
+            self.time, scalar_bar={"fmt": "%.0f"},
+            fn_title=lambda t: f"Temperature at t = {t:.0f} s\n"
+        )
+
+        plot = pv.Plotter()
+        plot.add_mesh(self.fields, scalars="T", cmap="fire", **opts)
+        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        plot.show()
+
+    def plot_field_pressure(self):
+        if "p" not in self.fields.point_data:
+            warnings.warn("Pressure field 'p' not found in the data.")
+            return
+
+        opts = self.get_options(
+            self.time, scalar_bar={"fmt": "%.0f"},
+            fn_title=lambda t: f"Pressure at t = {t:.0f} s\n"
+        )
+
+        plot = pv.Plotter()
+        plot.add_mesh(self.fields, scalars="p", cmap="plasma", **opts)
+        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        plot.show()
+
+    def plot_field_density(self):
+        if "rho" not in self.fields.point_data:
+            warnings.warn("Density field 'rho' not found in the data.")
+            return
+
+        opts = self.get_options(
+            self.time, scalar_bar={"fmt": "%.2f"},
+            fn_title=lambda t: f"Density at t = {t:.2f} s\n"
+        )
+
+        plot = pv.Plotter()
+        plot.add_mesh(self.fields, scalars="rho", cmap="plasma", **opts)
+        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        plot.show()
+
+    def plot_field_velocity(self):
+        if "U" not in self.fields.point_data:
+            warnings.warn("Velocity field 'U' not found in the data.")
+            return
+
+        opts = self.get_options(
+            self.time, scalar_bar={"fmt": "%.2f"},
+            fn_title=lambda t: f"Velocity at t = {t:.2f} s\n"
+        )
+
+        plot = pv.Plotter()
+        plot.add_mesh(self.fields, scalars="U", cmap="jet", **opts)
+        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        plot.show()
+    #endregion: fields
 
 #region: graphical post-processing
 class CowperLikePost:

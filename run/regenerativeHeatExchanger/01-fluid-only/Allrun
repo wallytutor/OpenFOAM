@@ -18,3 +18,6 @@ mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun
 
 # Reconstruct the results of final time step
 reconstructPar -latestTime
+
+# Generate logs for post-processing
+foamLog log.foamMultiRun

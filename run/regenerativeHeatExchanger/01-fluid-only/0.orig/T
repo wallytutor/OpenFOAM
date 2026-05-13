@@ -32,7 +32,7 @@ boundaryField
     fluidCold
     {
         type            inletOutlet;
-        value           uniform $solidTemperature;
+        value           uniform $fluidTemperature;
         inletValue      uniform $fluidTemperature;
     }
     fluid_to_solid
