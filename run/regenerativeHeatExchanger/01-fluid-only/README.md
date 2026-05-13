@@ -2,12 +2,14 @@
 
 **Goal:** establish a fluid-only case for initialization of flow pattern.
 
-## Preliminary mesh generation
+## Mesh generation
+
+- Create the mesh for the hole system:
 
 ```bash
-python3 model.py
-
 export NUM_PROCS=4
+
+python3 model.py
 
 gmshToFoam mesh.msh
 
@@ -20,7 +22,7 @@ splitMeshRegions -cellZones
 rm -rf constant/polyMesh
 ```
 
-## Transform into fluid-only case
+- Transform into fluid-only case by extracing the fluid region:
 
 ```bash
 mv constant/fluid/polyMesh constant/polyMesh
@@ -37,36 +39,4 @@ foamDictionary $fmesh -entry $where/neighbourRegion -remove
 foamDictionary $fmesh -entry $where/neighbourPatch -remove
 
 checkMesh
-```
-
-## Prepare conditions and run
-
-Clean automatically generated initial conditions and replace by actual ones:
-
-```bash
-rm -rf 0.00000000e+00
-
-# (option 1): hard copy of original conditions
-cp -avr 0.orig 0.00000000e+00
-
-# (option 2): expand original conditions to actual mesh
-mkdir -p 0.00000000e+00
-foamDictionary 0.orig/p -expand > 0.00000000e+00/p
-foamDictionary 0.orig/T -expand > 0.00000000e+00/T
-foamDictionary 0.orig/U -expand > 0.00000000e+00/U
-
-# XXX just for test, then stop and run in parallel
-foamRun
-```
-
-Create handle for ParaView and run in parallel:
-
-```bash
-touch case.foam
-
-decomposePar
-
-mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun &
-
-reconstructPar -latestTime
 ```
