@@ -293,8 +293,14 @@ def make_charging(model):
 class PostProcessing:
     """ Unified post-processing for the heat exchanger case. """
     def __init__(self, root, mode, domain=None):
-        self.post = FoamPostProcessingLoader(domain=domain, root=root)
-        self.root = self.post.root_directory
+        if domain is None:
+            self.fluid = FoamPostProcessingLoader(domain=None, root=root)
+            self.solid = None
+        else:
+            self.fluid = FoamPostProcessingLoader(domain="fluid", root=root)
+            self.solid = FoamPostProcessingLoader(domain="solid", root=root)
+
+        self.root = self.fluid.root_directory
         self.mode = mode.lower()
         self.logs = self.root.parent / "logs"
 
@@ -320,8 +326,8 @@ class PostProcessing:
     #region: postProcessing
     def plot_inlet_mass_flow_rate(self):
         """ Plot the inlet mass flow rate over time. """
-        df1 = self.post.load_report("flowRateHot")
-        df2 = self.post.load_report("flowRateCold")
+        df1 = self.fluid.load_report("flowRateHot")
+        df2 = self.fluid.load_report("flowRateCold")
 
         n = min(len(df1), len(df2))
 
@@ -341,8 +347,8 @@ class PostProcessing:
 
     def plot_imbalance_mass_flow_rate(self):
         """ Plot the imbalance of mass flow rate over time. """
-        df1 = self.post.load_report("flowRateHot")
-        df2 = self.post.load_report("flowRateCold")
+        df1 = self.fluid.load_report("flowRateHot")
+        df2 = self.fluid.load_report("flowRateCold")
 
         n = min(len(df1), len(df2))
 
@@ -360,8 +366,8 @@ class PostProcessing:
 
     def plot_total_pressure(self):
         """ Plot the total pressure over time. """
-        df1 = self.post.load_report("pressureCold")
-        df2 = self.post.load_report("pressureHot")
+        df1 = self.fluid.load_report("pressureCold")
+        df2 = self.fluid.load_report("pressureHot")
 
         n = min(len(df1), len(df2))
 
@@ -381,8 +387,8 @@ class PostProcessing:
 
     def plot_pressure_drop(self):
         """ Plot the pressure drop over time. """
-        df1 = self.post.load_report("pressureCold")
-        df2 = self.post.load_report("pressureHot")
+        df1 = self.fluid.load_report("pressureCold")
+        df2 = self.fluid.load_report("pressureHot")
 
         n = min(len(df1), len(df2))
 
@@ -400,8 +406,8 @@ class PostProcessing:
 
     def plot_total_temperature(self):
         """ Plot the total temperature over time. """
-        df1 = self.post.load_report("temperatureCold")
-        df2 = self.post.load_report("temperatureHot")
+        df1 = self.fluid.load_report("temperatureCold")
+        df2 = self.fluid.load_report("temperatureHot")
 
         n = min(len(df1), len(df2))
 
@@ -421,7 +427,7 @@ class PostProcessing:
 
     def plot_y_plus(self):
         """ Plot the y+ values over time. """
-        df = self.post.load_report("yPlus")
+        df = self.fluid.load_report("yPlus")
 
         x = df.iloc[:, 0]
         p_min = df.iloc[:, 2]
