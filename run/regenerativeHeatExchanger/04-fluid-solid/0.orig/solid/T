@@ -9,37 +9,40 @@ FoamFile
 {
     format      ascii;
     class       volScalarField;
-    location    "0/fluid";
+    location    "0/solid";
     object      T;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [ 0 0 0 1 0 0 0 ];
 
-#include "../constant/userParameters"
+#include "../../constant/userParameters"
 
-internalField    uniform $fluidTemperature;
+internalField   uniform $solidTemperature;
 
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    fluidHot
+    "solid(Top|Bottom)"
     {
-        type            fixedValue;
-        value           uniform $fluidTemperature;
+        type            externalTemperature;
+        Ta              constant $envTemperature;
+        h               uniform $envCoefficient;
+        thicknessLayers ($wallThickness);
+        kappaLayers     ($wallConductivity);
+        value           $internalField;
     }
-    fluidCold
-    {
-        type            inletOutlet;
-        value           uniform $fluidTemperature;
-        inletValue      uniform $fluidTemperature;
-    }
-    fluid_to_solid
+    solidSymmetry
     {
         type            zeroGradient;
     }
-    "cyclicFluid(Left|Right)"
+    solid_to_fluid
+    {
+        type            coupledTemperature;
+        value           $internalField;
+    }
+    "cyclicSolid(Left|Right)"
     {
         type            cyclic;
     }

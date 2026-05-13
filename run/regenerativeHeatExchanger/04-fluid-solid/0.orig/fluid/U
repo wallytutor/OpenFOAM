@@ -8,16 +8,17 @@
 FoamFile
 {
     format      ascii;
-    class       volScalarField;
+    class       volVectorField;
     location    "0/fluid";
-    object      p_rgh;
+    object      U;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [ 1 -1 -2 0 0 0 0 ];
+dimensions      [ 0 1 -1 0 0 0 0 ];
 
-// p - rho*g*h ~ 0
-internalField   uniform 101325.0;
+#include "../../constant/userParameters"
+
+internalField   uniform (0 0 0);
 
 boundaryField
 {
@@ -25,18 +26,16 @@ boundaryField
 
     fluidHot
     {
-        type            fixedFluxPressure;
-        value           $internalField;
+        type            fixedValue;
+        value           uniform (0 0 $inletVelocity);
     }
     fluidCold
     {
-        type            freestreamPressure;
-        freestreamValue $internalField;
-        // type            zeroGradient;
+        type            zeroGradient;
     }
     fluid_to_solid
     {
-        type            zeroGradient;
+        type            noSlip;
     }
     "cyclicFluid(Left|Right)"
     {
