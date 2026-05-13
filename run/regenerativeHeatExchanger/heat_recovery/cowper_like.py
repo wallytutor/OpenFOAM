@@ -298,9 +298,24 @@ class PostProcessing:
         self.mode = mode.lower()
         self.logs = self.root.parent / "logs"
 
-        fields, time = self.load_prepare_fields(case_dir=root)
-        self.fields = fields
-        self.time   = time
+        try:
+            fields, time = self.load_prepare_fields(case_dir=root)
+            self.fields = fields
+            self.time   = time
+        except Exception as err:
+            warnings.warn(f"Failed to load fields for post-processing: {err}")
+            self.fields = None
+            self.time = None
+
+    @staticmethod
+    def _ensure_has_time(fn):
+        """ Decorator to ensure that time is available for plotting. """
+        def wrapper(self, *args, **kwargs):
+            if self.time is None:
+                warnings.warn("Time information is not available for plotting.")
+                return
+            return fn(self, *args, **kwargs)
+        return wrapper
 
     #region: postProcessing
     def plot_inlet_mass_flow_rate(self):
@@ -535,6 +550,7 @@ class PostProcessing:
 
         return data.cell_data_to_point_data(), time
 
+    @_ensure_has_time
     def plot_field_temperature(self):
         if "T" not in self.fields.point_data:
             warnings.warn("Temperature field 'T' not found in the data.")
@@ -550,6 +566,7 @@ class PostProcessing:
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
+    @_ensure_has_time
     def plot_field_pressure(self):
         if "p" not in self.fields.point_data:
             warnings.warn("Pressure field 'p' not found in the data.")
@@ -565,6 +582,7 @@ class PostProcessing:
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
+    @_ensure_has_time
     def plot_field_density(self):
         if "rho" not in self.fields.point_data:
             warnings.warn("Density field 'rho' not found in the data.")
@@ -580,6 +598,7 @@ class PostProcessing:
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
+    @_ensure_has_time
     def plot_field_velocity(self):
         if "U" not in self.fields.point_data:
             warnings.warn("Velocity field 'U' not found in the data.")
@@ -595,6 +614,7 @@ class PostProcessing:
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
+    @_ensure_has_time
     def plot_field_buoyancy_pressure(self):
         if "p_rgh" not in self.fields.point_data:
             warnings.warn("Pressure field 'p_rgh' not found in the data.")
