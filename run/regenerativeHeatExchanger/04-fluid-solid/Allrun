@@ -6,37 +6,78 @@ cd ${0%/*} || exit 1
 # Wheter to start from scratch or restart from previous case
 mode="restart"
 
+# Whether to consider buoyancy effects or not
+buoyancy="no buoyancy"
+
 # Select number of cores to use for parallel run
-export NUM_PROCS=20
+export NUM_PROCS=6
 
+function generateMesh {
+    if [ -d "constant/fluid/polyMesh" ]; then
+        echo "Mesh already exists. Skipping mesh generation."
+        return
+    fi
 
-if [ "$mode" = "restart" ]; then
-    cp ../03-fluid-only/2.00000000e+00/* 0.00000000e+00/fluid
+    python3 model.py
 
-    fname="0.00000000e+00/fluid/T"
-    where="boundaryField/fluid_to_solid/type"
-    foamDictionary $fname -entry $where -set coupledTemperature
-    # TODO value
-else
-    foamDictionary 0.orig/p      -expand > 0.00000000e+00/p
-    foamDictionary 0.orig/T      -expand > 0.00000000e+00/T
-    foamDictionary 0.orig/U      -expand > 0.00000000e+00/U
-    foamDictionary 0.orig/alphat -expand > 0.00000000e+00/alphat
-    foamDictionary 0.orig/nut    -expand > 0.00000000e+00/nut
-    foamDictionary 0.orig/k      -expand > 0.00000000e+00/k
-    foamDictionary 0.orig/omega  -expand > 0.00000000e+00/omega
-    foamDictionary 0.orig/p_rgh  -expand > 0.00000000e+00/p_rgh
-fi
+    gmshToFoam mesh.msh
 
-# Expand solid temperature field to actual mesh
-foamDictionary 0.orig/solid/T -expand > 0.00000000e+00/solid/T
+    createPatch
 
-# Run the case in parallel
-decomposePar
-mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
+    renumberMesh
 
-# Reconstruct the results of final time step
-reconstructPar -latestTime
+    splitMeshRegions -cellZones
 
-# Generate logs for post-processing
-foamLog log.foamMultiRun
+    rm -rf constant/polyMesh
+
+    checkMesh -region fluid
+    checkMesh -region solid
+}
+
+function initializeCase {
+    if [ "$mode" = "restart" ]; then
+        mkdir -p 0.00000000e+00/{fluid,solid}
+        cp ../03-fluid-only/2.00000000e+00/* 0.00000000e+00/fluid
+
+        fname="0.00000000e+00/fluid/T"
+        where="boundaryField/fluid_to_solid"
+
+        foamDictionary $fname -entry $where/type -set coupledTemperature
+        foamDictionary $fname -entry $where/value -set 'uniform 300'
+
+        if [ "$buoyancy" != "buoyancy" ]; then
+            rm -rf 0.00000000e+00/fluid/p_rgh
+        fi
+    else
+        foamDictionary 0.orig/fluid/p      -expand > 0.00000000e+00/fluid/p
+        foamDictionary 0.orig/fluid/T      -expand > 0.00000000e+00/fluid/T
+        foamDictionary 0.orig/fluid/U      -expand > 0.00000000e+00/fluid/U
+        foamDictionary 0.orig/fluid/alphat -expand > 0.00000000e+00/fluid/alphat
+        foamDictionary 0.orig/fluid/nut    -expand > 0.00000000e+00/fluid/nut
+        foamDictionary 0.orig/fluid/k      -expand > 0.00000000e+00/fluid/k
+        foamDictionary 0.orig/fluid/omega  -expand > 0.00000000e+00/fluid/omega
+
+        if [ "$buoyancy" = "buoyancy" ]; then
+            foamDictionary 0.orig/p_rgh  -expand > 0.00000000e+00/fluid/p_rgh
+        fi
+    fi
+
+    # Expand solid temperature field to actual mesh
+    foamDictionary 0.orig/solid/T -expand > 0.00000000e+00/solid/T
+}
+
+function runCase {
+    # Run the case in parallel
+    decomposePar -allRegions
+    mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
+
+    # Reconstruct the results of final time step
+    reconstructPar -latestTime
+
+    # Generate logs for post-processing
+    foamLog log.foamMultiRun
+}
+
+generateMesh
+initializeCase
+runCase
