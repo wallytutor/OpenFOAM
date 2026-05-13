@@ -15,7 +15,7 @@ FoamFile
 
 #includeFunc residuals (
     name   = residuals,
-    fields = (p_rgh U h)
+    fields = (U h)
 )
 
 // ------------------------------------------------------------------------- //
