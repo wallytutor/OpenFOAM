@@ -37,7 +37,8 @@ boundaryField
     }
     fluid_to_solid
     {
-        type            zeroGradient;
+        type            coupledTemperature;
+        value           uniform $solidTemperature;
     }
     "cyclicFluid(Left|Right)"
     {

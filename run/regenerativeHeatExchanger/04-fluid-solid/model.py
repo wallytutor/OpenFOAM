@@ -58,7 +58,7 @@ def generate_charging_case(config, mesh) -> None:
 
 
 def post_process(here):
-    post = PostProcessing(here, mode="charging", domain=None)
+    post = PostProcessing(here, mode="charging", domain="fluid")
 
     post.plot_inlet_mass_flow_rate()
     post.plot_imbalance_mass_flow_rate()
