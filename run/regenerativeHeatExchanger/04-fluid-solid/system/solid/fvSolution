@@ -9,51 +9,44 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    location    "system/solid";
+    object      fvSolution;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../constant/userParameters"
-
-regionSolvers
+solvers
 {
-    fluid           fluid;
-    solid           solid;
+    e
+    {
+        // solver           PCG;
+        // preconditioner   DIC;
+
+        solver           GAMG;
+        smoother         symGaussSeidel;
+
+        tolerance        1e-6;
+        relTol           0.1;
+        maxIter          10;
+    }
+
+    eFinal
+    {
+        $e;
+        relTol           0;
+    }
 }
 
-startFrom         latestTime;
+PIMPLE
+{
+    nNonOrthogonalCorrectors 0;
+}
 
-startTime         0;
-
-stopAt            endTime;
-
-endTime           2.0;
-
-deltaT            1.0e-04;
-
-writeControl      adjustableRunTime;
-
-writeInterval     0.1;
-
-purgeWrite        0;
-
-writeFormat       ascii;
-
-writePrecision    6;
-
-writeCompression  off;
-
-timeFormat        scientific;
-
-timePrecision     8;
-
-runTimeModifiable true;
-
-maxCo             0.75;
-
-maxDeltaT         0.01;
-
-adjustTimeStep    no;
+relaxationFactors
+{
+    equations
+    {
+        ".*" 1;
+    }
+}
 
 // ************************************************************************* //

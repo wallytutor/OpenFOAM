@@ -9,51 +9,34 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "system";
-    object      controlDict;
+    location    "system/solid";
+    object      fvSchemes;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#include "../constant/userParameters"
-
-regionSolvers
+ddtSchemes
 {
-    fluid           fluid;
-    solid           solid;
+    default         Euler;
 }
-
-startFrom         latestTime;
-
-startTime         0;
-
-stopAt            endTime;
-
-endTime           2.0;
-
-deltaT            1.0e-04;
-
-writeControl      adjustableRunTime;
-
-writeInterval     0.1;
-
-purgeWrite        0;
-
-writeFormat       ascii;
-
-writePrecision    6;
-
-writeCompression  off;
-
-timeFormat        scientific;
-
-timePrecision     8;
-
-runTimeModifiable true;
-
-maxCo             0.75;
-
-maxDeltaT         0.01;
-
-adjustTimeStep    no;
+gradSchemes
+{
+    default         Gauss linear;
+}
+divSchemes
+{
+    default         none;
+}
+laplacianSchemes
+{
+    default         Gauss linear corrected;
+}
+interpolationSchemes
+{
+    default         linear;
+}
+snGradSchemes
+{
+    default         corrected;
+}
 
 // ************************************************************************* //
