@@ -13,9 +13,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-#includeFunc residuals (
+#includeFunc residuals
+(
     name   = residuals,
+    region = fluid,
     fields = (p_rgh U h)
+)
+
+#includeFunc residuals
+(
+    name   = residuals,
+    region = solid,
+    fields = (e)
 )
 
 // ------------------------------------------------------------------------- //
@@ -23,6 +32,7 @@ FoamFile
 #includeFunc patchFlowRate
 (
     name   = flowRateCold,
+    region = fluid,
     patch  = fluidCold,
     field  = phi
 )
@@ -30,6 +40,7 @@ FoamFile
 #includeFunc patchFlowRate
 (
     name   = flowRateHot,
+    region = fluid,
     patch  = fluidHot,
     field  = phi
 )
@@ -39,6 +50,7 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = temperatureCold,
+    region = fluid,
     patch  = fluidCold,
     field  = T
 )
@@ -46,6 +58,7 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = temperatureHot,
+    region = fluid,
     patch  = fluidHot,
     field  = T
 )
@@ -55,6 +68,7 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = pressureCold,
+    region = fluid,
     patch  = fluidCold,
     field  = p
 )
@@ -62,6 +76,7 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = pressureHot,
+    region = fluid,
     patch  = fluidHot,
     field  = p
 )
@@ -71,7 +86,40 @@ FoamFile
 #includeFunc yPlus
 (
     name   = yPlus,
+    region = fluid,
     patch  = fluid_to_solid
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc volAverage
+(
+    name   = solidTemperature,
+    region = solid,
+    field  = T
+)
+
+#includeFunc volIntegrate
+(
+    name   = solidEnergy,
+    region = solid,
+    field  = e
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc wallHeatFlux
+(
+    name   = fluidToSolidHeatFlux,
+    region = fluid,
+    patch  = fluid_to_solid
+)
+
+#includeFunc wallHeatFlux
+(
+    name   = solidToFluidHeatFlux,
+    region = solid,
+    patch  = solid_to_fluid
 )
 
 // ************************************************************************* //
