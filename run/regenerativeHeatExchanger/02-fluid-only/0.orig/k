@@ -20,14 +20,13 @@ internalField   uniform 0.004;
 
 boundaryField
 {
-    // XXX outlet is the inlet for hot gas and vice-versa!
-    fluidOutlet
+    fluidHot
     {
         type            turbulentIntensityKineticEnergyInlet;
         intensity       0.005;
         value           $internalField;
     }
-    fluidInlet
+    fluidCold
     {
         type            inletOutlet;
         phi             phi;

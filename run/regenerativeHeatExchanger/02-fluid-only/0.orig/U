@@ -24,17 +24,14 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    // XXX outlet is the inlet for hot gas and vice-versa!
-    fluidOutlet
+    fluidHot
     {
         type            fixedValue;
         value           uniform (0 0 $inletVelocity);
     }
-    fluidInlet
+    fluidCold
     {
         type            zeroGradient;
-        // type            pressureInletOutletVelocity;
-        // value           $internalField;
     }
     fluid_to_solid
     {
