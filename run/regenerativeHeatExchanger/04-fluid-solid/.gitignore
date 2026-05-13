@@ -4,8 +4,8 @@ stop.sh
 cellToRegion
 constant/cellToRegion
 constant/polyMesh/
-constant/solid/
-constant/fluid/
+constant/solid/polyMesh/
+constant/fluid/polyMesh/
 postProcessing
 processor*/
 VTK/
