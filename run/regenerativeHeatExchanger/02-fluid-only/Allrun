@@ -31,10 +31,10 @@ foamDictionary 0.orig/omega  -expand > 0.00000000e+00/omega
 
 # Run the case in parallel
 decomposePar
-mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun
+mpiexec -n $NUM_PROCS foamRun -parallel > log.foamRun
 
 # Reconstruct the results of final time step
 reconstructPar -latestTime
 
 # Generate logs for post-processing
-foamLog log.foamMultiRun
+foamLog log.foamRun
