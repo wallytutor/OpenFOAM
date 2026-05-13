@@ -396,6 +396,26 @@ class PostProcessing:
         p.axes[0].set_ylabel("Total temperature [°C]")
         p.resize(6, 5)
         p.savefig(self.root / "05-total_temperature.png")
+
+    def plot_y_plus(self):
+        """ Plot the y+ values over time. """
+        df = self.post.load_report("yPlus")
+
+        x = df.iloc[:, 0]
+        p_min = df.iloc[:, 2]
+        p_max = df.iloc[:, 3]
+        p_avg = df.iloc[:, 4]
+
+        p = plot_xy()
+        p.axes[0].plot(x, p_min, label="Min y+")
+        p.axes[0].plot(x, p_max, label="Max y+")
+        p.axes[0].plot(x, p_avg, label="Avg y+")
+        p.axes[0].legend(loc="best", fontsize="small")
+        p.axes[0].set_title(f"y+ values during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("y+")
+        p.resize(6, 5)
+        p.savefig(self.root / "06-y_plus.png")
     #endregion: postProcessing
 
     #region: foamLog

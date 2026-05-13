@@ -16,6 +16,7 @@ post.plot_imbalance_mass_flow_rate()
 post.plot_total_pressure()
 post.plot_pressure_drop()
 post.plot_total_temperature()
+post.plot_y_plus()
 post.plot_convergence()
 
 post.plot_field_temperature()
