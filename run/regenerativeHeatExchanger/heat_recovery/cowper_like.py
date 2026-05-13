@@ -29,6 +29,13 @@ DEFAULT_OPTIONS = {
 }
 
 
+def _simple_warning(message, category, filename, lineno, file=None, line=None):
+    return f"{category.__name__}: {message}\n"
+
+
+warnings.formatwarning = _simple_warning
+
+
 class CowperLikeGeometry:
     """ Geometry of a Cowper-like regenerative heat exchanger.
 
@@ -425,14 +432,20 @@ class PostProcessing:
                  "eFinalRes_0", "hFinalRes_0",
                  "kFinalRes_0", "omegaFinalRes_0"]
 
+        has_plots = False
         p = plot_xy()
 
         for fname in final:
             try:
                 df = pd.read_csv(self.logs / fname, sep=r"\s+", header=None)
                 p.axes[0].plot(np.log10(df[1]), label=fname.split("_")[0])
+                has_plots = True
             except FileNotFoundError as err:
                 print(err)
+
+        if not has_plots:
+            warnings.warn("No convergence data found to plot.")
+            return
 
         p.axes[0].set_ylim(ymin, ymax)
         p.axes[0].set_title(f"Convergence during {self.mode}")
@@ -579,6 +592,21 @@ class PostProcessing:
 
         plot = pv.Plotter()
         plot.add_mesh(self.fields, scalars="U", cmap="jet", **opts)
+        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        plot.show()
+
+    def plot_field_buoyancy_pressure(self):
+        if "p_rgh" not in self.fields.point_data:
+            warnings.warn("Pressure field 'p_rgh' not found in the data.")
+            return
+
+        opts = self.get_options(
+            self.time, scalar_bar={"fmt": "%.0f"},
+            fn_title=lambda t: f"Buoyancy pressure at t = {t:.0f} s\n"
+        )
+
+        plot = pv.Plotter()
+        plot.add_mesh(self.fields, scalars="p_rgh", cmap="plasma", **opts)
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
     #endregion: fields
