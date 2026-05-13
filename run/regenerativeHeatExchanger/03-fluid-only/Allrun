@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Wheter to start from scratch or restart from previous case
+mode="restart"
+
+# Select number of cores to use for parallel run
+export NUM_PROCS=20
+
+# Copy mesh from previous case:
+cp -avr ../01-fluid-only/constant/polyMesh constant/polyMesh
+
+if [ "$mode" = "restart" ]; then
+    cp -avr ../02-fluid-only/2.00000000e+00 0.00000000e+00
+    rm -rf 0.00000000e+00/uniform/
+else
+    # Expand original conditions to actual mesh
+    mkdir -p 0.00000000e+00
+    foamDictionary 0.orig/p      -expand > 0.00000000e+00/p
+    foamDictionary 0.orig/T      -expand > 0.00000000e+00/T
+    foamDictionary 0.orig/U      -expand > 0.00000000e+00/U
+fi
+
+# Expand turbulence/buoyancy fields to actual mesh
+foamDictionary 0.orig/alphat -expand > 0.00000000e+00/alphat
+foamDictionary 0.orig/nut    -expand > 0.00000000e+00/nut
+foamDictionary 0.orig/k      -expand > 0.00000000e+00/k
+foamDictionary 0.orig/omega  -expand > 0.00000000e+00/omega
+foamDictionary 0.orig/p_rgh  -expand > 0.00000000e+00/p_rgh
+
+# Run the case in parallel
+decomposePar
+mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun
+
+# Reconstruct the results of final time step
+reconstructPar -latestTime
+
+# Generate logs for post-processing
+foamLog log.foamMultiRun
