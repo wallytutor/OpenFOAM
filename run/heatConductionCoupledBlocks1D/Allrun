@@ -29,12 +29,12 @@ if [ ! -d constant/block/polyMesh ] ||
 
     # Fix patches that are over directions not used by solution
     foamDictionary constant/polyMesh/boundary \
-    -entry entry0/sides_block/type \
-    -set empty > log.2.setBoundaryType 2>&1
+        -entry entry0/sides_block/type \
+        -set empty > log.2.setBoundaryType 2>&1
 
     foamDictionary constant/polyMesh/boundary \
-    -entry entry0/sides_media/type \
-    -set empty >> log.2.setBoundaryType 2>&1
+        -entry entry0/sides_media/type \
+        -set empty >> log.2.setBoundaryType 2>&1
 
     # Prepare and check the mesh for use with region coupling
     renumberMesh > log.3.renumberMesh 2>&1
