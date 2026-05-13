@@ -2,9 +2,9 @@
 import numpy as np
 import pandas as pd
 import pyvista as pv
-from majordome_simulation.meshing import GmshOCCModel
-from majordome_simulation.meshing import GeometricProgression
-from majordome_utilities.plotting import plot2d
+from majordome.simulation import GmshOCCModel
+from majordome.simulation import GeometricProgression
+from majordome.utilities import plot_xy
 from matplotlib import pyplot as plt
 from matplotlib.lines import Line2D
 from pathlib import Path
@@ -49,6 +49,95 @@ CP: float = 1000.0
 
 K: float = 1.0
 """ Thermal conductivity of the material [W/(m·K)]. """
+
+
+def conductivity(T):
+    """ Reference thermal conductivity of material A. """
+    return 1.9847 - T * (2.531209E-03 - 1.43E-06 * T)
+
+
+def load_conductivity_data(fname="data/k_imperial.dat"):
+    """ Load the conductivity data from the given file. """
+    df = pd.read_csv(fname, sep=r"\s+", header=None, comment="#")
+    # df.columns = ["T", "k_A", "k_B"]
+
+    df[0] += 273.15
+    df[1] *= 0.144131  # Btu/(hr·ft·°F) to W/(m·K)
+    df[2] *= 0.144131  # Btu/(hr·ft·°F) to W/(m·K)
+
+    return df
+
+
+def plot_conductivity():
+    """ Plot the conductivity data from the given dataframe. """
+    df = load_conductivity_data()
+    T = np.linspace(df[0].min(), df[0].max(), 100)
+    k = conductivity(T)
+
+    p = plot_xy()
+    p.axes[0].plot(df[0].to_numpy(), df[1].to_numpy(), "ko", label="RS")
+    p.axes[0].plot(df[0].to_numpy(), df[2].to_numpy(), "ro", label="AS")
+    p.axes[0].plot(T, k, "k", label="_none_")
+    p.axes[0].set_xlabel("Temperature [K]")
+    p.axes[0].set_ylabel("Thermal conductivity [W/(m·K)]")
+    p.axes[0].legend(loc=3, fontsize="small")
+    p.axes[0].set_xlim(200, 1200)
+    # p.savefig("../conductivity.png")
+
+
+def plot_specific_heat_capacity():
+    """ Plot the specific heat capacity data from the given dataframe. """
+    df = pd.read_csv("data/cp.dat", sep=r"\s+", header=None)
+    T = np.linspace(df[0].min(), df[0].max(), 100)
+    cp = np.interp(T, df[0].to_numpy(),  df[1].to_numpy())
+
+    p = plot_xy()
+    p.axes[0].plot(df[0].to_numpy(), df[1].to_numpy(), "ko", label="Data")
+    p.axes[0].plot(T, cp, "k", label="_none_")
+    p.axes[0].set_xlabel("Temperature [K]")
+    p.axes[0].set_ylabel("Specific heat capacity [J/(kg·K)]")
+    p.axes[0].legend(loc=2, fontsize="small")
+    p.axes[0].set_xlim(200, 1200)
+    p.axes[0].set_ylim(900, 1100)
+    # p.savefig("../specific_heat_capacity.png")
+
+
+def print_table(x, y):
+    """ Print a table of the given x and y values. """
+    for xk, yk in zip(x, y):
+        print(f"({xk:6.1f} {yk:6.3f})")
+
+
+def tabulate_specific_heat_capacity(T):
+    """ Tabulate the specific heat capacity of the material. """
+    df = pd.read_csv("data/cp.dat", sep=r"\s+", header=None)
+    cp = np.interp(T, df[0].to_numpy(),  df[1].to_numpy())
+
+    print("\nSpecific heat capacity [J/(kg·K)]")
+    print_table(T, cp)
+
+
+def tabulate_conductivity(T, n):
+    """ Tabulate the thermal conductivity of the material. """
+    df = load_conductivity_data()
+    kc = np.interp(T, df[0].to_numpy(),  df[n].to_numpy())
+
+    print(f"\nThermal conductivity {n} [W/(m·K)]")
+    print_table(T, kc)
+
+
+def prepare_data():
+    """ Pre-process the data for the simulation. """
+    T_new = np.arange(200, 1301, 100)
+
+    tabulate_specific_heat_capacity(T_new)
+    tabulate_conductivity(T_new, n=1)
+    tabulate_conductivity(T_new, n=2)
+    plot_conductivity()
+
+    # XXX: only rhoConst is supported, not worth printing...
+    # df = pd.read_csv("rho.dat", sep=r"\s+", header=None)
+    # rho_new = np.interp(T_new, df[0].to_numpy(),  df[1].to_numpy())
 
 
 def generate_domain(
@@ -235,14 +324,17 @@ def plot_evolution(z, times, data, z_max=0.05, saveas="evolution.png"):
 
     z_lims = (z_selected[0], z_selected[-1])
     t_lims = (times[0], times[-1])
-    extent = (z_lims[0], z_lims[1], t_lims[0], t_lims[1])
+
+    # Get extent and convert to cm:
+    extent = (100*z_lims[0], 100*z_lims[1], t_lims[0], t_lims[1])
 
     Z, TT = np.meshgrid(z_selected, times_s)
     analytical_field = analytical(-Z, TT)
 
     plt.close("all")
-    cb = plt.imshow(selected, aspect="auto", extent=extent,
-                    origin="lower", cmap="hot")
+    fig, ax = plt.subplots(figsize=(8, 6), facecolor="white")
+    cb = ax.imshow(selected, aspect="auto", extent=extent,
+                   origin="lower", cmap="hot")
 
     opts1 = dict(levels=[200.0], colors="cyan", linewidths=1.5)
     opts2 = dict(levels=[200.0], colors="lime", linewidths=1.5)
@@ -252,16 +344,24 @@ def plot_evolution(z, times, data, z_max=0.05, saveas="evolution.png"):
     line2 = Line2D([0], [0], color="lime", linewidth=1.5,
                    label="Analytical 200 °F")
 
-    plt.contour(z_selected, times, selected, **opts1)
-    plt.contour(z_selected, times, analytical_field, **opts2)
-    plt.legend(handles=[line1, line2], loc=4, fontsize="small")
+    ax.contour(100*z_selected, times, selected, **opts1)
+    ax.contour(100*z_selected, times, analytical_field, **opts2)
+    ax.legend(handles=[line1, line2], loc=2, fontsize="small")
 
-    plt.xlabel("z [m]")
-    plt.ylabel("time [min]")
-    plt.title("Temperature [°F]")
+    ax.set_xlabel("Position [cm]")
+    ax.set_ylabel("Time [min]")
+    ax.set_title("Temperature evolution in block")
+
+    ax.set_xlim(100*z_lims[0], 100*z_lims[1])
+    ax.set_ylim(t_lims[0], t_lims[1])
+
+    ax.set_xticks(np.arange(0, 100*z_lims[1]+1, 1))
+    ax.set_yticks(np.arange(0, t_lims[1]+1, 2))
 
     cbar = plt.colorbar(cb, label="Temperature [°F]")
     cbar.set_ticks([100, 200, 400, 600, 800, 1000])
+    fig.tight_layout()
+
     plt.savefig(saveas, dpi=300)
 
 
