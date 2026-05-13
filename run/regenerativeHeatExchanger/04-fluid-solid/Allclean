@@ -20,8 +20,9 @@ find . \
 rm -rf case.foam
 rm -rf mesh.msh
 rm -rf constant/cellToRegion
-rm -rf constant/solid/
-rm -rf constant/fluid/
+rm -rf constant/polyMesh/
+rm -rf constant/solid/polyMesh/
+rm -rf constant/fluid/polyMesh/
 rm -rf postProcessing
 rm -rf processor*
 rm -rf log.*
