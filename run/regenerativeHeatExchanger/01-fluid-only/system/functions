@@ -23,14 +23,14 @@ FoamFile
 #includeFunc patchFlowRate
 (
     name   = flowRateInlet,
-    patch  = fluidInlet,
+    patch  = fluidCold,
     field  = phi
 )
 
 #includeFunc patchFlowRate
 (
     name   = flowRateOutlet,
-    patch  = fluidOutlet,
+    patch  = fluidHot,
     field  = phi
 )
 
@@ -39,14 +39,14 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = temperatureInlet,
-    patch  = fluidInlet,
+    patch  = fluidCold,
     field  = T
 )
 
 #includeFunc patchAverage
 (
     name   = temperatureOutlet,
-    patch  = fluidOutlet,
+    patch  = fluidHot,
     field  = T
 )
 
@@ -55,14 +55,14 @@ FoamFile
 #includeFunc patchAverage
 (
     name   = pressureInlet,
-    patch  = fluidInlet,
+    patch  = fluidCold,
     field  = p
 )
 
 #includeFunc patchAverage
 (
     name   = pressureOutlet,
-    patch  = fluidOutlet,
+    patch  = fluidHot,
     field  = p
 )
 

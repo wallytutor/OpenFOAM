@@ -6,6 +6,7 @@ cd ${0%/*} || exit 1
 # ---------------------------------------------------------------------
 # Remove top-level time directories like 0.00000000e+00
 # ---------------------------------------------------------------------
+
 find . \
     -mindepth 1 -maxdepth 1 -type d \
 	-regextype posix-extended \

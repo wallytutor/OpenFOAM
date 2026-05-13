@@ -17,14 +17,14 @@ FoamFile
 
 5 // entry0
 (
-    fluidInlet
+    fluidCold
     {
         type            patch;
         physicalType    patch;
         nFaces          37;
         startFace       223163;
     }
-    fluidOutlet
+    fluidHot
     {
         type            patch;
         physicalType    patch;

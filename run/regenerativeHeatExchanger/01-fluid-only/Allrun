@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Select number of cores to use for parallel run
+export NUM_PROCS=20
+
+# Expand original conditions to actual mesh
+mkdir -p 0.00000000e+00
+foamDictionary 0.orig/p -expand > 0.00000000e+00/p
+foamDictionary 0.orig/T -expand > 0.00000000e+00/T
+foamDictionary 0.orig/U -expand > 0.00000000e+00/U
+
+# Run the case in parallel
+decomposePar
+mpiexec -n $NUM_PROCS foamRun -parallel > log.foamMultiRun
+
+# Reconstruct the results of final time step
+reconstructPar -latestTime
