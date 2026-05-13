@@ -21,12 +21,12 @@ internalField   uniform 0;
 boundaryField
 {
     // XXX outlet is the inlet for hot gas and vice-versa!
-    fluidOutlet
+    fluidHot
     {
         type            calculated;
         value           $internalField;
     }
-    fluidInlet
+    fluidCold
     {
         type            calculated;
         value           $internalField;

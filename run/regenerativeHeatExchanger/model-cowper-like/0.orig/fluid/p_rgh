@@ -24,12 +24,12 @@ boundaryField
     #includeEtc "caseDicts/setConstraintTypes"
 
     // XXX outlet is the inlet for hot gas and vice-versa!
-    fluidOutlet
+    fluidHot
     {
         type            fixedFluxPressure;
         value           $internalField;
     }
-    fluidInlet
+    fluidCold
     {
         // type            zeroGradient;
         type            fixedValue;

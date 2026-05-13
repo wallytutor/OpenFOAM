@@ -23,12 +23,12 @@ boundaryField
     #includeEtc "caseDicts/setConstraintTypes"
 
     // XXX outlet is the inlet for hot gas and vice-versa!
-    fluidOutlet
+    fluidHot
     {
         type            calculated;
         value           $internalField;
     }
-    fluidInlet
+    fluidCold
     {
         type            calculated;
         value           $internalField;
@@ -44,11 +44,11 @@ boundaryField
     }
 
     // For pressure only
-    // fluidOutlet
+    // fluidHot
     // {
     //     type            zeroGradient;
     // }
-    // fluidInlet
+    // fluidCold
     // {
     //     type            fixedValue;
     //     value           $internalField;
@@ -59,12 +59,12 @@ boundaryField
     // }
 
     // Common buoyancy coupled flow
-    // fluidOutlet
+    // fluidHot
     // {
     //     type            calculated;
     //     value           $internalField;
     // }
-    // fluidInlet
+    // fluidCold
     // {
     //     // type            fixedValue;
     //     type            calculated;

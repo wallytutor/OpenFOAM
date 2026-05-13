@@ -104,8 +104,8 @@ from majordome.simulation import FoamPostProcessingLoader
 
 
 def pressure_drop_charging(fluid):
-    df_i = fluid.load_report("pressureInlet")
-    df_o = fluid.load_report("pressureOutlet")
+    df_i = fluid.load_report("pressureCold")
+    df_o = fluid.load_report("pressureHot")
 
     df = df_i.copy()
     df["Pressure"] = df_i.iloc[:, 1] - df_o.iloc[:, 1]
@@ -116,12 +116,12 @@ def pressure_drop_charging(fluid):
 fluid = FoamPostProcessingLoader("fluid")
 solid = FoamPostProcessingLoader("solid")
 
-# df = fluid.load_report("flowRateInlet")
-# df = fluid.load_report("flowRateOutlet")
+# df = fluid.load_report("flowRateCold")
+# df = fluid.load_report("flowRateHot")
 # df = fluid.load_report("fluidToSolidHeatFlux")
 # df = fluid.load_report("residualsFluid")
-# df = fluid.load_report("temperatureInlet")
-# df = fluid.load_report("temperatureOutlet")
+# df = fluid.load_report("temperatureCold")
+# df = fluid.load_report("temperatureHot")
 # df = fluid.load_report("yPlusFluid")
 # df = solid.load_report("residualsSolid")
 # df = solid.load_report("solidEnergy")

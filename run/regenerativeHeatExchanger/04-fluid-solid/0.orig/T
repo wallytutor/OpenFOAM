@@ -16,7 +16,7 @@ FoamFile
 
 dimensions      [ 0 0 0 1 0 0 0 ];
 
-#include "../../constant/userParameters"
+#include "../constant/userParameters"
 
 internalField    uniform $fluidTemperature;
 
@@ -24,7 +24,6 @@ boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
 
-    // XXX outlet is the inlet for hot gas and vice-versa!
     fluidHot
     {
         type            fixedValue;
@@ -33,13 +32,12 @@ boundaryField
     fluidCold
     {
         type            inletOutlet;
-        value           uniform $solidTemperature;
+        value           uniform $fluidTemperature;
         inletValue      uniform $fluidTemperature;
     }
     fluid_to_solid
     {
-        type            coupledTemperature;
-        value           uniform $solidTemperature;
+        type            zeroGradient;
     }
     "cyclicFluid(Left|Right)"
     {

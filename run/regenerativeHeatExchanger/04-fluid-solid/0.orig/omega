@@ -10,36 +10,33 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0/fluid";
-    object      T;
+    object      omega;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-dimensions      [ 0 0 0 1 0 0 0 ];
+dimensions      [0 0 -1 0 0 0 0];
 
-#include "../../constant/userParameters"
-
-internalField    uniform $fluidTemperature;
+internalField   uniform 100;
 
 boundaryField
 {
-    #includeEtc "caseDicts/setConstraintTypes"
-
-    // XXX outlet is the inlet for hot gas and vice-versa!
     fluidHot
     {
-        type            fixedValue;
-        value           uniform $fluidTemperature;
+        type            turbulentMixingLengthFrequencyInlet;
+        mixingLength    0.00175;
+        value           $internalField;
     }
     fluidCold
     {
         type            inletOutlet;
-        value           uniform $solidTemperature;
-        inletValue      uniform $fluidTemperature;
+        phi             phi;
+        inletValue      $internalField;
+        value           $internalField;
     }
     fluid_to_solid
     {
-        type            coupledTemperature;
-        value           uniform $solidTemperature;
+        type            omegaWallFunction;
+        value           $internalField;
     }
     "cyclicFluid(Left|Right)"
     {
