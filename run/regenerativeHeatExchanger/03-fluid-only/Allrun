@@ -1,19 +1,34 @@
 #!/usr/bin/env bash
 
+# ---------------------------------------------------------------------
+
 # Run from this directory
 cd ${0%/*} || exit 1
 
-# Wheter to start from scratch or restart from previous case
-mode="restart"
+# Source OpenFOAM environment helpers
+source ../../../script/foamrc
 
 # Select number of cores to use for parallel run
-export NUM_PROCS=20
+export NUM_PROCS=$(safe_run_ncores 20)
 
-# Copy mesh from previous case:
-cp -avr ../01-fluid-only/constant/polyMesh constant/polyMesh
+# ---------------------------------------------------------------------
+
+# Ensure mesh is present by extracting from archive if not already done
+if [ ! -d "constant/polyMesh" ]; then
+    mkdir -p constant/polyMesh
+    tar -xf ../mesh_single.tar.xz -C constant/polyMesh
+fi
+
+# ---------------------------------------------------------------------
+
+# Whether to start from scratch or restart from previous case
+mode="restart"
 
 if [ "$mode" = "restart" ]; then
-    cp -avr ../02-fluid-only/2.00000000e+00 0.00000000e+00
+    reference="../02-fluid-only"
+    last_time="$(foamListTimes -case "$reference" -latestTime)"
+
+    cp -avr "$reference/$last_time" 0.00000000e+00
     rm -rf 0.00000000e+00/uniform/
 else
     # Expand original conditions to actual mesh
@@ -21,14 +36,16 @@ else
     foamDictionary 0.orig/p      -expand > 0.00000000e+00/p
     foamDictionary 0.orig/T      -expand > 0.00000000e+00/T
     foamDictionary 0.orig/U      -expand > 0.00000000e+00/U
+    foamDictionary 0.orig/alphat -expand > 0.00000000e+00/alphat
+    foamDictionary 0.orig/nut    -expand > 0.00000000e+00/nut
+    foamDictionary 0.orig/k      -expand > 0.00000000e+00/k
+    foamDictionary 0.orig/omega  -expand > 0.00000000e+00/omega
 fi
 
-# Expand turbulence/buoyancy fields to actual mesh
-foamDictionary 0.orig/alphat -expand > 0.00000000e+00/alphat
-foamDictionary 0.orig/nut    -expand > 0.00000000e+00/nut
-foamDictionary 0.orig/k      -expand > 0.00000000e+00/k
-foamDictionary 0.orig/omega  -expand > 0.00000000e+00/omega
+# Expand buoyancy fields to actual mesh
 foamDictionary 0.orig/p_rgh  -expand > 0.00000000e+00/p_rgh
+
+# ---------------------------------------------------------------------
 
 # Run the case in parallel
 decomposePar
