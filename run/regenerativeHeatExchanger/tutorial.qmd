@@ -307,6 +307,8 @@ case_dir = HERE / "01-fluid-only"
 post = PostProcessing(case_dir, mode="charging")
 ```
 
+## Tabular post-processing
+
 ```{python}
 post.plot_inlet_mass_flow_rate()
 ```
@@ -331,6 +333,8 @@ post.plot_total_temperature()
 post.plot_y_plus()
 ```
 
+## Field post-processing
+
 ```{python}
 runner(["reconstructPar", "-latestTime"], wdir=case_dir)
 ```
@@ -351,9 +355,107 @@ post.plot_field_velocity()
 post.plot_field_temperature()
 ```
 
+## Convergence checks
 
 ```{python}
 post.plot_convergence()
 ```
+
+# Including turbulence
+
+```bash
+02-fluid-only/
+├── 0.orig
+│   ├── T
+│   ├── U
+│   ├── alphat
+│   ├── k
+│   ├── nut
+│   ├── omega
+│   └── p
+├── Allclean
+├── Allrun
+├── constant
+│   ├── momentumTransport
+│   ├── physicalProperties
+│   └── userParameters
+├── inspect.py
+└── system
+    ├── controlDict
+    ├── createPatchDict
+    ├── decomposeParDict
+    ├── functions
+    ├── fvConstraints
+    ├── fvSchemes
+    └── fvSolution
+```
+
+```{python}
+#| echo: true
+case_dir = HERE / "02-fluid-only"
+post = PostProcessing(case_dir, mode="charging")
+```
+
+## Tabular post-processing
+
+```{python}
+post.plot_inlet_mass_flow_rate()
+```
+
+```{python}
+post.plot_imbalance_mass_flow_rate()
+```
+
+```{python}
+post.plot_total_pressure()
+```
+
+```{python}
+post.plot_pressure_drop()
+```
+
+```{python}
+post.plot_total_temperature()
+```
+
+```{python}
+post.plot_y_plus()
+```
+
+## Field post-processing
+
+```{python}
+runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+```
+
+```{python}
+post.plot_field_pressure()
+```
+
+```{python}
+post.plot_field_density()
+```
+
+```{python}
+post.plot_field_velocity()
+```
+
+```{python}
+post.plot_field_temperature()
+```
+
+<!--
+post.plot_field_turb_kinetic_energy()
+post.plot_field_turb_dissipation_rate()
+post.plot_field_buoyancy_pressure()
+-->
+
+## Convergence checks
+
+```{python}
+post.plot_convergence()
+```
+
+# Including buoyancy effects
 
 # Adding solid region
