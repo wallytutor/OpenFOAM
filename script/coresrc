@@ -1,0 +1,78 @@
+#!/usr/bin/env bash
+
+get_physical_cores() {
+    # Get the number of physical CPU cores.
+    #
+    # Usage:
+    #   get_physical_cores
+    #
+    # Description:
+    #   Uses `lscpu` parse output and counts unique socket/core pairs.
+    #   Prints the physical core count to stdout.
+    #
+    # Returns:
+    #   0 on success (prints integer core count), non-zero on failure.
+    #
+    # Examples:
+    #   get_physical_cores
+
+    if ! command -v lscpu > /dev/null 2>&1; then
+        echo "Error: lscpu command not found. Cannot determine physical cores." >&2
+        return 1
+    fi
+
+    local phys_cores
+    phys_cores=$(lscpu -p=core,socket | grep -v '^#' | sort -u | wc -l) || return 1
+
+    if [ -z "$phys_cores" ] || ! [[ "$phys_cores" =~ ^[0-9]+$ ]] || [ "$phys_cores" -le 0 ]; then
+        echo "Error: failed to parse physical core count from lscpu output." >&2
+        return 1
+    fi
+
+    echo "$phys_cores"
+}
+
+safe_run_ncores() {
+    # Return a safe number of cores for execution.
+    #
+    # Usage:
+    #   safe_run_ncores REQUESTED_CORES
+    #
+    # Arguments:
+    #   REQUESTED_CORES    Number of cores requested by the caller
+    #
+    # Description:
+    #   Returns the requested core count if it does not exceed physical cores.
+    #   If it exceeds physical cores, returns physical core count instead.
+    #   Diagnostics are printed to stderr; stdout only prints the final integer.
+    #
+    # Returns:
+    #   0 on success (prints integer core count), non-zero on failure.
+    #
+    # Examples:
+    #   safe_run_ncores 8
+    #   ncores=$(safe_run_ncores 32)
+
+    local requested_cores="$1"
+    local phys_cores
+
+    if [ -z "$requested_cores" ]; then
+        echo "Error: missing REQUESTED_CORES argument." >&2
+        return 1
+    fi
+
+    if ! [[ "$requested_cores" =~ ^[0-9]+$ ]] || [ "$requested_cores" -le 0 ]; then
+        echo "Error: REQUESTED_CORES must be a positive integer (got '$requested_cores')." >&2
+        return 1
+    fi
+
+    phys_cores=$(get_physical_cores) || return 1
+
+    if [ "$requested_cores" -gt "$phys_cores" ]; then
+        echo "Requested cores ($requested_cores) exceed physical cores ($phys_cores)." >&2
+        echo "Using $phys_cores instead of requested $requested_cores." >&2
+        echo "$phys_cores"
+    else
+        echo "$requested_cores"
+    fi
+}

@@ -24,10 +24,10 @@ rename_stl_files_from_solid_names() {
     #   rename_stl_files_from_solid_names /path/to/stls      # Specific directory
     #   rename_stl_files_from_solid_names --dry-run          # Test mode
     #   rename_stl_files_from_solid_names -n /path/to/stls   # Test in specific dir
-    
+
     local directory="."
     local dry_run=false
-    
+
     # Parse arguments
     while [[ $# -gt 0 ]]; do
         case $1 in
@@ -60,14 +60,14 @@ rename_stl_files_from_solid_names() {
                 ;;
         esac
     done
-    
+
     if [ "$dry_run" = true ]; then
         echo "DRY RUN MODE - No files will be renamed"
     fi
-    
+
     echo "Scanning STL files in: $directory"
     echo "----------------------------------------"
-    
+
     # Change to target directory if specified
     if [ "$directory" != "." ]; then
         pushd "$directory" > /dev/null || {
@@ -75,21 +75,21 @@ rename_stl_files_from_solid_names() {
             return 1
         }
     fi
-    
+
     local count=0
     local skipped=0
     local warnings=0
-    
+
     for stl_file in *.stl; do
         # Skip if no STL files found
         [ -f "$stl_file" ] || continue
-        
+
         # Extract text between quotes from first line
         local solid_name=$(head -n 1 "$stl_file" | grep -oP '(?<=").*?(?=")')
-        
+
         if [ -n "$solid_name" ]; then
             local new_name="${solid_name}.stl"
-            
+
             # Skip if file already has the correct name
             if [ "$stl_file" != "$new_name" ]; then
                 if [ "$dry_run" = true ]; then
@@ -108,12 +108,12 @@ rename_stl_files_from_solid_names() {
             ((warnings++))
         fi
     done
-    
+
     # Return to original directory if we changed
     if [ "$directory" != "." ]; then
         popd > /dev/null
     fi
-    
+
     echo "----------------------------------------"
     echo "Summary:"
     if [ "$dry_run" = true ]; then
