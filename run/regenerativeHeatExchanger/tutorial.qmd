@@ -1,0 +1,281 @@
+---
+title: "Regenerative Heat Exchanger Tutorial"
+author: "Walter Dal'Maz Silva"
+date: today
+format: pdf
+---
+
+# Introduction
+
+In this tutorial we will go through the steps to create a regenerative heat exchanger case in OpenFOAM. We will start by generating the geometry and mesh using Gmsh, then we will set up the case for a fluid-only simulation, and finally we will add the solid region to create a coupled fluid-solid case. The steps are decomposed into:
+
+- `01-fluid-only/`: establish a fluid-only case for initialization of flow pattern. This is a minimalistic case, mostly focused on getting a basic flow solution for testing the mesh quickly.
+
+- `02-fluid-only/`: include turbulence in the fluid-only case. This is the case that should be used for the final fluid-only solution, which will be used as initial condition for the coupled case.
+
+::: {.callout-note title="Generating a new mesh"}
+
+Please notice generating a new mesh, you should manually clean the `01-fluid-only` case and residuals in the project root. That means:
+
+- Delete the `constant/polyMesh` and `0.00000000e+00` directories.
+- Delete any `.tar.xz` file and any residual `mesh.msh`  from a previous run
+
+This is intentional to ensure that the new mesh is created on intention, and to prevent accidental overwriting of existing data.
+
+:::
+
+# Environment setup
+
+Before starting, we import all required tools and libraries. It is simpler to track the environment when everything is imported in one place.
+
+```{python}
+#| echo: true
+import os
+import shutil
+import sys
+import tarfile
+from pathlib import Path
+from subprocess import run
+from heat_recovery.cowper_like import CowperLikeGeometry
+from heat_recovery.thermocline import ThermoclineModel
+from majordome.engineering import SolutionDimless
+from majordome.engineering import SkinFrictionFactor
+from majordome.engineering import WallGradingCalculator
+from ruamel.yaml import YAML
+```
+
+```{python}
+#| echo: false
+# If running in a Jupyter notebook, __file__ is not defined, so we use
+# the current working directory as the base path. If running as a script,
+# we use the directory of the script as the base path. This allows us to
+# have a consistent reference point for file paths regardless of the
+# execution environment.
+try:
+    HERE = Path(__file__).parent
+except NameError:
+    HERE = Path(os.getcwd())
+```
+
+::: {.callout-note title="Environment variables"}
+
+All cases require a `NUM_PROCS` environment variable to be set. This is used to set the number of processors for parallel runs. By default, we set it to 4, but you can change it based on your system capabilities.
+
+```{python}
+#| echo: true
+ENV = os.environ.copy()
+ENV["NUM_PROCS"] = "4"
+```
+
+:::
+
+Some pervasive variables used across the tutorial: the configuration file with the heat exchanger paramenters, and the name of the mesh file to be generated.
+
+```{python}
+#| echo: true
+config = "dimensioning.yaml"
+mesh   = "mesh.msh"
+```
+
+# Geometry and mesh
+
+## Mesh generation
+
+The most important parameters for the mesh is the height of the first layer to be used. This is computed based on the expected flow conditions and the desired y+ value for the first layer. The `compute_first_layer` function takes care of this calculation, using the `ThermoclineModel` to get the necessary flow parameters and the `WallGradingCalculator` to compute the first layer thickness.
+
+```{python}
+#| echo: true
+def compute_first_layer(config: str) -> float:
+    """ Compute the first layer thickness for the charging case. """
+    model = ThermoclineModel(config)
+
+    y_p = model.num_y_plus
+    U_h = model.fn_U_g(*model.args_charging)
+
+    sol = SolutionDimless("airish.yaml")
+    sol.set_state(model.num_T_h, 101325, "N2: 0.79, O2: 0.21")
+    calc = WallGradingCalculator.from_solution(sol, L=model.num_D_h, U=U_h)
+
+    def f_tur(Re):
+        return SkinFrictionFactor.smooth_wall(Re, check=False) / 8
+
+    return calc.first_layer(y_p, skin_factor=f_tur)
+```
+
+Function `generate_mesh` is responsible for creating the mesh using the `CowperLikeGeometry` class. It makes use of `compute_first_layer` to get the first layer thickness, and then it creates the geometry and mesh based on the parameters defined in the configuration file. Please notice that if changing any configuration in `dimensioning.yaml`, it may be necessary to change the coefficients multiplying `y_first` and other boundary layer parameters used in this function.
+
+```{python}
+#| echo: true
+def generate_mesh(config: str, mesh: str, render: bool = False) -> None:
+    """ Generate the mesh and conditions for the charging case. """
+    y_first = compute_first_layer(config)
+
+    data = YAML().load(open(config))
+
+    geom = CowperLikeGeometry(
+        m_h = data["m_h"],
+        D_h = data["D_h"],
+        h_t = data["h_t"],
+
+        # Use with care based on the above values:
+        num_points_angular   = data["num_points_angular"],
+        num_points_core      = data["num_points_core"],
+        core_radius_fraction = data["core_radius_fraction"],
+        fluid_bl_tot         = data["fluid_bl_tot"] * y_first,
+        fluid_bl_ext         = data["fluid_bl_ext"] * y_first,
+        fluid_bl_int         = data["fluid_bl_int"] * y_first,
+        solid_bl_ext         = data["solid_bl_ext"] * y_first,
+        solid_bl_int         = data["solid_bl_int"] * y_first,
+        rel_layer            = data["rel_layer"],
+    )
+
+    geom.create_model(saveas=mesh, render=render)
+```
+
+Below we generate the mesh if it does not exist. This is a safety check to prevent accidental overwriting of existing meshes, which can be time-consuming to generate. If you want to generate a new mesh, please make sure to clean the previous mesh and residuals as mentioned in the note above. Setting render to `True` can be useful for debugging purposes, but it is not necessary if you inspect the mesh externally.
+
+```{python}
+#| echo: true
+if not Path(mesh).exists():
+    generate_mesh(config, mesh, render=False)
+```
+
+## Mesh conversion for OpenFOAM
+
+So far you could have worked in vanilla Windows, as it supports Gmsh. However, the post-processing steps to convert the mesh for use in OpenFOAM are only implemented for Linux systems, as they rely on OpenFOAM utilities that are not available on Windows. If you are using Windows, you can still generate the mesh, but you will need to transfer it to a Linux system to perform the post-processing steps. This is useful if your local station runs Windows but you have access to a Linux server or a virtual machine/WSL where you can run OpenFOAM.
+
+Below we provide a standard function that will be used to run commands in the terminal with the correct environment. This is a utility function that will be used throughout the tutorial. It ensures that the commands are executed in the correct environment and that the output is logged for later inspection.
+
+```{python}
+#| echo: true
+def runner(cmd, wdir: str = None) -> None:
+    """ Run a command in the terminal with the correct environment. """
+    with open("log.model", "a") as f:
+        run(cmd, env=ENV, check=True, stdout=f, stderr=f, cwd=wdir)
+```
+
+To avoid generating the mesh again for the full case, we can compress the mesh regions into tarballs. The `compress_region` function takes care of this by creating a tarball for a given region (fluid or solid) that can be later extracted on the Linux system.
+
+```{python}
+#| echo: true
+def compress_region(case_path: str, region: str) -> None:
+    """ Compress a region into a tarball for later use. """
+    root_dir = f"{case_path}/constant/{region}/polyMesh"
+    mesh_name = f"mesh_{region}"
+    shutil.make_archive(mesh_name, "xztar", root_dir=root_dir)
+```
+
+Now we can finally convert the mesh for use in OpenFOAM:
+
+1. We use `gmshToFoam` to convert the Gmsh mesh into OpenFOAM format.
+2. We use `createPatch` to create the necessary patches for the case.
+3. We use `renumberMesh` to optimize the mesh for better performance.
+4. We use `splitMeshRegions` to split the mesh cell zones into separate regions.
+5. Finally, we compress the fluid and solid regions into tarballs.
+
+```{python}
+#| echo: true
+def convert_global_mesh(mesh) -> None:
+    if sys.platform != "linux":
+        raise NotImplementedError("Only implemented for Linux systems.")
+
+    targets = [
+        HERE / "mesh_fluid.tar.xz",
+        HERE / "mesh_solid.tar.xz",
+        HERE / "mesh_zero.tar.xz"
+    ]
+    if all(target.exists() for target in targets):
+        print("Target files already exist.")
+        return
+
+    # Run from case directory:
+    wdir = HERE / "01-fluid-only"
+
+    # Create the mesh for the hole system:
+    runner(["gmshToFoam", HERE / mesh], wdir=wdir)
+    runner(["createPatch"], wdir=wdir)
+    runner(["renumberMesh"], wdir=wdir)
+    runner(["splitMeshRegions", "-cellZones"], wdir=wdir)
+
+    compress_region(str(wdir), "fluid")
+    compress_region(str(wdir), "solid")
+
+    mesh_zero = wdir / "0.00000000e+00"
+    shutil.make_archive("mesh_zero", "xztar", root_dir=mesh_zero)
+```
+
+The above function is called below:
+
+```{python}
+#| echo: true
+convert_global_mesh(mesh)
+```
+
+## Extracting the fluid region
+
+The final step is to extract the fluid region from the full mesh. This involves moving the fluid region to the correct location, removing the solid region, and fixing the boundary conditions for the coupled patch. The `post_process_mesh` function takes care of all these steps.
+
+```{python}
+#| echo: true
+def post_process_mesh(mesh: str) -> None:
+    """ Post-process the mesh for use in OpenFOAM. """
+    if sys.platform != "linux":
+        raise NotImplementedError("Only implemented for Linux systems.")
+
+    # Run from case directory:
+    wdir = HERE / "01-fluid-only"
+
+    if (target := HERE / "mesh_single.tar.xz").exists():
+        print("Target file already exists.")
+
+        with tarfile.open(target, "r:xz") as tar:
+            tar.extractall(path=wdir / "constant/polyMesh")
+
+        return
+
+    # Transform into fluid-only case by extracing the fluid region:
+    runner([
+        "rm",
+        "-rf",
+        "0.00000000e+00",
+        "constant/polyMesh",
+        "constant/solid",
+        "constant/cellToRegion",
+        "constant/fluid/polyMesh/cellRegionAddressing",
+        "constant/fluid/polyMesh/faceRegionAddressing",
+        "constant/fluid/polyMesh/pointRegionAddressing"
+    ], wdir=wdir)
+
+    runner(["mv", "constant/fluid/polyMesh", "constant/polyMesh"], wdir=wdir)
+    runner(["rm", "-rf", "constant/fluid"], wdir=wdir)
+
+    def fix_coupled_patch(patch: str, param: str, *actions) -> None:
+        """ Fix the patch type for a given patch. """
+        runner([
+            "foamDictionary",
+            "constant/polyMesh/boundary",
+            "-entry", f"entry0/{patch}/{param}",
+            *actions
+        ], wdir=wdir)
+
+    fix_coupled_patch("fluid_to_solid", "type", "-set", "wall")
+    fix_coupled_patch("fluid_to_solid", "inGroups", "-remove")
+    fix_coupled_patch("fluid_to_solid", "neighbourRegion", "-remove")
+    fix_coupled_patch("fluid_to_solid", "neighbourPatch", "-remove")
+
+    runner(["checkMesh"], wdir=wdir)
+
+    mesh_single = wdir / "constant/polyMesh"
+    shutil.make_archive("mesh_single", "xztar", root_dir=mesh_single)
+```
+
+The following cell calls the above function to perform the post-processing steps on the mesh. This will prepare the mesh for use in the fluid-only case, which will be used as the initial condition for the coupled case.
+
+```{python}
+#| echo: true
+post_process_mesh(mesh)
+```
+
+# Fluid only case
+
+# Adding solid region
