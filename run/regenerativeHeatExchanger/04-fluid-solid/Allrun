@@ -52,11 +52,13 @@ if [ "$mode" = "restart" ]; then
 
     cp $reference/$last_time/* $fluidDir/
 
+    # XXX the temperatures are hardcoded here! Use env instead?
     fname="$fluidDir/T"
     where="boundaryField/fluid_to_solid"
-
-    # XXX the fluid temperature is hardcoded here! Use env instead?
     foamDictionary $fname -entry $where/type -set coupledTemperature
+    foamDictionary $fname -entry $where/value -set 'uniform 300.0'
+
+    where="boundaryField/fluidHot"
     foamDictionary $fname -entry $where/value -set 'uniform 873.15'
 else
     # Expand original conditions to actual mesh

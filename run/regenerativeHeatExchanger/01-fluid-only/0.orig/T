@@ -18,7 +18,7 @@ dimensions      [ 0 0 0 1 0 0 0 ];
 
 #include "../constant/userParameters"
 
-internalField    uniform $fluidTemperature;
+internalField    uniform $solidTemperature;
 
 boundaryField
 {
@@ -27,13 +27,13 @@ boundaryField
     fluidHot
     {
         type            fixedValue;
-        value           uniform $fluidTemperature;
+        value           uniform $solidTemperature;
     }
     fluidCold
     {
         type            inletOutlet;
-        value           uniform $fluidTemperature;
-        inletValue      uniform $fluidTemperature;
+        value           uniform $solidTemperature;
+        inletValue      uniform $solidTemperature;
     }
     fluid_to_solid
     {
