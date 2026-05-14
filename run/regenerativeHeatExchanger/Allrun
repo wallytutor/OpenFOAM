@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+if [ ! -d "01-fluid-only/2.00000000e+00" ]; then
+    (
+        cd 01-fluid-only || exit 1
+        ./Allclean
+        ./Allrun
+    )
+fi
+
+if [ ! -d "02-fluid-only/2.00000000e+00" ]; then
+    (
+        cd 02-fluid-only || exit 1
+        ./Allclean
+        ./Allrun
+    )
+fi
+
+if [ ! -d "03-fluid-only/2.00000000e+00" ]; then
+    (
+        cd 03-fluid-only || exit 1
+        ./Allclean
+        ./Allrun
+    )
+fi
+
+if [ ! -d "04-fluid-only/10.00000000e+00" ]; then
+    (
+        cd 04-fluid-only || exit 1
+        ./Allclean
+        ./Allrun
+    )
+fi
