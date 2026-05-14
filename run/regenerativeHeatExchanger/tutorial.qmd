@@ -560,7 +560,42 @@ post.plot_convergence()
 # Adding solid region
 
 ```bash
-TODO tree 04-fluid-solid
+04-fluid-solid/
+├── 0.orig
+│   ├── fluid
+│   │   ├── T
+│   │   ├── U
+│   │   ├── alphat
+│   │   ├── k
+│   │   ├── nut
+│   │   ├── omega
+│   │   ├── p
+│   │   └── p_rgh
+│   └── solid
+│       └── T
+├── Allclean
+├── Allrun
+├── constant
+│   ├── fluid
+│   │   ├── g
+│   │   ├── momentumTransport
+│   │   └── physicalProperties
+│   ├── solid
+│   │   └── physicalProperties
+│   └── userParameters
+└── system
+    ├── controlDict
+    ├── createPatchDict
+    ├── decomposeParDict
+    ├── fluid
+    │   ├── fvConstraints
+    │   ├── fvSchemes
+    │   └── fvSolution
+    ├── functions
+    ├── fvSolution
+    └── solid
+        ├── fvSchemes
+        └── fvSolution
 ```
 
 ```{python}
