@@ -37,6 +37,7 @@ import tarfile
 from pathlib import Path
 from subprocess import run
 from heat_recovery.cowper_like import CowperLikeGeometry
+from heat_recovery.cowper_like import PostProcessing
 from heat_recovery.thermocline import ThermoclineModel
 from majordome.engineering import SolutionDimless
 from majordome.engineering import SkinFrictionFactor
@@ -68,6 +69,16 @@ ENV["NUM_PROCS"] = "4"
 ```
 
 :::
+
+Below we provide a standard function that will be used to run commands in the terminal with the correct environment. This is a utility function that will be used throughout the tutorial. It ensures that the commands are executed in the correct environment and that the output is logged for later inspection.
+
+```{python}
+#| echo: true
+def runner(cmd, wdir: str = None) -> None:
+    """ Run a command in the terminal with the correct environment. """
+    with open("log.model", "a") as f:
+        run(cmd, env=ENV, check=True, stdout=f, stderr=f, cwd=wdir)
+```
 
 Some pervasive variables used across the tutorial: the configuration file with the heat exchanger paramenters, and the name of the mesh file to be generated.
 
@@ -143,16 +154,6 @@ if not Path(mesh).exists():
 ## Mesh conversion for OpenFOAM
 
 So far you could have worked in vanilla Windows, as it supports Gmsh. However, the post-processing steps to convert the mesh for use in OpenFOAM are only implemented for Linux systems, as they rely on OpenFOAM utilities that are not available on Windows. If you are using Windows, you can still generate the mesh, but you will need to transfer it to a Linux system to perform the post-processing steps. This is useful if your local station runs Windows but you have access to a Linux server or a virtual machine/WSL where you can run OpenFOAM.
-
-Below we provide a standard function that will be used to run commands in the terminal with the correct environment. This is a utility function that will be used throughout the tutorial. It ensures that the commands are executed in the correct environment and that the output is logged for later inspection.
-
-```{python}
-#| echo: true
-def runner(cmd, wdir: str = None) -> None:
-    """ Run a command in the terminal with the correct environment. """
-    with open("log.model", "a") as f:
-        run(cmd, env=ENV, check=True, stdout=f, stderr=f, cwd=wdir)
-```
 
 To avoid generating the mesh again for the full case, we can compress the mesh regions into tarballs. The `compress_region` function takes care of this by creating a tarball for a given region (fluid or solid) that can be later extracted on the Linux system.
 
@@ -277,5 +278,82 @@ post_process_mesh(mesh)
 ```
 
 # Fluid only case
+
+```bash
+01-fluid-only/
+├── 0.orig
+│   ├── T
+│   ├── U
+│   └── p
+├── Allclean
+├── Allrun
+├── constant
+│   ├── momentumTransport
+│   ├── physicalProperties
+│   └── userParameters
+└── system
+    ├── controlDict
+    ├── createPatchDict
+    ├── decomposeParDict
+    ├── functions
+    ├── fvConstraints
+    ├── fvSchemes
+    └── fvSolution
+```
+
+```{python}
+#| echo: true
+case_dir = HERE / "01-fluid-only"
+post = PostProcessing(case_dir, mode="charging")
+```
+
+```{python}
+post.plot_inlet_mass_flow_rate()
+```
+
+```{python}
+post.plot_imbalance_mass_flow_rate()
+```
+
+```{python}
+post.plot_total_pressure()
+```
+
+```{python}
+post.plot_pressure_drop()
+```
+
+```{python}
+post.plot_total_temperature()
+```
+
+```{python}
+post.plot_y_plus()
+```
+
+```{python}
+runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+```
+
+```{python}
+post.plot_field_pressure()
+```
+
+```{python}
+post.plot_field_density()
+```
+
+```{python}
+post.plot_field_velocity()
+```
+
+```{python}
+post.plot_field_temperature()
+```
+
+
+```{python}
+post.plot_convergence()
+```
 
 # Adding solid region
