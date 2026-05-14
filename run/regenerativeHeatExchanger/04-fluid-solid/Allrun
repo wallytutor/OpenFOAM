@@ -1,83 +1,89 @@
 #!/usr/bin/env bash
 
+# ---------------------------------------------------------------------
+
 # Run from this directory
 cd ${0%/*} || exit 1
 
-# Wheter to start from scratch or restart from previous case
-mode="restart"
-
-# Whether to consider buoyancy effects or not
-buoyancy="no buoyancy"
+# Source OpenFOAM environment helpers
+source ../../../script/foamrc
 
 # Select number of cores to use for parallel run
-export NUM_PROCS=6
+export NUM_PROCS=$(safe_run_ncores 20)
 
-function generateMesh {
-    if [ -d "constant/fluid/polyMesh" ]; then
-        echo "Mesh already exists. Skipping mesh generation."
-        return
+# ---------------------------------------------------------------------
+
+# Ensure mesh is present by extracting from archive if not already done
+if [ ! -d "constant/fluid/polyMesh" ]; then
+    mkdir -p constant/fluid/polyMesh
+    tar -xf ../mesh_fluid.tar.xz -C constant/fluid/polyMesh
+fi
+
+if [ ! -d "constant/solid/polyMesh" ]; then
+    mkdir -p constant/solid/polyMesh
+    tar -xf ../mesh_solid.tar.xz -C constant/solid/polyMesh
+fi
+
+if [ ! -d "0.00000000e+00" ]; then
+    mkdir -p 0.00000000e+00
+    tar -xf ../mesh_zero.tar.xz -C 0.00000000e+00
+fi
+
+# ---------------------------------------------------------------------
+
+# Whether to start from scratch or restart from previous case
+mode="no restart"
+
+# Whether to consider buoyancy effects or not
+buoyancy=false
+
+# Define directories for fluid and solid regions
+fluidDir="0.00000000e+00/fluid"
+solidDir="0.00000000e+00/solid"
+
+if [ "$mode" = "restart" ]; then
+    reference="../02-fluid-only"
+
+    if [ "$buoyancy" = "true" ]; then
+        reference="../03-fluid-only"
     fi
 
-    python3 model.py
+    last_time="$(foamListTimes -case "$reference" -latestTime)"
 
-    gmshToFoam mesh.msh
+    cp $reference/$last_time/* $fluidDir/
 
-    createPatch
+    fname="$fluidDir/T"
+    where="boundaryField/fluid_to_solid"
 
-    renumberMesh
+    # XXX the solid temperature is hardcoded here! Use env instead?
+    foamDictionary $fname -entry $where/type -set coupledTemperature
+    foamDictionary $fname -entry $where/value -set 'uniform 300'
+else
+    # Expand original conditions to actual mesh
+    foamDictionary 0.orig/fluid/p      -expand > $fluidDir/p
+    foamDictionary 0.orig/fluid/T      -expand > $fluidDir/T
+    foamDictionary 0.orig/fluid/U      -expand > $fluidDir/U
+    foamDictionary 0.orig/fluid/alphat -expand > $fluidDir/alphat
+    foamDictionary 0.orig/fluid/nut    -expand > $fluidDir/nut
+    foamDictionary 0.orig/fluid/k      -expand > $fluidDir/k
+    foamDictionary 0.orig/fluid/omega  -expand > $fluidDir/omega
 
-    splitMeshRegions -cellZones
-
-    rm -rf constant/polyMesh
-
-    checkMesh -region fluid
-    checkMesh -region solid
-}
-
-function initializeCase {
-    if [ "$mode" = "restart" ]; then
-        mkdir -p 0.00000000e+00/{fluid,solid}
-        cp ../03-fluid-only/2.00000000e+00/* 0.00000000e+00/fluid
-
-        fname="0.00000000e+00/fluid/T"
-        where="boundaryField/fluid_to_solid"
-
-        foamDictionary $fname -entry $where/type -set coupledTemperature
-        foamDictionary $fname -entry $where/value -set 'uniform 300'
-
-        if [ "$buoyancy" != "buoyancy" ]; then
-            rm -rf 0.00000000e+00/fluid/p_rgh
-        fi
-    else
-        foamDictionary 0.orig/fluid/p      -expand > 0.00000000e+00/fluid/p
-        foamDictionary 0.orig/fluid/T      -expand > 0.00000000e+00/fluid/T
-        foamDictionary 0.orig/fluid/U      -expand > 0.00000000e+00/fluid/U
-        foamDictionary 0.orig/fluid/alphat -expand > 0.00000000e+00/fluid/alphat
-        foamDictionary 0.orig/fluid/nut    -expand > 0.00000000e+00/fluid/nut
-        foamDictionary 0.orig/fluid/k      -expand > 0.00000000e+00/fluid/k
-        foamDictionary 0.orig/fluid/omega  -expand > 0.00000000e+00/fluid/omega
-
-        if [ "$buoyancy" = "buoyancy" ]; then
-            foamDictionary 0.orig/p_rgh  -expand > 0.00000000e+00/fluid/p_rgh
-        fi
+    if [ "$buoyancy" -eq "true" ]; then
+        foamDictionary 0.orig/fluid/p_rgh  -expand > $fluidDir/p_rgh
     fi
+fi
 
-    # Expand solid temperature field to actual mesh
-    foamDictionary 0.orig/solid/T -expand > 0.00000000e+00/solid/T
-}
+# Expand solid temperature field to actual mesh
+foamDictionary 0.orig/solid/T -expand > $solidDir/T
 
-function runCase {
-    # Run the case in parallel
-    decomposePar -allRegions
-    mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
+# ---------------------------------------------------------------------
 
-    # Reconstruct the results of final time step
-    reconstructPar -latestTime
+# Run the case in parallel
+decomposePar -allRegions
+mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
 
-    # Generate logs for post-processing
-    foamLog log.foamMultiRun
-}
+# Reconstruct the results of final time step
+reconstructPar -latestTime
 
-generateMesh
-initializeCase
-runCase
+# Generate logs for post-processing
+foamLog log.foamMultiRun

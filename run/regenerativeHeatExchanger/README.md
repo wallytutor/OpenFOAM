@@ -36,4 +36,4 @@ quarto render report/
 
 ## Running the models
 
-Each model has its own *README.md* file which can be read by [Jupytext](https://jupytext.readthedocs.io/en/latest/) within a Jupyter environment to manage the models. Please refer to the respective files for instructions on how to run each model.
+Each model has its own pair of `Allrun` and `Allclean` scripts, which can be used to run the case and clean the generated files, respectively. The `Allrun` script is organized in a way that allows you to easily switch between different modes of operation (e.g., starting from scratch vs. restarting from a previous case, including buoyancy effects or not). You can edit the script to set the desired mode before running it.

@@ -198,6 +198,9 @@ def convert_global_mesh(mesh) -> None:
     runner(["renumberMesh"], wdir=wdir)
     runner(["splitMeshRegions", "-cellZones"], wdir=wdir)
 
+    runner(["checkMesh", "-region", "fluid"], wdir=wdir)
+    runner(["checkMesh", "-region", "solid"], wdir=wdir)
+
     compress_region(str(wdir), "fluid")
     compress_region(str(wdir), "solid")
 
@@ -447,7 +450,6 @@ post.plot_field_temperature()
 <!--
 post.plot_field_turb_kinetic_energy()
 post.plot_field_turb_dissipation_rate()
-post.plot_field_buoyancy_pressure()
 -->
 
 ## Convergence checks
@@ -458,4 +460,171 @@ post.plot_convergence()
 
 # Including buoyancy effects
 
+```bash
+03-fluid-only/
+├── 0.orig
+│   ├── T
+│   ├── U
+│   ├── alphat
+│   ├── k
+│   ├── nut
+│   ├── omega
+│   ├── p
+│   └── p_rgh
+├── Allclean
+├── Allrun
+├── constant
+│   ├── g
+│   ├── momentumTransport
+│   ├── physicalProperties
+│   └── userParameters
+└── system
+    ├── controlDict
+    ├── createPatchDict
+    ├── decomposeParDict
+    ├── functions
+    ├── fvConstraints
+    ├── fvSchemes
+    └── fvSolution
+```
+
+```{python}
+#| echo: true
+case_dir = HERE / "03-fluid-only"
+post = PostProcessing(case_dir, mode="charging")
+```
+
+## Tabular post-processing
+
+```{python}
+post.plot_inlet_mass_flow_rate()
+```
+
+```{python}
+post.plot_imbalance_mass_flow_rate()
+```
+
+```{python}
+post.plot_total_pressure()
+```
+
+```{python}
+post.plot_pressure_drop()
+```
+
+```{python}
+post.plot_total_temperature()
+```
+
+```{python}
+post.plot_y_plus()
+```
+
+## Field post-processing
+
+```{python}
+# runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+```
+
+```{python}
+post.plot_field_pressure()
+```
+
+```{python}
+post.plot_field_density()
+```
+
+```{python}
+post.plot_field_velocity()
+```
+
+```{python}
+post.plot_field_temperature()
+```
+
+<!--
+post.plot_field_turb_kinetic_energy()
+post.plot_field_turb_dissipation_rate()
+-->
+
+```{python}
+post.plot_field_buoyancy_pressure()
+```
+
+## Convergence checks
+
+```{python}
+post.plot_convergence()
+```
+
 # Adding solid region
+
+```bash
+TODO tree 04-fluid-solid
+```
+
+```{python}
+#| echo: true
+case_dir = HERE / "04-fluid-solid"
+post = PostProcessing(case_dir, mode="charging", domain="all")
+```
+
+## Tabular post-processing
+
+```{python}
+post.plot_inlet_mass_flow_rate()
+```
+
+```{python}
+post.plot_imbalance_mass_flow_rate()
+```
+
+```{python}
+post.plot_total_pressure()
+```
+
+```{python}
+post.plot_pressure_drop()
+```
+
+```{python}
+post.plot_total_temperature()
+```
+
+```{python}
+post.plot_y_plus()
+```
+
+## Field post-processing
+
+```{python}
+# runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+```
+
+```{python}
+post.plot_field_pressure()
+```
+
+```{python}
+post.plot_field_density()
+```
+
+```{python}
+post.plot_field_velocity()
+```
+
+```{python}
+post.plot_field_temperature()
+```
+
+<!--
+post.plot_field_turb_kinetic_energy()
+post.plot_field_turb_dissipation_rate()
+post.plot_field_buoyancy_pressure()
+-->
+
+## Convergence checks
+
+```{python}
+post.plot_convergence()
+```
