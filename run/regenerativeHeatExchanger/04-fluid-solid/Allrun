@@ -32,7 +32,7 @@ fi
 # ---------------------------------------------------------------------
 
 # Whether to start from scratch or restart from previous case
-mode="no restart"
+mode="restart"
 
 # Whether to consider buoyancy effects or not
 buoyancy=false
@@ -55,9 +55,9 @@ if [ "$mode" = "restart" ]; then
     fname="$fluidDir/T"
     where="boundaryField/fluid_to_solid"
 
-    # XXX the solid temperature is hardcoded here! Use env instead?
+    # XXX the fluid temperature is hardcoded here! Use env instead?
     foamDictionary $fname -entry $where/type -set coupledTemperature
-    foamDictionary $fname -entry $where/value -set 'uniform 300'
+    foamDictionary $fname -entry $where/value -set 'uniform 873.15'
 else
     # Expand original conditions to actual mesh
     foamDictionary 0.orig/fluid/p      -expand > $fluidDir/p
@@ -68,7 +68,7 @@ else
     foamDictionary 0.orig/fluid/k      -expand > $fluidDir/k
     foamDictionary 0.orig/fluid/omega  -expand > $fluidDir/omega
 
-    if [ "$buoyancy" -eq "true" ]; then
+    if [ "$buoyancy" = "true" ]; then
         foamDictionary 0.orig/fluid/p_rgh  -expand > $fluidDir/p_rgh
     fi
 fi
