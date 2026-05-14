@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+rm -rf log.model
+rm -rf mesh.msh
+rm -rf mesh_fluid.tar.xz
+rm -rf mesh_single.tar.xz
+rm -rf mesh_solid.tar.xz
+rm -rf mesh_zero.tar.xz
