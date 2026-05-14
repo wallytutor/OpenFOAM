@@ -1,10 +1,25 @@
 #!/usr/bin/env bash
 
+# ---------------------------------------------------------------------
+
 # Run from this directory
 cd ${0%/*} || exit 1
 
+# Source OpenFOAM environment helpers
+source ../../../script/foamrc
+
 # Select number of cores to use for parallel run
-export NUM_PROCS=20
+export NUM_PROCS=$(safe_run_ncores 20)
+
+# ---------------------------------------------------------------------
+
+# Ensure mesh is present by extracting from archive if not already done
+if [ ! -d "constant/polyMesh" ]; then
+    mkdir -p constant/polyMesh
+    tar -xf ../mesh_single.tar.xz -C constant/polyMesh
+fi
+
+# ---------------------------------------------------------------------
 
 # Expand original conditions to actual mesh
 mkdir -p 0.00000000e+00
