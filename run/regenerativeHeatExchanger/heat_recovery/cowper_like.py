@@ -292,7 +292,7 @@ def make_charging(model):
 
 class PostProcessing:
     """ Unified post-processing for the heat exchanger case. """
-    def __init__(self, root, mode, domain=None):
+    def __init__(self, root, mode, domain=None, **kw):
         if domain is None:
             self.fluid = FoamPostProcessingLoader(domain=None, root=root)
             self.solid = None
@@ -300,24 +300,35 @@ class PostProcessing:
             self.fluid = FoamPostProcessingLoader(domain="fluid", root=root)
             self.solid = FoamPostProcessingLoader(domain="solid", root=root)
 
+        self.case = root
         self.root = self.fluid.root_directory
         self.mode = mode.lower()
         self.logs = self.root.parent / "logs"
 
+        self.auto_load_fields = kw.get("auto_load_fields", True)
+        self.fields = None
+        self.time   = None
+
+        self._load_fields(**kw)
+
+    def _load_fields(self, **kw):
+        """ Load the fields for post-processing. """
         try:
-            fields, time = self.load_prepare_fields(case_dir=root)
-            self.fields = fields
-            self.time   = time
+            self.fields, self.time = self.load_prepare_fields(
+                case_dir = self.case,
+                config = kw.get("config", "dimensioning.yaml")
+            )
         except Exception as err:
             warnings.warn(f"Failed to load fields for post-processing: {err}")
-            self.fields = None
-            self.time = None
 
     @staticmethod
     def _ensure_has_time(fn):
         """ Decorator to ensure that time is available for plotting. """
         def wrapper(self, *args, **kwargs):
-            if self.time is None:
+            if self.auto_load_fields:
+                self._load_fields(**kwargs)
+
+            if self.time is None or self.fields is None:
                 warnings.warn("Time information is not available for plotting.")
                 return
             return fn(self, *args, **kwargs)
@@ -531,7 +542,7 @@ class PostProcessing:
         plot.camera.parallel_scale = ps
 
     @staticmethod
-    def load_prepare_fields(case_dir, config="../dimensioning.yaml"):
+    def load_prepare_fields(case_dir, config):
         if not (case_dir / "case.foam").exists():
             with open(case_dir / "case.foam", "w") as f:
                 f.write("dummy")
@@ -564,7 +575,7 @@ class PostProcessing:
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.0f"},
-            fn_title=lambda t: f"Temperature at t = {t:.0f} s\n"
+            fn_title=lambda t: f"Temperature at t = {t:.1f} s\n"
         )
 
         plot = pv.Plotter()
@@ -580,7 +591,7 @@ class PostProcessing:
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.0f"},
-            fn_title=lambda t: f"Pressure at t = {t:.0f} s\n"
+            fn_title=lambda t: f"Pressure at t = {t:.1f} s\n"
         )
 
         plot = pv.Plotter()
@@ -596,7 +607,7 @@ class PostProcessing:
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.2f"},
-            fn_title=lambda t: f"Density at t = {t:.2f} s\n"
+            fn_title=lambda t: f"Density at t = {t:.1f} s\n"
         )
 
         plot = pv.Plotter()
@@ -612,7 +623,7 @@ class PostProcessing:
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.2f"},
-            fn_title=lambda t: f"Velocity at t = {t:.2f} s\n"
+            fn_title=lambda t: f"Velocity at t = {t:.1f} s\n"
         )
 
         plot = pv.Plotter()
@@ -628,7 +639,7 @@ class PostProcessing:
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.0f"},
-            fn_title=lambda t: f"Buoyancy pressure at t = {t:.0f} s\n"
+            fn_title=lambda t: f"Buoyancy pressure at t = {t:.1f} s\n"
         )
 
         plot = pv.Plotter()
