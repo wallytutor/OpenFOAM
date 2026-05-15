@@ -306,20 +306,61 @@ class PostProcessing:
         self.logs = self.root.parent / "logs"
 
         self.auto_load_fields = kw.get("auto_load_fields", True)
-        self.fields = None
         self.time   = None
+        self.fields = {}
 
         self._load_fields(**kw)
 
+    #region: field loading
     def _load_fields(self, **kw):
         """ Load the fields for post-processing. """
         try:
-            self.fields, self.time = self.load_prepare_fields(
-                case_dir = self.case,
-                config = kw.get("config", "dimensioning.yaml")
-            )
+            PostProcessing._ensure_foam_case(self.case)
+
+            model = ThermoclineModel(kw.get("config", "dimensioning.yaml"))
+            scale = (1, 1, model.num_D_h / model.num_h_t)
+
+            reader = pv.POpenFOAMReader(self.case / "case.foam")
+            self.time = reader.time_values[-1]
+            reader.set_active_time_value(self.time)
+
+            mesh = reader.read()
+
+            if self.solid is None:
+                fluid = PostProcessing._load_region(mesh, scale, name=None)
+                self.fields = {"fluid": fluid}
+            else:
+                fluid = PostProcessing._load_region(mesh, scale, name="fluid")
+                solid = PostProcessing._load_region(mesh, scale, name="solid")
+                self.fields = {"fluid": fluid, "solid": solid}
         except Exception as err:
             warnings.warn(f"Failed to load fields for post-processing: {err}")
+
+    @staticmethod
+    def _ensure_foam_case(case_dir):
+        if not (case_dir / "case.foam").exists():
+            with open(case_dir / "case.foam", "w") as f:
+                f.write("dummy")
+
+    @staticmethod
+    def _load_region(mesh, scale, name=None):
+        if name is None:
+            data = mesh.slice("y")[0]
+            data.points *= scale
+        else:
+            data = mesh[name].slice("y")[0]
+            data.points *= scale
+
+        if "rho" in data.cell_data:
+            data.cell_data["rho"] = data.cell_data["rho"] * 1000.0
+
+        if "p" in data.cell_data:
+            data.cell_data["p"] = data.cell_data["p"] - constants.P_NORMAL
+
+        if "T" in data.cell_data:
+            data.cell_data["T"] = data.cell_data["T"] - constants.T_NORMAL
+
+        return data.cell_data_to_point_data()
 
     @staticmethod
     def _ensure_has_time(fn):
@@ -328,11 +369,12 @@ class PostProcessing:
             if self.auto_load_fields:
                 self._load_fields(**kwargs)
 
-            if self.time is None or self.fields is None:
+            if self.time is None or not self.fields:
                 warnings.warn("Time information is not available for plotting.")
                 return
             return fn(self, *args, **kwargs)
         return wrapper
+    #endregion: field loading
 
     #region: postProcessing
     def plot_inlet_mass_flow_rate(self):
@@ -541,37 +583,24 @@ class PostProcessing:
         plot.camera.parallel_projection = True
         plot.camera.parallel_scale = ps
 
-    @staticmethod
-    def load_prepare_fields(case_dir, config):
-        if not (case_dir / "case.foam").exists():
-            with open(case_dir / "case.foam", "w") as f:
-                f.write("dummy")
-
-        model = ThermoclineModel(config)
-        reader = pv.POpenFOAMReader(case_dir / "case.foam")
-        scale = (1, 1, model.num_D_h / model.num_h_t)
-
-        time = reader.time_values[-1]
-        reader.set_active_time_value(time)
-
-        mesh = reader.read()
-
-        data = mesh.slice("y")[0]
-        data.points *= scale
-
-        if "rho" in data.cell_data:
-            data.cell_data["rho"] = data.cell_data["rho"] * 1000.0
-
-        if "p" in data.cell_data:
-            data.cell_data["p"] = data.cell_data["p"] - constants.P_NORMAL
-
-        return data.cell_data_to_point_data(), time
-
     @_ensure_has_time
-    def plot_field_temperature(self):
-        if "T" not in self.fields.point_data:
+    def plot_field_temperature(self, show_solid=False, show_fluid=True):
+        if not show_solid and not show_fluid:
+            warnings.warn("At least one of domains must be displayed.")
+            return
+
+        if (fluid := self.fields.get("fluid", None)) is None:
+            warnings.warn("Fluid data not found.")
+            return
+
+        if "T" not in fluid.point_data:
             warnings.warn("Temperature field 'T' not found in the data.")
             return
+
+        solid = None
+
+        if show_solid and self.solid is not None and "solid" in self.fields:
+            solid = self.fields["solid"]
 
         opts = self.get_options(
             self.time, scalar_bar={"fmt": "%.0f"},
@@ -579,13 +608,29 @@ class PostProcessing:
         )
 
         plot = pv.Plotter()
-        plot.add_mesh(self.fields, scalars="T", cmap="fire", **opts)
-        self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+
+        if show_fluid:
+            plot.add_mesh(fluid, scalars="T", cmap="fire", **opts)
+
+        if show_solid and solid is not None:
+            plot.add_mesh(solid, scalars="T", cmap="fire", **opts)
+
+        if show_fluid and not show_solid:
+            self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
+        elif show_solid and show_fluid:
+            self.align_camera(plot, xc=0.0250, zc=0.02, ps=0.017)
+        else:
+            self.align_camera(plot, xc=0.0375, zc=0.02, ps=0.017)
+
         plot.show()
 
     @_ensure_has_time
     def plot_field_pressure(self):
-        if "p" not in self.fields.point_data:
+        if (fluid := self.fields.get("fluid", None)) is None:
+            warnings.warn("Fluid data not found.")
+            return
+
+        if "p" not in fluid.point_data:
             warnings.warn("Pressure field 'p' not found in the data.")
             return
 
@@ -595,13 +640,17 @@ class PostProcessing:
         )
 
         plot = pv.Plotter()
-        plot.add_mesh(self.fields, scalars="p", cmap="plasma", **opts)
+        plot.add_mesh(fluid, scalars="p", cmap="plasma", **opts)
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
     @_ensure_has_time
     def plot_field_density(self):
-        if "rho" not in self.fields.point_data:
+        if (fluid := self.fields.get("fluid", None)) is None:
+            warnings.warn("Fluid data not found.")
+            return
+
+        if "rho" not in fluid.point_data:
             warnings.warn("Density field 'rho' not found in the data.")
             return
 
@@ -611,13 +660,17 @@ class PostProcessing:
         )
 
         plot = pv.Plotter()
-        plot.add_mesh(self.fields, scalars="rho", cmap="plasma", **opts)
+        plot.add_mesh(fluid, scalars="rho", cmap="plasma", **opts)
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
     @_ensure_has_time
     def plot_field_velocity(self):
-        if "U" not in self.fields.point_data:
+        if (fluid := self.fields.get("fluid", None)) is None:
+            warnings.warn("Fluid data not found.")
+            return
+
+        if "U" not in fluid.point_data:
             warnings.warn("Velocity field 'U' not found in the data.")
             return
 
@@ -627,13 +680,17 @@ class PostProcessing:
         )
 
         plot = pv.Plotter()
-        plot.add_mesh(self.fields, scalars="U", cmap="jet", **opts)
+        plot.add_mesh(fluid, scalars="U", cmap="jet", **opts)
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
 
     @_ensure_has_time
     def plot_field_buoyancy_pressure(self):
-        if "p_rgh" not in self.fields.point_data:
+        if (fluid := self.fields.get("fluid", None)) is None:
+            warnings.warn("Fluid data not found.")
+            return
+
+        if "p_rgh" not in fluid.point_data:
             warnings.warn("Pressure field 'p_rgh' not found in the data.")
             return
 
@@ -643,109 +700,7 @@ class PostProcessing:
         )
 
         plot = pv.Plotter()
-        plot.add_mesh(self.fields, scalars="p_rgh", cmap="plasma", **opts)
+        plot.add_mesh(fluid, scalars="p_rgh", cmap="plasma", **opts)
         self.align_camera(plot, xc=0.0125, zc=0.02, ps=0.017)
         plot.show()
     #endregion: fields
-
-#region: graphical post-processing
-class CowperLikePost:
-    __slots__ = (
-        "_reader",
-        "_scale",
-        "_time",
-        "_fluid_internal",
-        "_solid_internal",
-        "_slice_fluid",
-        "_slice_solid",
-    )
-
-    def __init__(self, scale=(1, 1, 1)):
-        self._reader = pv.POpenFOAMReader("case.foam")
-        self._scale = scale
-
-    def _get_slice(self, internal_mesh):
-        data = internal_mesh.slice("y")
-
-        if "U" in data.cell_data:
-            Umag = np.linalg.norm(data.cell_data["U"], axis=1)
-            data.cell_data["Umag"] = Umag
-
-        return data.scale(self._scale, inplace=False)
-
-    @property
-    def time_values(self):
-        return self._reader.time_values
-
-    @property
-    def slice_fluid(self):
-        return self._slice_fluid.copy()
-
-    @property
-    def slice_solid(self):
-        return self._slice_solid.copy()
-
-    @staticmethod
-    def camera_position_xz(w: float, h: float) -> tuple:
-        """ Get camera position for XZ plane view (top-down). """
-        x = w / 2
-        z = h / 2
-
-        # Camera position above the geometry
-        pos = (x, 2 * max(w, h), z)
-
-        # Looking at the center
-        focal = (x, 0, z)
-
-        # View up: (0, 1, 0) - Y axis points up
-        viewup = (0, 0, 1)
-
-        return (pos, focal, viewup)
-
-    @staticmethod
-    def align_camera(plot, xc=0.025, zc=0.02, ps=0.017):
-        plot.renderer.set_background("#FFFFFF")
-        plot.camera_position = CowperLikePost.camera_position_xz(xc, zc)
-        plot.camera.parallel_projection = True
-        plot.camera.parallel_scale = ps
-
-    def load_state(self, time=None):
-        if time is None:
-            time = self.time_values[-1]
-
-        self._time = time
-        self._reader.set_active_time_value(time)
-
-        mesh = self._reader.read()
-        self._fluid_internal = mesh["fluid"]["internalMesh"]
-        self._solid_internal = mesh["solid"]["internalMesh"]
-
-        self._slice_fluid = self._get_slice(self._fluid_internal)
-        self._slice_solid = self._get_slice(self._solid_internal)
-
-        pRel = self._slice_fluid.cell_data["p"] - 101325.0
-        self._slice_fluid.cell_data["pRel"] = pRel
-
-    def get_options(self, **kws) -> dict:
-        fn_title = kws.pop("fn_title", lambda t: f"At t = {t:.0f} s\n")
-
-        opts = {
-            "pbr": False,
-            "show_edges": False,
-            "scalar_bar_args": {
-                "title": fn_title(self._time),
-                "vertical": False,
-                "title_font_size": 16,
-                "label_font_size": 12,
-                "position_x": 0.1,
-                "position_y": 0.05,
-                "color": "k",
-                "n_colors": 10,
-                "width": 0.8,
-                "height": 0.1,
-                "fmt": "%.0f"
-            }
-        }
-        opts.update(kws)
-        return opts
-#endregion: graphical post-processing

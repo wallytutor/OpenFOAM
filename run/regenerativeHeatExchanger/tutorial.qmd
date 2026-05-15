@@ -54,6 +54,7 @@ import sys
 import tarfile
 import numpy as np
 import sympy as sp
+import pyvista as pv
 from pathlib import Path
 from subprocess import run
 from majordome.engineering import SolutionDimless
@@ -65,6 +66,8 @@ import heat_recovery.thermocline as tc
 from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import PostProcessing
 from heat_recovery.thermocline import ThermoclineModel
+
+pv.set_jupyter_backend("static")
 ```
 
 ```{python}
@@ -78,6 +81,8 @@ try:
     HERE = Path(__file__).parent
 except NameError:
     HERE = Path(os.getcwd())
+
+# print(f"Base path: {HERE}")
 ```
 
 ::: {.callout-note title="Environment variables"}
@@ -814,14 +819,20 @@ post.plot_field_velocity()
 ```
 
 ```{python}
-post.plot_field_temperature()
+post.plot_field_temperature(show_solid=False, show_fluid=True)
 ```
 
-<!--
-post.plot_field_turb_kinetic_energy()
-post.plot_field_turb_dissipation_rate()
-post.plot_field_buoyancy_pressure()
--->
+```{python}
+post.plot_field_temperature(show_solid=True, show_fluid=False)
+```
+
+# Parametric model
+
+```{python}
+# model = ThermoclineModel(config)
+# make_solid(model)
+# make_charging(model)
+```
 
 # References {.unnumbered}
 
