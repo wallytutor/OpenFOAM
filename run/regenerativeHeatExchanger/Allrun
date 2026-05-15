@@ -3,7 +3,7 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
-if [ ! -d "01-fluid-only/2.00000000e+00" ]; then
+if [ ! -d "01-fluid-only/postProcessing" ]; then
     (
         cd 01-fluid-only || exit 1
         ./Allclean
@@ -11,7 +11,7 @@ if [ ! -d "01-fluid-only/2.00000000e+00" ]; then
     )
 fi
 
-if [ ! -d "02-fluid-only/2.00000000e+00" ]; then
+if [ ! -d "02-fluid-only/postProcessing" ]; then
     (
         cd 02-fluid-only || exit 1
         ./Allclean
@@ -19,17 +19,17 @@ if [ ! -d "02-fluid-only/2.00000000e+00" ]; then
     )
 fi
 
-if [ ! -d "03-fluid-only/2.00000000e+00" ]; then
-    (
-        cd 03-fluid-only || exit 1
-        ./Allclean
-        ./Allrun
-    )
-fi
+# if [ ! -d "03-fluid-only/postProcessing" ]; then
+#     (
+#         cd 03-fluid-only || exit 1
+#         ./Allclean
+#         ./Allrun
+#     )
+# fi
 
-if [ ! -d "04-fluid-only/10.00000000e+00" ]; then
+if [ ! -d "04-fluid-solid/postProcessing" ]; then
     (
-        cd 04-fluid-only || exit 1
+        cd 04-fluid-solid || exit 1
         ./Allclean
         ./Allrun
     )
