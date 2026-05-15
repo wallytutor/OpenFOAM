@@ -14,8 +14,6 @@ book:
 
   chapters:
     - index.qmd
-    - 01-model-cowper-like.qmd
-    - 02-model-porous-media.qmd
     - references.qmd
 
   # appendices:

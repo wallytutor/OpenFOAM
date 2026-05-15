@@ -4,6 +4,8 @@ build/
 *.pyc
 *.egg-info/
 .ipynb_checkpoints/
+.quarto/
+**/*.quarto_ipynb
 
 !01-fluid-only/
 !02-fluid-only/
