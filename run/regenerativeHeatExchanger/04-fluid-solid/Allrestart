@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# ---------------------------------------------------------------------
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Source OpenFOAM environment helpers
+source ../../../script/foamrc
+
+# Select number of cores to use for parallel run
+export NUM_PROCS=$(safe_run_ncores 20)
+
+# ---------------------------------------------------------------------
+
+foamDictionary system/controlDict -entry endTime        -set 20.0
+foamDictionary system/controlDict -entry writeInterval  -set 0.5
+foamDictionary system/controlDict -entry adjustTimeStep -set yes
+
+# ---------------------------------------------------------------------
+
+mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
+
+# ---------------------------------------------------------------------
+
+foamDictionary system/controlDict -entry endTime        -set 3600.0
+foamDictionary system/controlDict -entry writeInterval  -set 60.0
+
+# ---------------------------------------------------------------------
+
+mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
