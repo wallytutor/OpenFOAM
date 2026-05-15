@@ -85,7 +85,7 @@ decomposePar -allRegions
 mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
 
 # Reconstruct the results of final time step
-reconstructPar -latestTime
+reconstructPar -latestTime -allRegions
 
 # Generate logs for post-processing
 foamLog log.foamMultiRun
