@@ -339,7 +339,9 @@ post.plot_y_plus()
 ## Field post-processing
 
 ```{python}
-runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["foamLog", "log.foamRun"], wdir=case_dir)
+# post.plot_convergence()
 ```
 
 ```{python}
@@ -356,12 +358,6 @@ post.plot_field_velocity()
 
 ```{python}
 post.plot_field_temperature()
-```
-
-## Convergence checks
-
-```{python}
-post.plot_convergence()
 ```
 
 # Including turbulence
@@ -428,7 +424,9 @@ post.plot_y_plus()
 ## Field post-processing
 
 ```{python}
-runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["foamLog", "log.foamRun"], wdir=case_dir)
+# post.plot_convergence()
 ```
 
 ```{python}
@@ -445,17 +443,6 @@ post.plot_field_velocity()
 
 ```{python}
 post.plot_field_temperature()
-```
-
-<!--
-post.plot_field_turb_kinetic_energy()
-post.plot_field_turb_dissipation_rate()
--->
-
-## Convergence checks
-
-```{python}
-post.plot_convergence()
 ```
 
 # Including buoyancy effects
@@ -524,6 +511,8 @@ post.plot_y_plus()
 
 ```{python}
 # runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["foamLog", "log.foamRun"], wdir=case_dir)
+# post.plot_convergence()
 ```
 
 ```{python}
@@ -542,19 +531,8 @@ post.plot_field_velocity()
 post.plot_field_temperature()
 ```
 
-<!--
-post.plot_field_turb_kinetic_energy()
-post.plot_field_turb_dissipation_rate()
--->
-
 ```{python}
 post.plot_field_buoyancy_pressure()
-```
-
-## Convergence checks
-
-```{python}
-post.plot_convergence()
 ```
 
 # Adding solid region
@@ -634,6 +612,8 @@ post.plot_y_plus()
 
 ```{python}
 # runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["foamLog", "log.foamMultiRun"], wdir=case_dir)
+# post.plot_convergence()
 ```
 
 ```{python}
@@ -657,9 +637,3 @@ post.plot_field_turb_kinetic_energy()
 post.plot_field_turb_dissipation_rate()
 post.plot_field_buoyancy_pressure()
 -->
-
-## Convergence checks
-
-```{python}
-post.plot_convergence()
-```
