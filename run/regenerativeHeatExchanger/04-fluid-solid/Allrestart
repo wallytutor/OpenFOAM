@@ -15,7 +15,7 @@ export NUM_PROCS=$(safe_run_ncores 20)
 
 foamDictionary system/controlDict -entry endTime        -set 20.0
 foamDictionary system/controlDict -entry writeInterval  -set 0.5
-foamDictionary system/controlDict -entry adjustTimeStep -set yes
+# foamDictionary system/controlDict -entry adjustTimeStep -set yes
 
 # ---------------------------------------------------------------------
 
