@@ -798,6 +798,31 @@ post.plot_total_temperature()
 post.plot_y_plus()
 ```
 
+```{python}
+post.plot_solid_total_energy()
+```
+
+```{python}
+post.plot_solid_mean_temperature()
+```
+
+```{python}
+post.plot_solid_heating_power()
+```
+
+<!--
+In the initialization we compute the power per hole
+With the above we have the power density
+Thus we can compute the transfer efficiency
+
+eta = q * A / P
+
+Where
+- q is the heat flux,
+- A is the area of the hole, and
+- P is the power per hole.
+-->
+
 ## Field post-processing
 
 ```{python}

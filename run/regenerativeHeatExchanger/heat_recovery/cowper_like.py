@@ -497,6 +497,60 @@ class PostProcessing:
         p.axes[0].set_ylabel("y+")
         p.resize(6, 5)
         p.savefig(self.root / "06-y_plus.png")
+
+    def plot_solid_total_energy(self):
+        """ Plot the solid energy over time. """
+        if self.solid is None:
+            warnings.warn("Solid data not available.")
+            return
+
+        df = self.solid.load_report("solidEnergy")
+
+        x = df.iloc[:, 0]
+        U = df.iloc[:, 1]
+
+        p = plot_xy(x, U)
+        p.axes[0].set_title(f"Solid energy during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Solid energy [J]")
+        p.resize(6, 5)
+        p.savefig(self.root / "07-solid_energy.png")
+
+    def plot_solid_mean_temperature(self):
+        """ Plot the solid temperature over time. """
+        if self.solid is None:
+            warnings.warn("Solid data not available.")
+            return
+
+        df = self.solid.load_report("solidTemperature")
+
+        x = df.iloc[:, 0]
+        T = df.iloc[:, 1] - constants.T_NORMAL
+
+        p = plot_xy(x, T)
+        p.axes[0].set_title(f"Solid mean temperature during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Solid temperature [°C]")
+        p.resize(6, 5)
+        p.savefig(self.root / "08-solid_temperature.png")
+
+    def plot_solid_heating_power(self):
+        """ Plot the solid heating power over time. """
+        if self.solid is None:
+            warnings.warn("Solid data not available.")
+            return
+
+        df = self.solid.load_report("solidToFluidHeatFlux")
+
+        x = df.iloc[:, 0]
+        q = df.iloc[:, 5]
+
+        p = plot_xy(x, q)
+        p.axes[0].set_title(f"Solid heating power during {self.mode}")
+        p.axes[0].set_xlabel("Time [s]")
+        p.axes[0].set_ylabel("Heating power [W/m²]")
+        p.resize(6, 5)
+        p.savefig(self.root / "09-solid_heating_power.png")
     #endregion: postProcessing
 
     #region: foamLog
