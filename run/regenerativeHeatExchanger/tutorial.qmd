@@ -70,8 +70,10 @@ from heat_recovery.thermocline import ThermoclineModel
 pv.set_jupyter_backend("static")
 ```
 
+Some pervasive variables used across the tutorial: the configuration file with the heat exchanger paramenters, and the name of the mesh file to be generated.
+
 ```{python}
-#| echo: false
+#| echo: true
 # If running in a Jupyter notebook, __file__ is not defined, so we use
 # the current working directory as the base path. If running as a script,
 # we use the directory of the script as the base path. This allows us to
@@ -82,38 +84,28 @@ try:
 except NameError:
     HERE = Path(os.getcwd())
 
-# print(f"Base path: {HERE}")
+config = "dimensioning.yaml"
+mesh   = "mesh.msh"
 ```
 
 ::: {.callout-note title="Environment variables"}
 
 All cases require a `NUM_PROCS` environment variable to be set. This is used to set the number of processors for parallel runs. By default, we set it to 4, but you can change it based on your system capabilities.
 
+We also provide a standard function that will be used to run commands in the terminal with the correct environment. This is a utility function that will be used throughout the tutorial. It ensures that the commands are executed in the correct environment and that the output is logged for later inspection.
+
 ```{python}
 #| echo: true
 ENV = os.environ.copy()
 ENV["NUM_PROCS"] = "4"
-```
 
-:::
-
-Below we provide a standard function that will be used to run commands in the terminal with the correct environment. This is a utility function that will be used throughout the tutorial. It ensures that the commands are executed in the correct environment and that the output is logged for later inspection.
-
-```{python}
-#| echo: true
 def runner(cmd, wdir: str = None) -> None:
     """ Run a command in the terminal with the correct environment. """
     with open("log.model", "a") as f:
         run(cmd, env=ENV, check=True, stdout=f, stderr=f, cwd=wdir)
 ```
 
-Some pervasive variables used across the tutorial: the configuration file with the heat exchanger paramenters, and the name of the mesh file to be generated.
-
-```{python}
-#| echo: true
-config = "dimensioning.yaml"
-mesh   = "mesh.msh"
-```
+:::
 
 # System dimensioning
 
@@ -826,7 +818,7 @@ Where
 ## Field post-processing
 
 ```{python}
-# runner(["reconstructPar", "-latestTime"], wdir=case_dir)
+# runner(["reconstructPar", "-latestTime", "-allRegions"], wdir=case_dir)
 # runner(["foamLog", "log.foamMultiRun"], wdir=case_dir)
 # post.plot_convergence()
 ```
