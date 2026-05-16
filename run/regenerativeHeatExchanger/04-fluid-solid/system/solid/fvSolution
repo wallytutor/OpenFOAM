@@ -20,8 +20,9 @@ solvers
     {
         solver           PCG;
         preconditioner   DIC;
-        tolerance        1e-6;
-        relTol           0.1;
+        tolerance        1e-8;
+        relTol           0;
+        minIter          1;
         maxIter          50;
     }
 
@@ -29,6 +30,7 @@ solvers
     {
         $e;
         relTol           0;
+        minIter          1;
     }
 }
 
