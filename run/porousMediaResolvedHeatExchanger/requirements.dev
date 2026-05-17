@@ -1,0 +1,10 @@
+# Technical deps
+matplotlib
+numpy
+scikit-image
+trimesh
+
+# Interface deps
+ipython
+jupyterlab
+jupytext
