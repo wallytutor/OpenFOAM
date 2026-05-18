@@ -894,7 +894,73 @@ cl.make_charging(case_dir, model)
 
 ```{python}
 #| echo: true
-# post = PostProcessing(case_dir, mode="charging", domain="all")
+post = PostProcessing(case_dir, mode="charging", domain="all")
+```
+
+## Tabular post-processing
+
+```{python}
+post.plot_inlet_mass_flow_rate()
+```
+
+```{python}
+post.plot_imbalance_mass_flow_rate()
+```
+
+```{python}
+post.plot_total_pressure()
+```
+
+```{python}
+post.plot_pressure_drop()
+```
+
+```{python}
+post.plot_total_temperature()
+```
+
+```{python}
+post.plot_y_plus()
+```
+
+```{python}
+post.plot_solid_total_energy()
+```
+
+```{python}
+post.plot_solid_mean_temperature()
+```
+
+```{python}
+post.plot_solid_heating_power()
+```
+
+## Field post-processing
+
+```{python}
+# runner(["reconstructPar", "-latestTime", "-allRegions"], wdir=case_dir)
+# runner(["foamLog", "log.foamMultiRun"], wdir=case_dir)
+# post.plot_convergence()
+```
+
+```{python}
+post.plot_field_pressure()
+```
+
+```{python}
+post.plot_field_density()
+```
+
+```{python}
+post.plot_field_velocity()
+```
+
+```{python}
+post.plot_field_temperature(show_solid=False, show_fluid=True)
+```
+
+```{python}
+post.plot_field_temperature(show_solid=True, show_fluid=False)
 ```
 
 # References {.unnumbered}
