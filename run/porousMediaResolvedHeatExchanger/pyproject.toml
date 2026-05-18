@@ -14,12 +14,16 @@ dependencies = [
     "matplotlib>=3.10.9",
     "numpy>=2.4.5",
     "pyvista>=0.48.4",
+    "ruamel-yaml>=0.19.1",
     "scikit-image>=0.26.0",
     "trimesh>=4.12.2",
 ]
 authors = [
   {name = "Walter Dal'Maz Silva", email = "walter.dalmazsilva@gmail.com"},
 ]
+
+[project.scripts]
+porous-media-geometry = "porous_media.geometry:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

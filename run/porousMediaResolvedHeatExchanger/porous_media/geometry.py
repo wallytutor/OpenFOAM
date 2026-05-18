@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
+
+import argparse
+from pathlib import Path
+from typing import Any
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
+
 from numpy.typing import NDArray
+from ruamel.yaml import YAML
 from skimage.measure import marching_cubes
 from typing import Any, Protocol
 from matplotlib.figure import Figure
@@ -245,3 +252,78 @@ class FunctionalShapes:
         fig.tight_layout()
 
         return fig, ax
+
+
+def _load_yaml_config(path: Path) -> dict[str, Any]:
+    yaml = YAML(typ="safe")
+
+    with path.open("r", encoding="utf-8") as fobj:
+        data = yaml.load(fobj)
+
+    if data is None:
+        raise ValueError(f"Empty YAML file: {path}")
+
+    if not isinstance(data, dict):
+        raise ValueError("Top-level YAML content must be a mapping")
+
+    return data
+
+
+def _extract_shape_kwargs(config: dict[str, Any]) -> dict[str, Any]:
+    if "functional_shapes" in config:
+        params = config["functional_shapes"]
+
+        if not isinstance(params, dict):
+            raise ValueError("'functional_shapes' must be a mapping")
+        return dict(params)
+
+    # Fallback: allow passing FunctionalShapes kwargs at the YAML root.
+    return dict(config)
+
+
+def main() -> int:
+    #region: build parser
+    parser = argparse.ArgumentParser(
+        prog="porous-media-geometry",
+        description="Generate porous media geometry from YAML configuration.",
+    )
+
+    parser.add_argument(
+        "config",
+        type=Path,
+        help="Path to YAML file with FunctionalShapes parameters.",
+    )
+
+    parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Allow overwriting existing output files (default: false).",
+    )
+    #endregion: build parser
+
+    args = parser.parse_args()
+
+    config = _load_yaml_config(args.config)
+
+    params = _extract_shape_kwargs(config)
+
+    plot_mesh = bool(config.get("plot_mesh", True))
+    output_path = Path(config.get("output", "surface.stl"))
+
+    if output_path.exists() and not args.overwrite:
+        raise FileExistsError(f"Output file already exists: {output_path}")
+
+    if output_path.suffix.lower() != ".stl":
+        raise ValueError(f"Unsupported output format: {output_path.suffix}")
+
+    surface = FunctionalShapes(**params)
+    surface.save_mesh(str(output_path))
+
+    if plot_mesh:
+        surface.plot_mesh(str(output_path))
+
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,25 @@
+# Input parameters for porous-media-geometry
+# uv run porous-media-geometry script/geometry.yaml
+
+output: surface.stl
+plot_mesh: true
+
+functional_shapes:
+  functional: schwarz
+
+  # Domain limits and resolution:
+  x_lims: [-9.42477796076938, 18.84955592153876]
+  y_lims: [-9.42477796076938, 18.84955592153876]
+  z_lims: [0.0, 9.42477796076938]
+  nx: 50
+  ny: 50
+  nz: 50
+
+  # Functional parameters:
+  rugosity_ampl: 0.0
+  stripes_ampl: 0.0
+  stripes_freq: 0.0
+  level: 0.0
+
+  # Functional-specific parameters:
+  isocontour: 0.0
