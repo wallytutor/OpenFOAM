@@ -1,1 +1,8 @@
+# Generated STL surface files:
 *.stl
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.venv/

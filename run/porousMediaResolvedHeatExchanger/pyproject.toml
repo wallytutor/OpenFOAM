@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=80", "wheel>=0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "porous_media"
+version = "0.1.0"
+description = "Geometrically resolved porous media models."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=7.2.0",
+    "ipython>=9.13.0",
+    "matplotlib>=3.10.9",
+    "numpy>=2.4.5",
+    "scikit-image>=0.26.0",
+    "trimesh>=4.12.2",
+]
+authors = [
+  {name = "Walter Dal'Maz Silva", email = "walter.dalmazsilva@gmail.com"},
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["porous_media"]

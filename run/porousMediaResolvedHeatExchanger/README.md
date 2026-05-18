@@ -1,17 +1,41 @@
 # Resolved porous medium
 
-## Setup
+Simulation of a resolved porous medium with conjugate heat transfer.
 
-This case was conceived and tested under OpenFOAM 12.
+---
 
-For generating the geometry and running the case you will need:
+## Environment setup
 
-```shell
-python -m venv venv
+- Models developed and tested under [WSL](https://learn.microsoft.com/en-us/windows/wsl/install) running Ubuntu 24.04; if you are working under Windows, you can install the referred distribution with `wsl --install Ubuntu-24.04`.
 
-venv/Scripts/Activate.ps1
+- Install [OpenFOAM (v13)](https://openfoam.org/download/13-ubuntu/) for your distribution (click link for instructions related to the referenced version).
 
-python -m pip install --upgrade pip
+- Source the bootstrap script `source bootstrap.sh` to set up the environment; alternatively (if you have OpenFOAM and uv installed), you can manually start a virtual environment with `uv`:
 
-pip install -r requirements.dev
+```bash
+# Create a virtual environment
+uv venv --python 3.12 .venv
+
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Install the required packages
+uv pip install -r requirements.txt
 ```
+
+---
+
+## Generating the report
+
+```bash
+export QUARTO_PYTHON="${PWD}/.venv/bin/python"
+
+quarto install tinytex
+quarto render report.qmd
+```
+
+---
+
+## Running the models
+
+*WIP*
