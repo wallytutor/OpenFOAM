@@ -6,3 +6,7 @@
 __pycache__/
 *.egg-info/
 .venv/
+
+# Ignore all scripts except for samples:
+script/*
+!script/sample_*

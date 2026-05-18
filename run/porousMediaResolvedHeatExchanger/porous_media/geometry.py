@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import importlib.util
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -38,9 +40,11 @@ class FunctionalShapes:
     Parameters
     ----------
     functional : str | FunctionalType
-        Name of a built-in functional (for example ``"gyroid"`` or
-        ``"schwarz"``) or a callable with signature
-        ``f(X, Y, Z, **kwargs) -> NDArray``.
+        Name of a built-in functional (``"gyroid"`` or ``"schwarz"``),
+        a path to a Python module file (any string containing a ``.``
+        before a recognised extension such as ``.py``) that exposes
+        ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``, or a
+        plain callable with the same signature.
     x_lims : tuple[float, float]
         Domain limits for x as ``(xmin, xmax)``.
     y_lims : tuple[float, float]
@@ -86,25 +90,13 @@ class FunctionalShapes:
             level: float = 0.0,
             **kwargs: Any,
         ) -> None:
-        """Initialize the surface by sampling a field and extracting an isosurface."""
         #region: generate grid
         (X, Y, Z), _ = self.meshgrid_3d(x_lims=x_lims, y_lims=y_lims,
                                         z_lims=z_lims, nx=nx, ny=ny, nz=nz)
         #endregion: generate grid
 
-        #region: resolve functional
-        if callable(functional):
-            f = functional
-        elif isinstance(functional, str):
-            try:
-                f = getattr(self, functional)
-            except AttributeError:
-                raise ValueError(f"Functional '{functional}' not found")
-        else:
-            raise ValueError("Functional must be a string or a callable")
-        #endregion: resolve functional
-
         #region: generate surface
+        f = self._resolve_functional(functional)
         surface = f(X, Y, Z, **kwargs)
 
         if rugosity_ampl > 0.0:
@@ -130,6 +122,62 @@ class FunctionalShapes:
         self._vertices = vertices
         self._faces    = faces
         self._mesh     = Trimesh(vertices=vertices, faces=faces)
+
+    def _resolve_functional(self,
+            functional: str | FunctionalType
+        ) -> FunctionalType:
+        """ Resolve a functional to be used for mesh generation. """
+        if callable(functional):
+            return functional
+
+        if isinstance(functional, str):
+            # treat as a module if any suffix is present
+            if (path := Path(functional)).suffix:
+                return self._load_module_functional(path)
+            else:
+                try:
+                    return getattr(self, functional)
+                except AttributeError:
+                    raise ValueError(f"Functional '{functional}' not found")
+
+        raise ValueError("Functional must be a string or a callable")
+
+    @staticmethod
+    def _load_module_functional(path: Path) -> FunctionalType:
+        """ Import ``implicit_surface``  from path to module.
+
+        Parameters
+        ----------
+        path : Path
+            Absolute or relative path to a Python source file that defines
+            ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
+
+        Raises
+        ------
+        FileNotFoundError
+            If *path* does not point to an existing file.
+        AttributeError
+            If the loaded module does not expose ``implicit_surface``.
+        """
+        resolved = path.resolve()
+
+        if not resolved.is_file():
+            raise FileNotFoundError(f"Functional module not found: {resolved}")
+
+        spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
+
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load module from: {resolved}")
+
+        module: ModuleType = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+        if not hasattr(module, "implicit_surface"):
+            raise AttributeError(
+                f"Module '{resolved}' does not define 'implicit_surface'"
+            )
+
+        return module.implicit_surface  # type: ignore[return-value]
 
     @classmethod
     def gyroid(
@@ -254,33 +302,6 @@ class FunctionalShapes:
         return fig, ax
 
 
-def _load_yaml_config(path: Path) -> dict[str, Any]:
-    yaml = YAML(typ="safe")
-
-    with path.open("r", encoding="utf-8") as fobj:
-        data = yaml.load(fobj)
-
-    if data is None:
-        raise ValueError(f"Empty YAML file: {path}")
-
-    if not isinstance(data, dict):
-        raise ValueError("Top-level YAML content must be a mapping")
-
-    return data
-
-
-def _extract_shape_kwargs(config: dict[str, Any]) -> dict[str, Any]:
-    if "functional_shapes" in config:
-        params = config["functional_shapes"]
-
-        if not isinstance(params, dict):
-            raise ValueError("'functional_shapes' must be a mapping")
-        return dict(params)
-
-    # Fallback: allow passing FunctionalShapes kwargs at the YAML root.
-    return dict(config)
-
-
 def main() -> int:
     #region: build parser
     parser = argparse.ArgumentParser(
@@ -299,14 +320,27 @@ def main() -> int:
         action="store_true",
         help="Allow overwriting existing output files (default: false).",
     )
-    #endregion: build parser
 
     args = parser.parse_args()
+    #endregion: build parser
 
-    config = _load_yaml_config(args.config)
+    #region: load config
+    yaml = YAML(typ="safe")
 
-    params = _extract_shape_kwargs(config)
+    with args.config.open("r", encoding="utf-8") as fobj:
+        config = yaml.load(fobj)
 
+    if config is None:
+        raise ValueError(f"Empty YAML file: {args.config}")
+
+    if not isinstance(config, dict):
+        raise ValueError("Top-level YAML content must be a mapping")
+
+    if not isinstance(params := config["functional_shapes"], dict):
+        raise ValueError("'functional_shapes' must be a mapping")
+    #endregion: load config
+
+    #region: validate output
     plot_mesh = bool(config.get("plot_mesh", True))
     output_path = Path(config.get("output", "surface.stl"))
 
@@ -315,6 +349,7 @@ def main() -> int:
 
     if output_path.suffix.lower() != ".stl":
         raise ValueError(f"Unsupported output format: {output_path.suffix}")
+    #endregion: validate output
 
     surface = FunctionalShapes(**params)
     surface.save_mesh(str(output_path))

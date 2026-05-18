@@ -1,11 +1,11 @@
 # Input parameters for porous-media-geometry
-# uv run porous-media-geometry script/sample_geometry.yaml
+# uv run porous-media-geometry script/sample_gyroid.yaml
 
 output: surface.stl
 plot_mesh: true
 
 functional_shapes:
-  functional: schwarz
+  functional: script/sample_gyroid.py
 
   # Domain limits and resolution:
   x_lims: [-9.42477796076938, 18.84955592153876]
