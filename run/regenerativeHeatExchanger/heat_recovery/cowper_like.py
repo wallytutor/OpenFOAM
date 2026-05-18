@@ -261,28 +261,28 @@ class CowperLikeGeometry:
                 model.dump(saveas)
 
 
-def make_solid(model):
+def make_solid(case_dir, model):
     """ Create the solid physical properties file. """
     def add_property(f, name, value):
         f[name] = {}
         f[name]["type"] = "uniform"
         f[name]["value"] = value
 
-    with FoamFile("constant/solid/physicalProperties") as f:
+    with FoamFile(case_dir / "constant/solid/physicalProperties") as f:
         f["thermoType"] = "constSolidThermo"
         add_property(f, "rho",   model.num_rho_s)
         add_property(f, "Cv",    model.num_c_ps)
         add_property(f, "kappa", model.num_k_s)
 
 
-def make_charging(model):
+def make_charging(case_dir, model):
     """ Create the charging inputs file.
 
     Notice:
     - The inlet velocity is negative because the fluid enters from the
       *outlet* side (top) of the geometry, poiting downwards.
     """
-    with FoamFile("constant/userParameters") as f:
+    with FoamFile(case_dir / "constant/userParameters") as f:
         f["fluidTemperature"] = model.num_T_h
         f["solidTemperature"] = model.num_T_c
         f["inletVelocity"] = -1.0 * model.fn_U_g(*model.args_charging)

@@ -62,6 +62,7 @@ from majordome.engineering import SkinFrictionFactor
 from majordome.engineering import WallGradingCalculator
 from ruamel.yaml import YAML
 
+import heat_recovery.cowper_like as cl
 import heat_recovery.thermocline as tc
 from heat_recovery.cowper_like import CowperLikeGeometry
 from heat_recovery.cowper_like import PostProcessing
@@ -845,10 +846,55 @@ post.plot_field_temperature(show_solid=True, show_fluid=False)
 
 # Parametric model
 
+```bash
+05-parametric/
+├── 0.orig
+│   ├── fluid
+│   │   ├── T
+│   │   ├── U
+│   │   ├── alphat
+│   │   ├── k
+│   │   ├── nut
+│   │   ├── omega
+│   │   └── p
+│   └── solid
+│       └── T
+├── Allclean
+├── Allrestart
+├── Allrun
+├── constant
+│   ├── fluid
+│   │   ├── momentumTransport
+│   │   └── physicalProperties
+│   ├── solid
+│   │   └── physicalProperties
+│   └── userParameters
+└── system
+    ├── controlDict
+    ├── createPatchDict
+    ├── decomposeParDict
+    ├── fluid
+    │   ├── fvConstraints
+    │   ├── fvSchemes
+    │   └── fvSolution
+    ├── functions
+    ├── fvSolution
+    └── solid
+        ├── fvSchemes
+        └── fvSolution
+```
+
 ```{python}
-# model = ThermoclineModel(config)
-# make_solid(model)
-# make_charging(model)
+case_dir = HERE / "05-parametric"
+
+model = ThermoclineModel(config)
+cl.make_solid(case_dir, model)
+cl.make_charging(case_dir, model)
+```
+
+```{python}
+#| echo: true
+# post = PostProcessing(case_dir, mode="charging", domain="all")
 ```
 
 # References {.unnumbered}
