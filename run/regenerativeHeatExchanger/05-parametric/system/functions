@@ -1,0 +1,125 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      functions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeFunc residuals
+(
+    name   = residuals,
+    region = fluid,
+    fields = (p_rgh U h)
+)
+
+#includeFunc residuals
+(
+    name   = residuals,
+    region = solid,
+    fields = (e)
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchFlowRate
+(
+    name   = flowRateCold,
+    region = fluid,
+    patch  = fluidCold,
+    field  = phi
+)
+
+#includeFunc patchFlowRate
+(
+    name   = flowRateHot,
+    region = fluid,
+    patch  = fluidHot,
+    field  = phi
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = temperatureCold,
+    region = fluid,
+    patch  = fluidCold,
+    field  = T
+)
+
+#includeFunc patchAverage
+(
+    name   = temperatureHot,
+    region = fluid,
+    patch  = fluidHot,
+    field  = T
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = pressureCold,
+    region = fluid,
+    patch  = fluidCold,
+    field  = p
+)
+
+#includeFunc patchAverage
+(
+    name   = pressureHot,
+    region = fluid,
+    patch  = fluidHot,
+    field  = p
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc yPlus
+(
+    name   = yPlus,
+    region = fluid,
+    patch  = fluid_to_solid
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc volAverage
+(
+    name   = solidTemperature,
+    region = solid,
+    field  = T
+)
+
+#includeFunc volIntegrate
+(
+    name   = solidEnergy,
+    region = solid,
+    field  = e
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc wallHeatFlux
+(
+    name   = fluidToSolidHeatFlux,
+    region = fluid,
+    patch  = fluid_to_solid
+)
+
+#includeFunc wallHeatFlux
+(
+    name   = solidToFluidHeatFlux,
+    region = solid,
+    patch  = solid_to_fluid
+)
+
+// ************************************************************************* //
