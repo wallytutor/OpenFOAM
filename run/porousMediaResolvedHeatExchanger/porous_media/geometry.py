@@ -86,7 +86,7 @@ class FunctionalShapes:
             nz: int = 100,
             rugosity_ampl: float =  0.0,
             stripes_ampl: float = 0.0,
-            stripes_freq: float = 1.0,
+            stripes_freq: float = 0.0,
             level: float = 0.0,
             **kwargs: Any,
         ) -> None:
@@ -265,11 +265,14 @@ class FunctionalShapes:
         """ Return the `trimesh.Trimesh` view of the generated surface. """
         return self._mesh
 
-    def save_mesh(self, filename: str) -> None:
+    def save_mesh(self, filename: str | Path, show: bool = False) -> None:
         """ Export the current mesh to a file path supported by trimesh. """
         self._mesh.export(file_obj=filename)
 
-    def plot_mesh(self, filename: str) -> None:
+        if show:
+            self.plot_mesh(filename)
+
+    def plot_mesh(self, filename: str | Path) -> None:
         """ Load a mesh file with PyVista display STL file. """
         mesh = pv.read(filename)
         mesh.plot()
@@ -352,10 +355,7 @@ def main() -> int:
     #endregion: validate output
 
     surface = FunctionalShapes(**params)
-    surface.save_mesh(str(output_path))
-
-    if plot_mesh:
-        surface.plot_mesh(str(output_path))
+    surface.save_mesh(str(output_path), show=plot_mesh)
 
     return 0
 

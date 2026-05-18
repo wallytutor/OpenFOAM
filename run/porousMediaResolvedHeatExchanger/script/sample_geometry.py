@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
-import matplotlib.pyplot as plt
 import numpy as np
+from pathlib import Path
 from porous_media.geometry import FunctionalShapes
 
-filename = "surface.stl"
+HERE = Path(__file__).parent
+""" Path to the directory containing this script. """
 
 surface = FunctionalShapes(
     # Functional type (or callable):
     functional = "schwarz",
 
     # Domain limits and resolution:
-    x_lims        = (-3*np.pi, 6*np.pi),
-    y_lims        = (-3*np.pi, 6*np.pi),
+    x_lims        = (-3*np.pi, 3*np.pi),
+    y_lims        = (-3*np.pi, 3*np.pi),
     z_lims        = (       0, 3*np.pi),
     nx            = 50,
     ny            = 50,
@@ -27,5 +28,5 @@ surface = FunctionalShapes(
     isocontour    = 0.0,
 )
 
-surface.save_mesh(filename)
-surface.plot_mesh(filename)
+filename = HERE / "surface.stl"
+surface.save_mesh(filename, show=True)
