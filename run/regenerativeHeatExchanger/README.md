@@ -23,13 +23,15 @@ source .venv/bin/activate
 uv pip install -r requirements.txt
 ```
 
+---
+
 ## Generating the report
 
 ```bash
 export QUARTO_PYTHON="${PWD}/.venv/bin/python"
 
 quarto install tinytex
-quarto render report/
+quarto render tutorial.qmd
 ```
 
 ---
