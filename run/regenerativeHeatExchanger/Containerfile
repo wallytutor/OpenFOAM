@@ -3,6 +3,10 @@ FROM ubuntu:24.04
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Allow OpenMPI to run as root inside the container
+ENV OMPI_ALLOW_RUN_AS_ROOT=1
+ENV OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
 # Install essential dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
