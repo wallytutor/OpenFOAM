@@ -39,3 +39,42 @@ quarto render tutorial.qmd
 ## Running the models
 
 Each model has its own pair of `Allrun` and `Allclean` scripts, which can be used to run the case and clean the generated files, respectively. The `Allrun` script is organized in a way that allows you to easily switch between different modes of operation (e.g., starting from scratch vs. restarting from a previous case, including buoyancy effects or not). You can edit the script to set the desired mode before running it.
+
+---
+
+## Running with Podman
+
+As an alternative to installing OpenFOAM 13 locally, you can build and run the models using [Podman](https://podman.io/) (or Docker) with the provided `Containerfile`.
+
+### 1. Build the Container Image
+
+Run the following command in this directory to build the minimal Ubuntu 24.04 image with OpenFOAM 13:
+
+```bash
+podman build -t openfoam13 -f Containerfile .
+```
+
+### 2. Run the Cases from the Current Directory
+
+Mount the current directory to `/workspace` inside the container. Because the container has an entrypoint that automatically sources the OpenFOAM 13 environment, you can run any OpenFOAM or local script directly.
+
+- **Run all cases:**
+  ```bash
+  podman run --rm -it -v ".:/workspace:Z" openfoam13 ./Allrun
+  ```
+
+- **Clean up generated files:**
+  ```bash
+  podman run --rm -it -v ".:/workspace:Z" openfoam13 ./Allclean
+  ```
+
+- **Run a specific OpenFOAM command (e.g., `foamRun` help):**
+  ```bash
+  podman run --rm -it -v ".:/workspace:Z" openfoam13 foamRun -help
+  ```
+
+- **Interactive Shell inside the container:**
+  ```bash
+  podman run --rm -it -v ".:/workspace:Z" openfoam13 bash
+  ```
+

@@ -1,0 +1,35 @@
+FROM ubuntu:24.04
+
+# Prevent interactive prompts during package installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install essential dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    wget \
+    gnupg \
+    util-linux \
+    grep \
+    xz-utils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add OpenFOAM GPG key and APT repository
+RUN wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc \
+    && echo "deb http://dl.openfoam.org/ubuntu noble main" > /etc/apt/sources.list.d/openfoam.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends openfoam13 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory inside the container
+WORKDIR /workspace
+
+# Setup shell environment sourcing on interactive shell login
+RUN echo "source /opt/openfoam13/etc/bashrc" >> /etc/bash.bashrc
+
+# Set up an entrypoint script to automatically source OpenFOAM for all commands
+RUN printf '#!/bin/bash\n\
+source /opt/openfoam13/etc/bashrc\n\
+exec "$@"\n' > /entrypoint.sh \
+    && chmod +x /entrypoint.sh
+
+ENTRYPOINT ["/entrypoint.sh"]
