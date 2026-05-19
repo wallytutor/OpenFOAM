@@ -34,7 +34,10 @@ FoamFile
     name   = flowRateCold,
     region = fluid,
     patch  = fluidCold,
-    field  = phi
+    field  = phi,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 #includeFunc patchFlowRate
@@ -42,7 +45,10 @@ FoamFile
     name   = flowRateHot,
     region = fluid,
     patch  = fluidHot,
-    field  = phi
+    field  = phi,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 // ------------------------------------------------------------------------- //
@@ -52,7 +58,10 @@ FoamFile
     name   = temperatureCold,
     region = fluid,
     patch  = fluidCold,
-    field  = T
+    field  = T,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 #includeFunc patchAverage
@@ -60,7 +69,10 @@ FoamFile
     name   = temperatureHot,
     region = fluid,
     patch  = fluidHot,
-    field  = T
+    field  = T,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 // ------------------------------------------------------------------------- //
@@ -70,7 +82,10 @@ FoamFile
     name   = pressureCold,
     region = fluid,
     patch  = fluidCold,
-    field  = p
+    field  = p,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 #includeFunc patchAverage
@@ -78,16 +93,10 @@ FoamFile
     name   = pressureHot,
     region = fluid,
     patch  = fluidHot,
-    field  = p
-)
+    field  = p,
 
-// ------------------------------------------------------------------------- //
-
-#includeFunc yPlus
-(
-    name   = yPlus,
-    region = fluid,
-    patch  = fluid_to_solid
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 // ------------------------------------------------------------------------- //
@@ -96,14 +105,20 @@ FoamFile
 (
     name   = solidTemperature,
     region = solid,
-    field  = T
+    field  = T,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 #includeFunc volIntegrate
 (
     name   = solidEnergy,
     region = solid,
-    field  = e
+    field  = e,
+
+    writeControl  = adjustableRunTime,
+    writeInterval = 0.1
 )
 
 // ------------------------------------------------------------------------- //
@@ -120,6 +135,15 @@ FoamFile
     name   = solidToFluidHeatFlux,
     region = solid,
     patch  = solid_to_fluid
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc yPlus
+(
+    name   = yPlus,
+    region = fluid,
+    patch  = fluid_to_solid
 )
 
 // ************************************************************************* //

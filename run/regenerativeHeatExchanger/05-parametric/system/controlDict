@@ -50,10 +50,11 @@ timePrecision     8;
 
 runTimeModifiable true;
 
-maxCo             0.75;
+maxCo             0.45;
 
-maxDeltaT         0.01;
+maxDeltaT         0.001;
 
-adjustTimeStep    no;
+// Activate only after 300s:
+adjustTimeStep    yes;
 
 // ************************************************************************* //
