@@ -463,6 +463,28 @@ def thicken_surface_mesh(
     return Trimesh(vertices=shell_vertices, faces=shell_faces, process=True)
 
 
+def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
+    """ Scale mesh vertices from voxel space to physical coordinates.
+
+    Marching cubes extracts vertices in index space [0, N-1], which needs
+    to be mapped back to the physical x_lims, y_lims, z_lims range.
+    Note: We must account for the 'xy' indexing of np.meshgrid in
+    FunctionalShapes.cube_meshgrid, which swaps the X and Y axes.
+    """
+    delta_x = (x_lims[1] - x_lims[0]) / (nx - 1)
+    delta_y = (y_lims[1] - y_lims[0]) / (ny - 1)
+    delta_z = (z_lims[1] - z_lims[0]) / (nz - 1)
+
+    pts = mesh.vertices.copy()
+    pts_physical = np.zeros_like(pts)
+    pts_physical[:, 0] = x_lims[0] + pts[:, 1] * delta_x
+    pts_physical[:, 1] = y_lims[0] + pts[:, 0] * delta_y
+    pts_physical[:, 2] = z_lims[0] + pts[:, 2] * delta_z
+    mesh.vertices = pts_physical
+
+    return mesh
+
+
 def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
     """ Create a hexahedral/cubic region (trimesh box) that is a fraction of the bounding box.
 
