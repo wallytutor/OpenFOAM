@@ -74,11 +74,14 @@ WAVENUMBERS = {
 # Workflow function
 # ---------------------------------------------------------------------
 
-def generate_surface(func, config, saveas, level=0.5, n=200):
+def generate_surface(func, config, saveas, **kwargs):
     """ Generate and save surface mesh for the given functional. """
+    n = kwargs.get("n", 200)
+
     surface = FunctionalShapes(
         functional = func,
-        level      = level,
+        level      = kwargs.get("level", 0.5),
+        thickness  = kwargs.get("thickness", 1.0),
         x_lims     = (-np.pi, np.pi),
         y_lims     = (-np.pi, np.pi),
         z_lims     = (-np.pi, np.pi),
