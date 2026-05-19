@@ -13,9 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Add OpenFOAM GPG key and APT repository (using HTTPS and retries for resilience against SourceForge mirror outages)
+# Add OpenFOAM GPG key and APT repository (using HTTP to allow SourceForge HTTP redirection, with retries for mirror robustness)
 RUN wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc \
-    && echo "deb https://dl.openfoam.org/ubuntu noble main" > /etc/apt/sources.list.d/openfoam.list \
+    && echo "deb http://dl.openfoam.org/ubuntu noble main" > /etc/apt/sources.list.d/openfoam.list \
     && apt-get update \
     && apt-get install -y --fix-missing -o Acquire::Retries=10 --no-install-recommends openfoam13 \
     && rm -rf /var/lib/apt/lists/*
