@@ -10,6 +10,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
+import trimesh
 
 from numpy.typing import NDArray
 from ruamel.yaml import YAML
@@ -460,6 +461,92 @@ def thicken_surface_mesh(
 
     shell_vertices = np.vstack((outer_vertices, inner_vertices))
     return Trimesh(vertices=shell_vertices, faces=shell_faces, process=True)
+
+
+def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
+    """ Create a hexahedral/cubic region (trimesh box) that is a fraction of the bounding box.
+
+    Parameters
+    ----------
+    x_lims : tuple[float, float]
+        Original domain limits for x.
+    y_lims : tuple[float, float]
+        Original domain limits for y.
+    z_lims : tuple[float, float]
+        Original domain limits for z.
+    box_frac : float, default=0.8
+        Fraction of the original bounding box dimensions to scale by.
+
+    Returns
+    -------
+    trimesh.Trimesh
+        Sub-volume box centered on the original bounding box.
+    """
+    cx = (x_lims[0] + x_lims[1]) / 2.0
+    cy = (y_lims[0] + y_lims[1]) / 2.0
+    cz = (z_lims[0] + z_lims[1]) / 2.0
+
+    dx = (x_lims[1] - x_lims[0]) * box_frac
+    dy = (y_lims[1] - y_lims[0]) * box_frac
+    dz = (z_lims[1] - z_lims[0]) * box_frac
+
+    box = trimesh.creation.box(extents=(dx, dy, dz))
+    box.apply_translation([cx, cy, cz])
+
+    return box
+
+
+def plot_domain(stl_mesh, subvolume, pore_bodies):
+    """ Display the extracted domain components.
+
+    Parameters
+    ----------
+    stl_mesh : trimesh.Trimesh
+        Original solid domain mesh in physical coordinates.
+    subvolume : trimesh.Trimesh
+        Sub-volume box mesh.
+    pore_bodies : list[pyvista.PolyData]
+        Disconnected components representing the extracted pore spaces.
+    """
+    print("Rendering final zones in PyVista...")
+    plotter = pv.Plotter(title="Watertight Pore Volume Zones")
+
+    # Add thin reference model of the solid wall shell
+    solid_pv = pv.wrap(stl_mesh)
+    plotter.add_mesh(
+        solid_pv,
+        color="#888888",
+        opacity=0.12,
+        show_edges=False,
+        label="Solid Wall (Reference)"
+    )
+
+    # Add wireframe bounding box
+    box_pv = pv.wrap(subvolume)
+    plotter.add_mesh(
+        box_pv,
+        color="#555555",
+        style="wireframe",
+        line_width=2,
+        label="Sub-Volume Bounds"
+    )
+
+    colors = ["#3A86FF", "#FF006E", "#8338EC", "#FFBE0B", "#FB5607", "#06D6A0"]
+    for i, body in enumerate(pore_bodies):
+        color = colors[i % len(colors)]
+        plotter.add_mesh(
+            body,
+            color=color,
+            opacity=0.85,
+            show_edges=True,
+            edge_color="#121214",
+            line_width=1.0,
+            label=f"Pore Zone {i+1} (Vol: {body.volume:.4f})"
+        )
+
+    plotter.add_legend(face="circle", bcolor=None)
+    plotter.show_axes()
+    plotter.show()
 
 
 def main() -> int:
