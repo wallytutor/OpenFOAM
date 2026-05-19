@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Add OpenFOAM GPG key and APT repository
 RUN wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc \
-    && echo "deb http://dl.openfoam.org/ubuntu noble main" > /etc/apt/sources.list.d/openfoam.list \
+    && add-apt-repository http://dl.openfoam.org/ubuntu \
     && apt-get update \
     && apt-get install -y --no-install-recommends openfoam13 \
     && rm -rf /var/lib/apt/lists/*
