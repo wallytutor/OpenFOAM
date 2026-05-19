@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import functools
 import importlib.util
 from pathlib import Path
 from types import ModuleType
@@ -57,22 +58,16 @@ class FunctionalShapes:
         Number of grid points along y.
     nz : int, default=100
         Number of grid points along z.
-    rugosity_ampl : float, default=0.0
-        Amplitude of additive Gaussian noise applied to the sampled field.
-    stripes_ampl : float, default=0.0
-        Amplitude of sinusoidal modulation added along z.
-    stripes_freq : float, default=1.0
-        Frequency used for sinusoidal stripe modulation.
     level : float, default=0.0
-        Isovalue extracted from the sampled scalar field.
+        Fractional level for isosurface extraction, where 0.0 corresponds
+        to the minimum value of the sampled field and 1.0 to the maximum.
+        For example, a value of 0.5 will extract the isosurface at the
+        midpoint between the minimum and maximum field values.
     **kwargs : Any
         Extra keyword arguments forwarded to the selected functional.
 
     Raises
     ------
-    ValueError
-        If the functional is invalid or if ``level`` lies outside the
-        sampled field range.
     RuntimeError
         If marching cubes cannot extract any surface.
     """
@@ -84,40 +79,16 @@ class FunctionalShapes:
             nx: int = 100,
             ny: int = 100,
             nz: int = 100,
-            rugosity_ampl: float =  0.0,
-            stripes_ampl: float = 0.0,
-            stripes_freq: float = 0.0,
             level: float = 0.0,
             **kwargs: Any,
         ) -> None:
-        #region: generate grid
-        (X, Y, Z), _ = self.meshgrid_3d(x_lims=x_lims, y_lims=y_lims,
-                                        z_lims=z_lims, nx=nx, ny=ny, nz=nz)
-        #endregion: generate grid
-
-        #region: generate surface
         f = self._resolve_functional(functional)
+
+        # XXX keep as a function (we may need hexagonal grids later!)
+        X, Y, Z = self.cube_meshgrid(x_lims, y_lims, z_lims, nx, ny, nz)
+
         surface = f(X, Y, Z, **kwargs)
-
-        if rugosity_ampl > 0.0:
-            surface += rugosity_ampl * np.random.normal(size=surface.shape)
-
-        if stripes_ampl > 0.0 and stripes_freq > 0.0:
-            surface += stripes_ampl * np.sin(stripes_freq * Z)
-        #endregion: generate surface
-
-        #region: extract features
-        vmin, vmax = surface.min(), surface.max()
-
-        if not (vmin <= level <= vmax):
-            raise ValueError(f"Level {level} outside [{vmin}; {vmax}]")
-
-        vertices, faces, _, _ = marching_cubes(surface, level=level)
-        faces = faces.astype(np.int32)
-
-        if len(vertices) == 0 or len(faces) == 0:
-            raise RuntimeError("No surface generated!")
-        #endregion: extract features
+        vertices, faces = self._extract_features(surface, level)
 
         self._vertices = vertices
         self._faces    = faces
@@ -131,93 +102,40 @@ class FunctionalShapes:
             return functional
 
         if isinstance(functional, str):
-            # treat as a module if any suffix is present
-            if (path := Path(functional)).suffix:
-                return self._load_module_functional(path)
-            else:
-                try:
-                    return getattr(self, functional)
-                except AttributeError:
-                    raise ValueError(f"Functional '{functional}' not found")
+            if not (module := Path(functional)).exists():
+                raise FileNotFoundError(f"No such module {functional}")
+
+            return load_implicit_surface(module)
 
         raise ValueError("Functional must be a string or a callable")
 
-    @staticmethod
-    def _load_module_functional(path: Path) -> FunctionalType:
-        """ Import ``implicit_surface``  from path to module.
+    def _extract_features(self,
+            surface: NDArray[Any],
+            fractional_level: float
+        ) -> tuple[NDArray, NDArray]:
+        """ Extract features from a scalar field using marching cubes. """
+        vmin, vmax = surface.min(), surface.max()
 
-        Parameters
-        ----------
-        path : Path
-            Absolute or relative path to a Python source file that defines
-            ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
+        level = vmin + fractional_level * (vmax - vmin)
 
-        Raises
-        ------
-        FileNotFoundError
-            If *path* does not point to an existing file.
-        AttributeError
-            If the loaded module does not expose ``implicit_surface``.
-        """
-        resolved = path.resolve()
+        vertices, faces, _, _ = marching_cubes(surface, level=level)
 
-        if not resolved.is_file():
-            raise FileNotFoundError(f"Functional module not found: {resolved}")
+        faces = faces.astype(np.int32)
 
-        spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
+        if len(vertices) == 0 or len(faces) == 0:
+            raise RuntimeError("No surface generated!")
 
-        if spec is None or spec.loader is None:
-            raise ImportError(f"Cannot load module from: {resolved}")
-
-        module: ModuleType = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(module)  # type: ignore[union-attr]
-
-        if not hasattr(module, "implicit_surface"):
-            raise AttributeError(
-                f"Module '{resolved}' does not define 'implicit_surface'"
-            )
-
-        return module.implicit_surface  # type: ignore[return-value]
-
-    @classmethod
-    def gyroid(
-            cls,
-            X: NDArray[Any],
-            Y: NDArray[Any],
-            Z: NDArray[Any],
-            **kwargs: Any,
-        ) -> NDArray[Any]:
-        """ Evaluate the gyroid implicit field on the input grid. """
-        a = np.sin(X) * np.cos(Y)
-        b = np.sin(Y) * np.cos(Z)
-        c = np.sin(Z) * np.cos(X)
-        return a + b + c
-
-    @classmethod
-    def schwarz(
-            cls,
-            X: NDArray[Any],
-            Y: NDArray[Any],
-            Z: NDArray[Any],
-            isocontour: float = 0.0,
-            **kwargs: Any,
-        ) -> NDArray[Any]:
-        """ Evaluate the Schwarz-P implicit field on the input grid. """
-        return np.cos(X) + np.cos(Y) + np.cos(Z) - isocontour
+        return vertices, faces
 
     @staticmethod
-    def meshgrid_3d(
-            *,
+    def cube_meshgrid(
             x_lims: tuple[float, float],
             y_lims: tuple[float, float],
             z_lims: tuple[float, float],
             nx: int,
             ny: int,
-            nz: int,
-            sx: float = 1.0,
-            sy: float = 1.0,
-            sz: float = 1.0
-        ) -> tuple[tuple[NDArray, NDArray, NDArray], NDArray]:
+            nz: int
+        ) -> tuple[NDArray, NDArray, NDArray]:
         """ Generate a 3D mesh grid within specified limits.
 
         Parameters
@@ -234,21 +152,11 @@ class FunctionalShapes:
             The number of points along the y-axis.
         nz : int
             The number of points along the z-axis.
-        sx : float, optional
-            Scaling factor for the x-axis (default is 1.0).
-        sy : float, optional
-            Scaling factor for the y-axis (default is 1.0).
-        sz : float, optional
-            Scaling factor for the z-axis (default is 1.0).
         """
-        x = sx * np.linspace(*x_lims, nx)
-        y = sy * np.linspace(*y_lims, ny)
-        z = sz * np.linspace(*z_lims, nz)
-
-        grid = np.meshgrid(x, y, z)
-        scale = np.array([sx, sy, sz])
-
-        return grid, scale
+        x = np.linspace(*x_lims, nx)
+        y = np.linspace(*y_lims, ny)
+        z = np.linspace(*z_lims, nz)
+        return np.meshgrid(x, y, z)
 
     @property
     def vertices(self) -> NDArray[Any]:
@@ -303,6 +211,128 @@ class FunctionalShapes:
         fig.tight_layout()
 
         return fig, ax
+
+
+def noisy_surface(
+        surface: NDArray[np.number],
+        rugosity_ampl: float
+    ) -> NDArray[np.number]:
+    """ Apply additive Gaussian noise to a surface.
+
+    Parameters
+    ----------
+    surface : NDArray[np.number]
+        The input surface array.
+    rugosity_ampl : float
+        Amplitude of the Gaussian noise.
+
+    Returns
+    -------
+    NDArray[np.number]
+        The surface with added noise.
+    """
+    if rugosity_ampl <= 0.0:
+        return surface
+
+    noise = np.random.normal(size=surface.shape)
+    return surface + rugosity_ampl * noise
+
+
+def wavy_surface(
+        surface: NDArray[np.number],
+        Z: NDArray[np.number],
+        amplitude: float,
+        wave_number: float
+    ) -> NDArray[np.number]:
+    """ Apply sinusoidal modulation along the z-axis to a surface.
+
+    Parameters
+    ----------
+    surface : NDArray[np.number]
+        The input surface array.
+    Z : NDArray[np.number]
+        The z-coordinates corresponding to the surface points.
+    amplitude : float
+        Amplitude of the sinusoidal modulation.
+    wave_number : float
+        Wave number of the sinusoidal modulation.
+
+    Returns
+    -------
+    NDArray[np.number]
+        The surface with added sinusoidal modulation.
+    """
+    if amplitude <= 0.0 or wave_number <= 0.0:
+        return surface
+
+    return surface + amplitude * np.sin(2.0 * np.pi / wave_number * Z)
+
+
+def decorate_surface(func: FunctionalType) -> FunctionalType:
+    """ Decorator to apply noise and/or sinusoidal modulation to a surface. """
+    @functools.wraps(func)
+    def decorated(
+            X: NDArray[Any],
+            Y: NDArray[Any],
+            Z: NDArray[Any],
+            **kwargs: Any
+        ) -> NDArray[Any]:
+        A = kwargs.get("relative_roughness", 0.0)
+        B = kwargs.get("wave_amplitude", 0.0)
+        f = kwargs.get("wave_number", 0.0)
+
+        surface = func(X, Y, Z, **kwargs)
+        vmin, vmax = surface.min(), surface.max()
+        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
+
+        surface = noisy_surface(surface, A * abs(vmax - vmin))
+        vmin, vmax = surface.min(), surface.max()
+        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
+
+        surface = wavy_surface(surface, Z, B * abs(vmax - vmin), f)
+        # vmin, vmax = surface.min(), surface.max()
+        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
+
+        return surface
+
+    return decorated
+
+
+def load_implicit_surface(path: Path) -> FunctionalType:
+    """ Import ``implicit_surface``  from path to module.
+
+    Parameters
+    ----------
+    path : Path
+        Absolute or relative path to a Python source file that defines
+        ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
+
+    Raises
+    ------
+    FileNotFoundError
+        If *path* does not point to an existing file.
+    AttributeError
+        If the loaded module does not expose ``implicit_surface``.
+    """
+    resolved = path.resolve()
+
+    if not resolved.is_file():
+        raise FileNotFoundError(f"Functional module not found: {resolved}")
+
+    spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
+
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Cannot load module from: {resolved}")
+
+    module: ModuleType = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+    if not hasattr(module, "implicit_surface"):
+        raise AttributeError(
+            f"Module '{resolved}' does not define 'implicit_surface'"
+        )
+
+    return module.implicit_surface  # type: ignore[return-value]
 
 
 def main() -> int:
