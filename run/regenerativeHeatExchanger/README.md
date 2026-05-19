@@ -56,25 +56,10 @@ podman build -t openfoam13 -f Containerfile .
 
 ### 2. Run the Cases from the Current Directory
 
-Mount the current directory to `/workspace` inside the container. Because the container has an entrypoint that automatically sources the OpenFOAM 13 environment, you can run any OpenFOAM or local script directly.
+Mount the root directory of the project to `/workspace` inside the container, *i.e.* run the following command from `OpenFOAM` folder in your host machine, as the project depends on scripts located in this directory:
 
-- **Run all cases:**
-  ```bash
-  podman run --rm -it -v ".:/workspace:Z" openfoam13 ./Allrun
-  ```
+```bash
+podman run --rm -it -v ".:/workspace:Z" openfoam13 bash
+```
 
-- **Clean up generated files:**
-  ```bash
-  podman run --rm -it -v ".:/workspace:Z" openfoam13 ./Allclean
-  ```
-
-- **Run a specific OpenFOAM command (e.g., `foamRun` help):**
-  ```bash
-  podman run --rm -it -v ".:/workspace:Z" openfoam13 foamRun -help
-  ```
-
-- **Interactive Shell inside the container:**
-  ```bash
-  podman run --rm -it -v ".:/workspace:Z" openfoam13 bash
-  ```
-
+Using `cd` navigate to this directory and run as in a local environment. Since the container has an entrypoint that automatically sources the OpenFOAM 13 environment, you can run any OpenFOAM or local script directly.

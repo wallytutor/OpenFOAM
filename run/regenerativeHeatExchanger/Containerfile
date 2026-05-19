@@ -13,12 +13,25 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xz-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Add OpenFOAM GPG key and APT repository (using HTTP to allow SourceForge HTTP redirection, with retries for mirror robustness)
+##############################################################################
+# Install OpenFOAM 13 from the official Ubuntu package
 RUN wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc \
     && echo "deb http://dl.openfoam.org/ubuntu noble main" > /etc/apt/sources.list.d/openfoam.list \
     && apt-get update \
     && apt-get install -y --fix-missing -o Acquire::Retries=10 --no-install-recommends openfoam13 \
     && rm -rf /var/lib/apt/lists/*
+
+##############################################################################
+# Alternative approach: if image fails to build, try installing
+# the OpenFOAM 13 deb package manually. First, navigate to
+# https://sourceforge.net/projects/foam/files/foam/ubuntu/dists/noble/main/binary-amd64/
+# and download the .deb package. Edit the version in COPY below if needed.
+# COPY openfoam13_20260407_amd64.deb /tmp/
+# RUN apt-get update \
+#     && apt-get install -y --fix-missing --no-install-recommends /tmp/openfoam13_20260407_amd64.deb \
+#     && rm -rf /tmp/openfoam13_20260407_amd64.deb \
+#     && rm -rf /var/lib/apt/lists/*
+##############################################################################
 
 # Create working directory inside the container
 WORKDIR /workspace
