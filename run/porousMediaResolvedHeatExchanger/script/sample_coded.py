@@ -1,46 +1,100 @@
 # -*- coding: utf-8 -*-
 import numpy as np
 from pathlib import Path
+from typing import Any
+from numpy.typing import NDArray
 from porous_media.geometry import FunctionalShapes
+from porous_media.geometry import decorate_surface
 
-HERE = Path(__file__).parent
-""" Path to the directory containing this script. """
+# ---------------------------------------------------------------------
+# User-defined implicit surfaces
+# ---------------------------------------------------------------------
 
-n = 2
-""" Number of porosity length scales in each dimension. """
+@decorate_surface
+def gyroid(
+        X: NDArray[Any],
+        Y: NDArray[Any],
+        Z: NDArray[Any],
+        **kwargs: Any,
+    ) -> NDArray[Any]:
+    """ Evaluate the gyroid implicit field on the input grid.
 
-l = 0.025
-""" Porosity length scale (m). """
+    https://en.wikipedia.org/wiki/Gyroid
+    """
+    mx = kwargs.get("mx", 1)
+    my = kwargs.get("my", 1)
+    mz = kwargs.get("mz", 1)
 
-m = 2.0 * np.pi / l
-""" Porosity frequency (rad/m). """
+    a = np.sin(mx * X) * np.cos(my * Y)
+    b = np.sin(my * Y) * np.cos(mz * Z)
+    c = np.sin(mz * Z) * np.cos(mx * X)
 
-
-def implicit_surface(X, Y, Z, **kwargs):
-    a = np.sin(m * X) * np.cos(m * Y)
-    b = np.sin(m * Y) * np.cos(m * Z)
-    c = np.sin(m * Z) * np.cos(m * X)
     return a + b + c
 
 
-surface = FunctionalShapes(
-    # Functional type (or callable):
-    functional = implicit_surface,
+@decorate_surface
+def schwarz_p(
+        X: NDArray[Any],
+        Y: NDArray[Any],
+        Z: NDArray[Any],
+        **kwargs: Any,
+    ) -> NDArray[Any]:
+    """ Evaluate the Schwarz-P implicit field on the input grid.
 
-    # Domain limits and resolution:
-    x_lims        = (0.0, n * l),
-    y_lims        = (0.0, n * l),
-    z_lims        = (0.0, n * l),
-    nx            = 50,
-    ny            = 50,
-    nz            = 50,
+    https://en.wikipedia.org/wiki/Schwarz_minimal_surface
+    """
+    mx = kwargs.get("mx", 1)
+    my = kwargs.get("my", 1)
+    mz = kwargs.get("mz", 1)
+    contour = kwargs.get("contour", 0.0)
 
-    # Functional parameters:
-    # rugosity_ampl = 0.005,
-    # stripes_ampl  = 0.001,
-    # stripes_freq  = 25,
-    # level         = 15,
-)
+    return np.cos(mx * X) + np.cos(my * Y) + np.cos(mz * Z) - contour
 
-filename = HERE / "geometry.stl"
-surface.save_mesh(filename, show=True)
+# ---------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------
+
+HERE = Path(__file__).parent
+
+SMOOTH = {}
+
+ROUGH = {
+    "relative_roughness": 0.005,
+    "wave_amplitude": 0.005,
+    "wave_number": 0.1
+}
+
+WAVENUMBERS = {
+    "mx": 3,
+    "my": 3,
+    "mz": 3,
+}
+
+# ---------------------------------------------------------------------
+# Workflow function
+# ---------------------------------------------------------------------
+
+def generate_surface(func, config, saveas, level=0.5, n=200):
+    """ Generate and save surface mesh for the given functional. """
+    surface = FunctionalShapes(
+        functional = func,
+        level      = level,
+        x_lims     = (-np.pi, np.pi),
+        y_lims     = (-np.pi, np.pi),
+        z_lims     = (-np.pi, np.pi),
+        nx         = n,
+        ny         = n,
+        nz         = n,
+        **config,
+        **WAVENUMBERS
+    )
+
+    filename = HERE / saveas
+    surface.save_mesh(filename, show=True)
+
+
+if __name__ == "__main__":
+    generate_surface(gyroid,    SMOOTH, "gyroid_smooth.stl")
+    generate_surface(gyroid,    ROUGH,  "gyroid_rough.stl")
+    generate_surface(schwarz_p, SMOOTH, "schwarz_p_smooth.stl")
+    generate_surface(schwarz_p, ROUGH,  "schwarz_p_rough.stl")
