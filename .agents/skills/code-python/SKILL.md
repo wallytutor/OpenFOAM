@@ -13,13 +13,25 @@ description: Provides directives for generating and modifying Python code.
 
 ## How to use this skill
 
-### General
+### Code style
 
-- Use PEP8 for style guidelines, unless the user explicitly requests otherwise or manually modifies the code for readability.
+- Use PEP8 for style guidelines, unless the user explicitly requests otherwise or manually modifies the code for readability. Code line should be wrapped in an 80–character limit.
 
-- There must be a blanck line before flow control statements like `if`, `match`, `for`, `while`.
+- There must be a blanck line before flow control statements like `if`, `match`, `for`, `while`, except when they are nested inside another flow control statement, as for example:
+
+```python
+for x in [1, 2, 3]:
+    if x > 1:
+        y = x + 1
+```
+
+### Code structure
+
+- Classes use `__slots__` to reduce memory usage and make sure no attribute is missing or created on the fly.
 
 - Type hints must be used and the code must include type annotations for function arguments and return values.
+
+### Documentation
 
 - Functions must be documented using docstrings. The summary line in the docstring should be on the same line as `"""` and there must be at one whitespace character between the `"""` and the summary text.
 
@@ -31,3 +43,7 @@ description: Provides directives for generating and modifying Python code.
     - Raises (optional)
     - See also (optional)
     - Notes (optional)
+
+- Docstring lines must be wrapped in an 68–character limit.
+
+- Class initialization `__init__` docstring must be included in the class docstring as usually done (not inside the function itself). The docstring of the methods must be in the methods themselves.
