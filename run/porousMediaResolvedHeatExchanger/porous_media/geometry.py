@@ -11,7 +11,17 @@ from typing import Any
 import matplotlib.pyplot as plt
 import numpy as np
 import pyvista as pv
+
+# This must come before trimesh!
+from .utils import get_blender
+blender_exe = get_blender()
+
 import trimesh
+
+# XXX: check if this is necessary, for now it works without...
+# import trimesh.interfaces.blender
+# trimesh.interfaces.blender._blender_executable = blender_exe
+# trimesh.interfaces.blender.exists = True
 
 from numpy.typing import NDArray
 from ruamel.yaml import YAML
@@ -509,6 +519,20 @@ def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
         mesh.invert()
 
     return mesh
+
+
+def load_physical_mesh(filename, x_lims, y_lims, z_lims, nx, ny, nz):
+    stl_trimesh = trimesh.load(filename)
+    stl_physical = map_voxel_to_physical(
+        mesh   = stl_trimesh,
+        x_lims = x_lims,
+        y_lims = y_lims,
+        z_lims = z_lims,
+        nx     = nx,
+        ny     = ny,
+        nz     = nz,
+    )
+    return stl_physical
 
 
 def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
