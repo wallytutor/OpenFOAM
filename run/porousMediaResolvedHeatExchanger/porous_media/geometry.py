@@ -153,7 +153,7 @@ class FunctionalShapes:
             if not (module := Path(functional)).exists():
                 raise FileNotFoundError(f"No such module {functional}")
 
-            return load_implicit_surface(module)
+            return self.load_implicit_surface(module)
 
         raise ValueError("Functional must be a string or a callable")
 
@@ -174,6 +174,41 @@ class FunctionalShapes:
             raise RuntimeError("No surface generated!")
 
         return vertices, faces
+
+    @staticmethod
+    def load_implicit_surface(path: Path) -> FunctionalType:
+        """ Import ``implicit_surface``  from path to module.
+
+        Parameters
+        ----------
+        path : Path
+            Absolute or relative path to a Python source file that defines
+            ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
+
+        Raises
+        ------
+        FileNotFoundError
+            If *path* does not point to an existing file.
+        AttributeError
+            If the loaded module does not expose ``implicit_surface``.
+        """
+        if not (resolved := path.resolve()).is_file():
+            raise FileNotFoundError(f"No such file: {resolved}")
+
+        spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
+
+        if spec is None or spec.loader is None:
+            raise ImportError(f"Cannot load module from: {resolved}")
+
+        module: ModuleType = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)  # type: ignore[union-attr]
+
+        if not hasattr(module, "implicit_surface"):
+            raise AttributeError(
+                f"Module '{resolved}' does not define 'implicit_surface'"
+            )
+
+        return module.implicit_surface  # type: ignore[return-value]
 
     @staticmethod
     def cube_meshgrid(
@@ -205,6 +240,37 @@ class FunctionalShapes:
         y = np.linspace(*y_lims, ny)
         z = np.linspace(*z_lims, nz)
         return np.meshgrid(x, y, z)
+
+    @staticmethod
+    def cube_subvolume(stl_mesh, box_frac=0.98):
+        """ Create a region that is a fraction of the bounding box.
+
+        Parameters
+        ----------
+        stl_mesh : trimesh.Trimesh
+            The STL mesh of the gyroid.
+        box_frac : float, default=0.8
+            Fraction of the original bounding box dimensions to scale by.
+
+        Returns
+        -------
+        trimesh.Trimesh
+            Sub-volume box centered on the original bounding box.
+        """
+        x_lims, y_lims, z_lims = stl_mesh.bounding_box.bounds.T
+
+        cx = (x_lims[0] + x_lims[1]) / 2.0
+        cy = (y_lims[0] + y_lims[1]) / 2.0
+        cz = (z_lims[0] + z_lims[1]) / 2.0
+
+        dx = (x_lims[1] - x_lims[0]) * box_frac
+        dy = (y_lims[1] - y_lims[0]) * box_frac
+        dz = (z_lims[1] - z_lims[0]) * box_frac
+
+        box = trimesh.creation.box(extents=(dx, dy, dz))
+        box.apply_translation([cx, cy, cz])
+
+        return box
 
     @staticmethod
     def thicken_surface_mesh(
@@ -365,8 +431,19 @@ class FunctionalShapes:
             self.plot_mesh(filename)
 
     @staticmethod
-    def from_stl(filename: str | Path, **kwargs: Any):
-        return trimesh.load(filename, file_type="stl")
+    def from_stl(filename: str | Path, **kwargs: Any) -> Trimesh:
+        """ Load an STL mesh file.
+
+        Note: if the STL was not created via FunctionalShapes, you may
+        need to call `FunctionalShapes.map_voxel_to_physical` on the
+        mesh from STL to get the right voxel mapping.
+        """
+        mesh = trimesh.load(filename, file_type="stl")
+
+        if kwargs.pop("map_voxel_to_physical", False):
+            mesh = FunctionalShapes.map_voxel_to_physical(mesh, **kwargs)
+
+        return mesh
 
     def plot_mesh(self, filename: str | Path) -> None:
         """ Load a mesh file with PyVista display STL file. """
@@ -399,6 +476,93 @@ class FunctionalShapes:
         fig.tight_layout()
 
         return fig, ax
+
+
+class PorousDomainExtractor:
+    def __init__(self, mesh, volume):
+        self._mesh   = mesh
+        self._volume = volume
+        self._bodies = self.get_porous_domain(mesh, volume)
+
+        self.porous_meshes = []
+        self.solid_meshes = []
+
+    @staticmethod
+    def _filter_bodies(
+            bodies: list[trimesh.Trimesh],
+            min_vertices: int = 100,
+        ) -> list[trimesh.Trimesh]:
+
+        result = []
+
+        for c in bodies:
+            if len(c.vertices) < min_vertices:
+                continue
+
+            c.fix_normals()
+            # Invert faces if volume is negative to ensure positive
+            # volume in PyVista
+            if c.volume < 0:
+                c.invert()
+
+            result.append(c)
+
+        # Sort largest components first
+        return result
+
+    @classmethod
+    def _operation(
+            cls,
+            this: trimesh.Trimesh,
+            that: trimesh.Trimesh,
+            operation: str
+        ) -> trimesh.Trimesh:
+        options = dict(engine="blender",check_volume=False,use_exact=False)
+        return getattr(this, operation)(that, **options)
+
+    @property
+    def bodies(self) -> list[trimesh.Trimesh]:
+        return self._bodies
+
+    @property
+    def solid_bodies(self) -> list[trimesh.Trimesh]:
+        return [b for b in self.bodies if b.metadata["type"] == "solid"]
+
+    @property
+    def fluid_bodies(self) -> list[trimesh.Trimesh]:
+        return [b for b in self.bodies if b.metadata["type"] == "fluid"]
+
+    @classmethod
+    def get_porous_domain(cls,
+            stl_physical: trimesh.Trimesh,
+            stl_domain: trimesh.Trimesh,
+            min_vertices: int = 100,
+        ) -> list[trimesh.Trimesh]:
+
+        def by_vertices(c):
+            return len(c.vertices)
+
+        # 1. Fluid domain: subtract the solid wall from the sub-volume
+        pore_trimesh = cls._operation(stl_domain, stl_physical, "difference")
+        porous = pore_trimesh.split(only_watertight=False)
+        porous = cls._filter_bodies(porous, min_vertices=min_vertices)
+
+        for c in porous:
+            c.metadata["type"] = "fluid"
+
+        # 2. Solid domain: intersect the solid wall with the sub-volume
+        solid_trimesh = cls._operation(stl_domain, stl_physical, "intersection")
+        solids = solid_trimesh.split(only_watertight=False)
+        solids = cls._filter_bodies(solids, min_vertices=min_vertices)
+
+        for c in solids:
+            c.metadata["type"] = "solid"
+
+        # Sort largest components first
+        porous = sorted(porous, key=by_vertices, reverse=True)
+        solids = sorted(solids, key=by_vertices, reverse=True)
+
+        return porous + solids
 
 
 def noisy_surface(
@@ -486,141 +650,10 @@ def decorate_surface(func: FunctionalType) -> FunctionalType:
     return decorated
 
 
-def load_implicit_surface(path: Path) -> FunctionalType:
-    """ Import ``implicit_surface``  from path to module.
-
-    Parameters
-    ----------
-    path : Path
-        Absolute or relative path to a Python source file that defines
-        ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
-
-    Raises
-    ------
-    FileNotFoundError
-        If *path* does not point to an existing file.
-    AttributeError
-        If the loaded module does not expose ``implicit_surface``.
-    """
-    resolved = path.resolve()
-
-    if not resolved.is_file():
-        raise FileNotFoundError(f"Functional module not found: {resolved}")
-
-    spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
-
-    if spec is None or spec.loader is None:
-        raise ImportError(f"Cannot load module from: {resolved}")
-
-    module: ModuleType = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)  # type: ignore[union-attr]
-
-    if not hasattr(module, "implicit_surface"):
-        raise AttributeError(
-            f"Module '{resolved}' does not define 'implicit_surface'"
-        )
-
-    return module.implicit_surface  # type: ignore[return-value]
-
-
-def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
-    """ Create a hexahedral/cubic region (trimesh box) that is a fraction of the bounding box.
-
-    Parameters
-    ----------
-    x_lims : tuple[float, float]
-        Original domain limits for x.
-    y_lims : tuple[float, float]
-        Original domain limits for y.
-    z_lims : tuple[float, float]
-        Original domain limits for z.
-    box_frac : float, default=0.8
-        Fraction of the original bounding box dimensions to scale by.
-
-    Returns
-    -------
-    trimesh.Trimesh
-        Sub-volume box centered on the original bounding box.
-    """
-    cx = (x_lims[0] + x_lims[1]) / 2.0
-    cy = (y_lims[0] + y_lims[1]) / 2.0
-    cz = (z_lims[0] + z_lims[1]) / 2.0
-
-    dx = (x_lims[1] - x_lims[0]) * box_frac
-    dy = (y_lims[1] - y_lims[0]) * box_frac
-    dz = (z_lims[1] - z_lims[0]) * box_frac
-
-    box = trimesh.creation.box(extents=(dx, dy, dz))
-    box.apply_translation([cx, cy, cz])
-
-    return box
-
-
-def _filter_bodies(
-        bodies: list[trimesh.Trimesh],
-        min_vertices: int = 100,
-    ) -> list[trimesh.Trimesh]:
-
-    result = []
-
-    for c in bodies:
-        if len(c.vertices) < min_vertices:
-            continue
-
-        c.fix_normals()
-        # Invert faces if volume is negative to ensure positive
-        # volume in PyVista
-        if c.volume < 0:
-            c.invert()
-
-        result.append(c)
-
-    # Sort largest components first
-    return result
-
-
-def get_porous_domain(
-        stl_physical: trimesh.Trimesh,
-        stl_domain: trimesh.Trimesh,
-        min_vertices: int = 100,
-    ) -> list[trimesh.Trimesh]:
-
-    def by_vertices(c):
-        return len(c.vertices)
-
-    # 1. Fluid domain: subtract the solid wall from the sub-volume
-    pore_trimesh = stl_domain.difference(
-        stl_physical, engine="blender", check_volume=False, use_exact=False)
-
-    pore_bodies = pore_trimesh.split(only_watertight=False)
-    pore_bodies = _filter_bodies(pore_bodies, min_vertices=min_vertices)
-
-    for c in pore_bodies:
-        c.metadata["type"] = "fluid"
-
-    # Sort largest fluid components first
-    pore_bodies = sorted(pore_bodies, key=by_vertices, reverse=True)
-
-    # 2. Solid domain (the gap): intersect the solid wall with the sub-volume
-    solid_trimesh = stl_domain.intersection(
-        stl_physical, engine="blender", check_volume=False, use_exact=False)
-
-    solid_bodies = solid_trimesh.split(only_watertight=False)
-    solid_bodies = _filter_bodies(solid_bodies, min_vertices=min_vertices)
-
-    for c in solid_bodies:
-        c.metadata["type"] = "solid"
-
-    # Sort largest solid components first
-    solid_bodies = sorted(solid_bodies, key=by_vertices, reverse=True)
-
-    return pore_bodies + solid_bodies
-
-
 def plot_domain(
-        pore_bodies: list[trimesh.Trimesh] | None = None,
-        subvolume: trimesh.Trimesh | None = None,
-        stl_mesh: trimesh.Trimesh | None = None,
+        bodies: list[trimesh.Trimesh] | None = None,
+        volume: trimesh.Trimesh | None = None,
+        parent: trimesh.Trimesh | None = None,
         saveas: str | Path | None = None,
     ) -> None:
     """ Display the extracted domain components.
@@ -638,8 +671,8 @@ def plot_domain(
     plotter = pv.Plotter(off_screen=off_screen, window_size=[800, 600])
 
     # Add thin reference model of the solid wall shell
-    if stl_mesh is not None:
-        solid_pv = pv.wrap(stl_mesh)
+    if parent is not None:
+        solid_pv = pv.wrap(parent)
         plotter.add_mesh(
             mesh        = solid_pv,
             color       = "#888888",
@@ -652,21 +685,20 @@ def plot_domain(
     # XXX this only works if subvolume is cuboidal, which is the case in
     # the current implementation, but TPMS surfaces could have hexagonal
     # bounding boxes, for instance, what could be needed in the future.
-    if subvolume is not None:
-        solid_pv = pv.wrap(subvolume)
+    if volume is not None:
+        solid_pv = pv.wrap(volume)
         plotter.add_mesh(solid_pv.outline(), color="#000000", line_width=2)
 
-    if pore_bodies is not None:
-        # fluid_colors = ["#3A86FF", "#FF006E", "#8338EC", "#06D6A0", "#FB5607"]
+    if bodies is not None:
         fluid_colors = ["#012169", "#FF8200", "#A50033", "#009681"]
         fluid_idx = 0
         solid_idx = 0
 
-        for body in pore_bodies:
+        for body in bodies:
             body_type = body.metadata.get("type", "fluid")
             if body_type == "fluid":
                 color = fluid_colors[fluid_idx % len(fluid_colors)]
-                label = f"Pore Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
+                label = f"Fluid Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
                 opacity = 0.5
                 fluid_idx += 1
             else:
@@ -690,7 +722,6 @@ def plot_domain(
         plotter.screenshot(saveas)
     else:
         plotter.show()
-
 
 
 def main() -> int:

@@ -13,11 +13,13 @@ def gyroid(X, Y, Z, **kwargs):
 
 
 if __name__ == "__main__":
-    n        = 200
-    x_lims   = (-pi, pi)
-    y_lims   = (-pi, pi)
-    z_lims   = (-pi, pi)
     box_frac = 0.9
+    inv_frac = 1.0 / box_frac
+    n        = 200
+
+    x_lims   = (-inv_frac * pi, inv_frac * pi)
+    y_lims   = (-inv_frac * pi, inv_frac * pi)
+    z_lims   = (-inv_frac * pi, inv_frac * pi)
 
     surface = pg.FunctionalShapes(
         functional = gyroid,
@@ -34,20 +36,13 @@ if __name__ == "__main__":
     filename = Path(__file__).parent / "surface.stl"
     surface.save_mesh(filename, show=False)
 
-    # stl_mesh = pg.FunctionalShapes.from_stl(filename)
-    # XXX the above only works if STL was created via FunctionalShapes!
-    # Otherwise you may need to call `FunctionalShapes.map_voxel_to_physical`
-    # on the mesh from STL to get the right voxel mapping!
+    mesh   = pg.FunctionalShapes.from_stl(filename)
+    volume = pg.FunctionalShapes.cube_subvolume(mesh, box_frac)
+    domain = pg.PorousDomainExtractor(mesh, volume)
 
-    stl_mesh = surface.mesh
-    x_lims, y_lims, z_lims = stl_mesh.bounding_box.bounds.T
-
-
-    # subvolume = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
-    # bodies = pg.get_porous_domain(stl_mesh, subvolume)
-
-    # pg.plot_domain(
-    #     pore_bodies = bodies,
-    #     # subvolume   = subvolume,
-    #     # stl_mesh    = stl_mesh,
-    # )
+    pg.plot_domain(
+        bodies = domain.fluid_bodies,
+        volume = volume,
+        parent = mesh,
+        saveas = filename.with_suffix(".png"),
+    )
