@@ -1,6 +1,9 @@
 # Generated STL surface files:
 *.stl
 
+# Generated media:
+*.png
+
 # Python
 *.pyc
 __pycache__/
