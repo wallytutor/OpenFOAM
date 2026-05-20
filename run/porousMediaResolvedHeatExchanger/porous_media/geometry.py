@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from IPython import display
 import argparse
 import os
 import functools
@@ -496,25 +497,30 @@ def thicken_surface_mesh(
 def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
     """ Scale mesh vertices from voxel space to physical coordinates.
 
-    Marching cubes extracts vertices in index space [0, N-1], which needs
-    to be mapped back to the physical x_lims, y_lims, z_lims range.
+    Marching cubes extracts vertices in index space [0, N-1], which
+    needs to be mapped back to the physical x_lims, y_lims, z_lims range.
+
     Note: We must account for the 'xy' indexing of np.meshgrid in
     FunctionalShapes.cube_meshgrid, which swaps the X and Y axes.
     """
+    pts = mesh.vertices.copy()
+    pts_physical = np.zeros_like(pts)
+
     delta_x = (x_lims[1] - x_lims[0]) / (nx - 1)
     delta_y = (y_lims[1] - y_lims[0]) / (ny - 1)
     delta_z = (z_lims[1] - z_lims[0]) / (nz - 1)
 
-    pts = mesh.vertices.copy()
-    pts_physical = np.zeros_like(pts)
     pts_physical[:, 0] = x_lims[0] + pts[:, 1] * delta_x
     pts_physical[:, 1] = y_lims[0] + pts[:, 0] * delta_y
     pts_physical[:, 2] = z_lims[0] + pts[:, 2] * delta_z
+
     mesh.vertices = pts_physical
 
-    # Fix chiral reflection: a coordinate swap inverts the winding of all faces.
-    # We must fix normals and invert faces if volume is negative to keep the mesh as a solid volume.
+    # Fix chiral reflection: a coordinate swap inverts the winding of
+    # all faces. We must fix normals and invert faces if volume is
+    # negative to keep the mesh as a solid volume.
     mesh.fix_normals()
+
     if mesh.volume < 0:
         mesh.invert()
 
@@ -633,6 +639,7 @@ def plot_domain(
         pore_bodies: list[trimesh.Trimesh] | None = None,
         subvolume: trimesh.Trimesh | None = None,
         stl_mesh: trimesh.Trimesh | None = None,
+        saveas: str | Path | None = None,
     ) -> None:
     """ Display the extracted domain components.
 
@@ -645,9 +652,8 @@ def plot_domain(
     stl_mesh : trimesh.Trimesh
         Original solid domain mesh.
     """
-    print("Rendering final zones in PyVista...")
-    off_screen = os.environ.get("OFF_SCREEN", "0") == "1"
-    plotter = pv.Plotter(title="Watertight Pore Volume Zones", off_screen=off_screen)
+    off_screen = saveas is not None
+    plotter = pv.Plotter(off_screen=off_screen, window_size=[800, 600])
 
     # Add thin reference model of the solid wall shell
     if stl_mesh is not None:
@@ -660,56 +666,46 @@ def plot_domain(
             label       = "Solid Wall (Reference)"
         )
 
-    # Add wireframe bounding box (clean 12-edge outline with no diagonals)
+    # Add wireframe bounding box.
+    # XXX this only works if subvolume is cuboidal, which is the case in
+    # the current implementation, but TPMS surfaces could have hexagonal
+    # bounding boxes, for instance, what could be needed in the future.
     if subvolume is not None:
         solid_pv = pv.wrap(subvolume)
-        plotter.add_mesh(
-            mesh        = solid_pv.outline(),
-            color       = "#000000",
-            line_width  = 2,
-            label       = "Sub-Volume Bounds"
-        )
+        plotter.add_mesh(solid_pv.outline(), color="#000000", line_width=2)
 
-    if pore_bodies is None:
-        if off_screen:
-            plotter.screenshot("pore_networks.png")
-        else:
-            plotter.show()
-        return
+    if pore_bodies is not None:
+        # fluid_colors = ["#3A86FF", "#FF006E", "#8338EC", "#06D6A0", "#FB5607"]
+        fluid_colors = ["#012169", "#FF8200", "#A50033", "#009681"]
+        fluid_idx = 0
+        solid_idx = 0
 
-    # Vibrant color palettes
-    fluid_colors = ["#3A86FF", "#FF006E", "#8338EC", "#06D6A0", "#FB5607"]
-    solid_colors = ["#FFBE0B", "#E76F51", "#2A9D8F", "#F4A261"]
+        for body in pore_bodies:
+            body_type = body.metadata.get("type", "fluid")
+            if body_type == "fluid":
+                color = fluid_colors[fluid_idx % len(fluid_colors)]
+                label = f"Pore Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
+                opacity = 0.5
+                fluid_idx += 1
+            else:
+                color = "#7F7F7F"
+                label = f"Solid Zone {solid_idx + 1} (Vol: {body.volume:.4f})"
+                opacity = 1.0
+                solid_idx += 1
 
-    fluid_idx = 0
-    solid_idx = 0
-
-    for body in pore_bodies:
-        body_type = body.metadata.get("type", "fluid")
-        if body_type == "fluid":
-            color = fluid_colors[fluid_idx % len(fluid_colors)]
-            label = f"Pore Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
-            opacity = 0.85
-            fluid_idx += 1
-        else:
-            color = solid_colors[solid_idx % len(solid_colors)]
-            label = f"Solid Zone {solid_idx + 1} (Vol: {body.volume:.4f})"
-            opacity = 0.50  # Semi-translucent to see interpenetrating networks
-            solid_idx += 1
-
-        plotter.add_mesh(
-            mesh        = body,
-            color       = color,
-            opacity     = opacity,
-            show_edges  = False,
-            label       = label
-        )
+            plotter.add_mesh(
+                mesh        = body,
+                color       = color,
+                opacity     = opacity,
+                show_edges  = False,
+                label       = label
+            )
 
     plotter.add_legend(face="circle", bcolor=None)
     plotter.show_axes()
 
     if off_screen:
-        plotter.screenshot("pore_networks.png")
+        plotter.screenshot(saveas)
     else:
         plotter.show()
 
