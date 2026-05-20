@@ -34,22 +34,20 @@ if __name__ == "__main__":
     filename = Path(__file__).parent / "surface.stl"
     surface.save_mesh(filename, show=False)
 
-    stl_mesh = pg.load_physical_mesh(
-        filename = filename,
-        x_lims   = x_lims,
-        y_lims   = y_lims,
-        z_lims   = z_lims,
-        nx       = n,
-        ny       = n,
-        nz       = n,
-    )
+    # stl_mesh = pg.FunctionalShapes.from_stl(filename)
+    # XXX the above only works if STL was created via FunctionalShapes!
+    # Otherwise you may need to call `FunctionalShapes.map_voxel_to_physical`
+    # on the mesh from STL to get the right voxel mapping!
 
-    subvolume = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
+    stl_mesh = surface.mesh
+    x_lims, y_lims, z_lims = stl_mesh.bounding_box.bounds.T
 
-    bodies = pg.get_porous_domain(stl_mesh, subvolume)
 
-    pg.plot_domain(
-        pore_bodies = bodies,
-        # subvolume   = subvolume,
-        # stl_mesh    = stl_mesh,
-    )
+    # subvolume = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
+    # bodies = pg.get_porous_domain(stl_mesh, subvolume)
+
+    # pg.plot_domain(
+    #     pore_bodies = bodies,
+    #     # subvolume   = subvolume,
+    #     # stl_mesh    = stl_mesh,
+    # )

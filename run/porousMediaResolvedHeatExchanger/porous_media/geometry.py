@@ -87,6 +87,19 @@ class FunctionalShapes:
     RuntimeError
         If marching cubes cannot extract any surface.
     """
+    __slots__ = (
+        "_vertices",
+        "_faces",
+        "_mesh",
+    )
+
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls)
+        obj._vertices = None
+        obj._faces    = None
+        obj._mesh     = None
+        return obj
+
     def __init__(self, *,
             functional: str | FunctionalType,
             x_lims: tuple[float, float],
@@ -112,7 +125,22 @@ class FunctionalShapes:
         self._mesh     = Trimesh(vertices=vertices, faces=faces)
 
         if thickness > 0.0:
-            self.thicken(thickness=thickness, inplace=True)
+            thickened = self.thicken_surface_mesh(self._mesh, thickness)
+            self._mesh = thickened
+            self._vertices = thickened.vertices
+            self._faces = thickened.faces
+
+        self._mesh = self.map_voxel_to_physical(
+            mesh   = self._mesh,
+            x_lims = x_lims,
+            y_lims = y_lims,
+            z_lims = z_lims,
+            nx     = nx,
+            ny     = ny,
+            nz     = nz,
+        )
+        self._vertices = self._mesh.vertices
+        self._faces    = self._mesh.faces
 
     def _resolve_functional(self,
             functional: str | FunctionalType
@@ -178,6 +206,142 @@ class FunctionalShapes:
         z = np.linspace(*z_lims, nz)
         return np.meshgrid(x, y, z)
 
+    @staticmethod
+    def thicken_surface_mesh(
+            mesh: Trimesh,
+            thickness: float,
+            *,
+            centered: bool = True,
+        ) -> Trimesh:
+        """ Create a shell with finite thickness from a triangulated surface.
+
+        The algorithm offsets vertices along vertex normals to form two surfaces
+        and connects boundary edges (if present) with side triangles.
+
+        Parameters
+        ----------
+        mesh : Trimesh
+            Input surface mesh.
+        thickness : float
+            Total shell thickness (must be positive).
+        centered : bool, default=True
+            If true, offsets equally to both sides of the original surface.
+            If false, keeps original surface as the outer side and offsets inward.
+
+        Returns
+        -------
+        Trimesh
+            Thickened shell mesh.
+        """
+        if not np.isfinite(thickness):
+            raise ValueError(f"thickness must be finite, got {thickness}")
+
+        if thickness <= 0.0:
+            raise ValueError(f"thickness must be positive, got {thickness}")
+
+        vertices = np.asarray(mesh.vertices)
+        faces    = np.asarray(mesh.faces, dtype=np.int32)
+        normals  = np.asarray(mesh.vertex_normals)
+
+        if len(vertices) == 0 or len(faces) == 0:
+            raise ValueError("Cannot thicken an empty mesh")
+
+        if centered:
+            outer_shift = 0.5 * thickness
+            inner_shift = -0.5 * thickness
+        else:
+            outer_shift = 0.0
+            inner_shift = -thickness
+
+        outer_vertices = vertices + outer_shift * normals
+        inner_vertices = vertices + inner_shift * normals
+
+        n_vertices = len(vertices)
+        outer_faces = faces.copy()
+        inner_faces = faces[:, ::-1] + n_vertices
+
+        # Find all directed boundary edges to enforce mathematically
+        # correct winding consistency
+        edges = np.vstack((
+            faces[:, [0, 1]],
+            faces[:, [1, 2]],
+            faces[:, [2, 0]],
+        ))
+
+        sorted_edges = np.sort(edges, axis=1)
+
+        unique_edges, counts = np.unique(
+            sorted_edges, axis=0, return_counts=True)
+
+        boundary_undirected = set(tuple(e) for e in unique_edges[counts == 1])
+
+        boundary_directed = []
+
+        for face in faces:
+            pairs = [
+                (face[0], face[1]),
+                (face[1], face[2]),
+                (face[2], face[0]),
+            ]
+
+            for u, v in pairs:
+                if tuple(sorted((u, v))) in boundary_undirected:
+                    boundary_directed.append((u, v))
+
+        if len(boundary_directed) > 0:
+            boundary_directed = np.array(boundary_directed, dtype=np.int32)
+
+            u = boundary_directed[:, 0]
+            v = boundary_directed[:, 1]
+
+            u_in = u + n_vertices
+            v_in = v + n_vertices
+
+            # Consistently wound triangles connecting outer and inner surfaces
+            side_1 = np.column_stack((v, u, u_in))
+            side_2 = np.column_stack((v, u_in, v_in))
+
+            side_faces = np.vstack((side_1, side_2)).astype(np.int32)
+            shell_faces = np.vstack((outer_faces, inner_faces, side_faces))
+        else:
+            shell_faces = np.vstack((outer_faces, inner_faces))
+
+        shell_vertices = np.vstack((outer_vertices, inner_vertices))
+        return Trimesh(vertices=shell_vertices, faces=shell_faces, process=True)
+
+    @staticmethod
+    def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
+        """ Scale mesh vertices from voxel space to physical coordinates.
+
+        Marching cubes extracts vertices in index space [0, N-1], which
+        needs to be mapped back to the physical x_lims, y_lims, z_lims range.
+
+        Note: We must account for the 'xy' indexing of np.meshgrid in
+        FunctionalShapes.cube_meshgrid, which swaps the X and Y axes.
+        """
+        pts = mesh.vertices.copy()
+        pts_physical = np.zeros_like(pts)
+
+        delta_x = (x_lims[1] - x_lims[0]) / (nx - 1)
+        delta_y = (y_lims[1] - y_lims[0]) / (ny - 1)
+        delta_z = (z_lims[1] - z_lims[0]) / (nz - 1)
+
+        pts_physical[:, 0] = x_lims[0] + pts[:, 1] * delta_x
+        pts_physical[:, 1] = y_lims[0] + pts[:, 0] * delta_y
+        pts_physical[:, 2] = z_lims[0] + pts[:, 2] * delta_z
+
+        mesh.vertices = pts_physical
+
+        # Fix chiral reflection: a coordinate swap inverts the winding of
+        # all faces. We must fix normals and invert faces if volume is
+        # negative to keep the mesh as a solid volume.
+        mesh.fix_normals()
+
+        if mesh.volume < 0:
+            mesh.invert()
+
+        return mesh
+
     @property
     def vertices(self) -> NDArray[Any]:
         """ Return mesh vertices with shape ``(n_vertices, 3)``. """
@@ -193,50 +357,16 @@ class FunctionalShapes:
         """ Return the `trimesh.Trimesh` view of the generated surface. """
         return self._mesh
 
-    def thicken(self,
-            thickness: float,
-            *,
-            centered: bool = True,
-            inplace: bool = False,
-        ) -> Trimesh:
-        """Create a thickened shell mesh from the current surface.
-
-        Parameters
-        ----------
-        thickness : float
-            Total shell thickness.
-        centered : bool, default=True
-            If true, offset half the thickness on each side of the current
-            surface. If false, keep the current surface as the outer side and
-            offset only inward.
-        inplace : bool, default=False
-            If true, replace the current mesh/vertices/faces with the
-            thickened shell.
-
-        Returns
-        -------
-        Trimesh
-            Thickened shell mesh.
-        """
-        thickened = thicken_surface_mesh(
-            self._mesh,
-            thickness=thickness,
-            centered=centered,
-        )
-
-        if inplace:
-            self._mesh = thickened
-            self._vertices = thickened.vertices
-            self._faces = thickened.faces
-
-        return thickened
-
     def save_mesh(self, filename: str | Path, show: bool = False) -> None:
         """ Export the current mesh to a file path supported by trimesh. """
         self._mesh.export(file_obj=filename)
 
         if show:
             self.plot_mesh(filename)
+
+    @staticmethod
+    def from_stl(filename: str | Path, **kwargs: Any):
+        return trimesh.load(filename, file_type="stl")
 
     def plot_mesh(self, filename: str | Path) -> None:
         """ Load a mesh file with PyVista display STL file. """
@@ -391,154 +521,6 @@ def load_implicit_surface(path: Path) -> FunctionalType:
         )
 
     return module.implicit_surface  # type: ignore[return-value]
-
-
-def _boundary_edges(faces: NDArray[Any]) -> NDArray[Any]:
-    """ Return edges that belong to exactly one triangle. """
-    edges = np.vstack((
-        faces[:, [0, 1]],
-        faces[:, [1, 2]],
-        faces[:, [2, 0]],
-    ))
-
-    sorted_edges = np.sort(edges, axis=1)
-    unique_edges, counts = np.unique(sorted_edges, axis=0, return_counts=True)
-    return unique_edges[counts == 1]
-
-
-def thicken_surface_mesh(
-        mesh: Trimesh,
-        *,
-        thickness: float,
-        centered: bool = True,
-    ) -> Trimesh:
-    """ Create a shell with finite thickness from a triangulated surface.
-
-    The algorithm offsets vertices along vertex normals to form two surfaces
-    and connects boundary edges (if present) with side triangles.
-
-    Parameters
-    ----------
-    mesh : Trimesh
-        Input surface mesh.
-    thickness : float
-        Total shell thickness (must be positive).
-    centered : bool, default=True
-        If true, offsets equally to both sides of the original surface.
-        If false, keeps original surface as the outer side and offsets inward.
-
-    Returns
-    -------
-    Trimesh
-        Thickened shell mesh.
-    """
-    if not np.isfinite(thickness):
-        raise ValueError(f"thickness must be finite, got {thickness}")
-
-    if thickness <= 0.0:
-        raise ValueError(f"thickness must be positive, got {thickness}")
-
-    vertices = np.asarray(mesh.vertices)
-    faces = np.asarray(mesh.faces, dtype=np.int32)
-    normals = np.asarray(mesh.vertex_normals)
-
-    if len(vertices) == 0 or len(faces) == 0:
-        raise ValueError("Cannot thicken an empty mesh")
-
-    if centered:
-        outer_shift = 0.5 * thickness
-        inner_shift = -0.5 * thickness
-    else:
-        outer_shift = 0.0
-        inner_shift = -thickness
-
-    outer_vertices = vertices + outer_shift * normals
-    inner_vertices = vertices + inner_shift * normals
-
-    n_vertices = len(vertices)
-    outer_faces = faces.copy()
-    inner_faces = faces[:, ::-1] + n_vertices
-
-    # Find all directed boundary edges to enforce mathematically correct winding consistency
-    edges = np.vstack((
-        faces[:, [0, 1]],
-        faces[:, [1, 2]],
-        faces[:, [2, 0]],
-    ))
-    sorted_edges = np.sort(edges, axis=1)
-    unique_edges, counts = np.unique(sorted_edges, axis=0, return_counts=True)
-    boundary_undirected = set(tuple(e) for e in unique_edges[counts == 1])
-
-    boundary_directed = []
-    for face in faces:
-        for u, v in [(face[0], face[1]), (face[1], face[2]), (face[2], face[0])]:
-            if tuple(sorted((u, v))) in boundary_undirected:
-                boundary_directed.append((u, v))
-
-    if len(boundary_directed) > 0:
-        boundary_directed = np.array(boundary_directed, dtype=np.int32)
-        u = boundary_directed[:, 0]
-        v = boundary_directed[:, 1]
-        u_in = u + n_vertices
-        v_in = v + n_vertices
-
-        # Consistently wound triangles connecting outer and inner surfaces
-        side_1 = np.column_stack((v, u, u_in))
-        side_2 = np.column_stack((v, u_in, v_in))
-        side_faces = np.vstack((side_1, side_2)).astype(np.int32)
-        shell_faces = np.vstack((outer_faces, inner_faces, side_faces))
-    else:
-        shell_faces = np.vstack((outer_faces, inner_faces))
-
-    shell_vertices = np.vstack((outer_vertices, inner_vertices))
-    return Trimesh(vertices=shell_vertices, faces=shell_faces, process=True)
-
-
-def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
-    """ Scale mesh vertices from voxel space to physical coordinates.
-
-    Marching cubes extracts vertices in index space [0, N-1], which
-    needs to be mapped back to the physical x_lims, y_lims, z_lims range.
-
-    Note: We must account for the 'xy' indexing of np.meshgrid in
-    FunctionalShapes.cube_meshgrid, which swaps the X and Y axes.
-    """
-    pts = mesh.vertices.copy()
-    pts_physical = np.zeros_like(pts)
-
-    delta_x = (x_lims[1] - x_lims[0]) / (nx - 1)
-    delta_y = (y_lims[1] - y_lims[0]) / (ny - 1)
-    delta_z = (z_lims[1] - z_lims[0]) / (nz - 1)
-
-    pts_physical[:, 0] = x_lims[0] + pts[:, 1] * delta_x
-    pts_physical[:, 1] = y_lims[0] + pts[:, 0] * delta_y
-    pts_physical[:, 2] = z_lims[0] + pts[:, 2] * delta_z
-
-    mesh.vertices = pts_physical
-
-    # Fix chiral reflection: a coordinate swap inverts the winding of
-    # all faces. We must fix normals and invert faces if volume is
-    # negative to keep the mesh as a solid volume.
-    mesh.fix_normals()
-
-    if mesh.volume < 0:
-        mesh.invert()
-
-    return mesh
-
-
-def load_physical_mesh(filename, x_lims, y_lims, z_lims, nx, ny, nz):
-    stl_trimesh = trimesh.load(filename)
-    stl_physical = map_voxel_to_physical(
-        mesh   = stl_trimesh,
-        x_lims = x_lims,
-        y_lims = y_lims,
-        z_lims = z_lims,
-        nx     = nx,
-        ny     = ny,
-        nz     = nz,
-    )
-    return stl_physical
 
 
 def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
