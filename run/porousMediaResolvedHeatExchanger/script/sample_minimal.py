@@ -74,10 +74,14 @@ if __name__ == "__main__":
 
     subvolume = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
 
-    bodies = pg.get_porous_domain(stl_mesh, subvolume)
+    stl_mesh = stl_mesh.intersection(
+        subvolume, engine="blender", check_volume=False
+    )
+
+    # bodies = pg.get_porous_domain(stl_mesh, subvolume)
 
     pg.plot_domain(
-        pore_bodies = bodies,
-        # subvolume   = subvolume,
-        # stl_mesh    = stl_mesh
+        # pore_bodies = bodies,
+        subvolume   = subvolume,
+        stl_mesh    = stl_mesh
     )

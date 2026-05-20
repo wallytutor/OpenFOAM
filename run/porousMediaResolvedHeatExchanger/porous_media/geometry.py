@@ -573,7 +573,7 @@ def get_porous_domain(
 
 
 def plot_domain(
-        pore_bodies,
+        pore_bodies: list[trimesh.Trimesh] | None = None,
         subvolume: trimesh.Trimesh | None = None,
         stl_mesh: trimesh.Trimesh | None = None,
     ) -> None:
@@ -597,7 +597,7 @@ def plot_domain(
         plotter.add_mesh(
             mesh        = solid_pv,
             color       = "#888888",
-            opacity     = 0.12,
+            opacity     = 1.0,
             show_edges  = False,
             label       = "Solid Wall (Reference)"
         )
@@ -612,6 +612,10 @@ def plot_domain(
             line_width  = 2,
             label       = "Sub-Volume Bounds"
         )
+
+    if pore_bodies is None:
+        plotter.show()
+        return
 
     # Vibrant color palettes
     fluid_colors = ["#3A86FF", "#FF006E", "#8338EC", "#06D6A0", "#FB5607"]
