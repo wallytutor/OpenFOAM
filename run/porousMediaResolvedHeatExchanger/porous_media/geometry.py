@@ -518,7 +518,67 @@ def get_subvolume(x_lims, y_lims, z_lims, box_frac=0.8):
     return box
 
 
-def plot_domain(stl_mesh, subvolume, pore_bodies):
+def _filter_bodies(
+        bodies: list[trimesh.Trimesh],
+        min_vertices: int = 100,
+    ) -> list[trimesh.Trimesh]:
+
+    result = []
+
+    for c in bodies:
+        if len(c.vertices) < min_vertices:
+            continue
+
+        c.fix_normals()
+        # Invert faces if volume is negative to ensure positive
+        # volume in PyVista
+        if c.volume < 0:
+            c.invert()
+
+        result.append(c)
+
+    # Sort largest components first
+    return result
+
+
+def get_porous_domain(
+        stl_physical: trimesh.Trimesh,
+        stl_domain: trimesh.Trimesh,
+        min_vertices: int = 100,
+    ) -> list[trimesh.Trimesh]:
+
+    pore_trimesh = stl_domain.difference(
+        stl_physical, engine="blender", check_volume=False)
+
+    # print(f"Solid wall mesh watertight? {stl_physical.is_watertight}")
+    # print(f"Solid wall Euler number: {stl_physical.euler_number}")
+
+    # print(f"Pore volume watertight? {pore_trimesh.is_watertight}")
+    # print(f"Pore volume exact value: {pore_trimesh.volume:.4f}")
+
+    # Use trimesh.split to split the pore mesh based on face adjacency,
+    # which is topologically exact and unaffected by PyVista/VTK shared
+    # vertex mergers.
+    bodies = pore_trimesh.split(only_watertight=False)
+    bodies = _filter_bodies(bodies, min_vertices=min_vertices)
+
+    # Sort largest components first
+    # bodies = [pv.wrap(b) for b in bodies]
+    # bodies = sorted(bodies, key=lambda b: b.n_points, reverse=True)
+
+    # print(f"Extracted pore space split into {len(bodies)} regions")
+    # for i, b in enumerate(bodies):
+    #     print(f" - Region {i+1}: points={b.n_points}, "
+    #           f"cells={b.n_cells}, volume={b.volume:.4f}")
+
+    return bodies
+
+
+def plot_domain(
+        pore_bodies,
+        subvolume: trimesh.Trimesh | None = None,
+        stl_mesh: trimesh.Trimesh | None = None,
+    ) -> None:
     """ Display the extracted domain components.
 
     Parameters
@@ -534,36 +594,47 @@ def plot_domain(stl_mesh, subvolume, pore_bodies):
     plotter = pv.Plotter(title="Watertight Pore Volume Zones")
 
     # Add thin reference model of the solid wall shell
-    solid_pv = pv.wrap(stl_mesh)
-    plotter.add_mesh(
-        solid_pv,
-        color="#888888",
-        opacity=0.12,
-        show_edges=False,
-        label="Solid Wall (Reference)"
-    )
+    if stl_mesh is not None:
+        solid_pv = pv.wrap(stl_mesh)
+        plotter.add_mesh(
+            mesh        = solid_pv,
+            color       = "#888888",
+            opacity     = 0.12,
+            show_edges  = False,
+            label       = "Solid Wall (Reference)"
+        )
 
     # Add wireframe bounding box
-    box_pv = pv.wrap(subvolume)
-    plotter.add_mesh(
-        box_pv,
-        color="#555555",
-        style="wireframe",
-        line_width=2,
-        label="Sub-Volume Bounds"
-    )
+    if subvolume is not None:
+        box_pv = pv.wrap(subvolume)
+        plotter.add_mesh(
+            mesh        = box_pv,
+            color       = "#555555",
+            style       = "wireframe",
+            line_width  = 2,
+            label       = "Sub-Volume Bounds"
+        )
 
-    colors = ["#3A86FF", "#FF006E", "#8338EC", "#FFBE0B", "#FB5607", "#06D6A0"]
+    colors = [
+        "#3A86FF",
+        "#FF006E",
+        "#8338EC",
+        "#FFBE0B",
+        "#FB5607",
+        "#06D6A0"
+    ]
+
     for i, body in enumerate(pore_bodies):
         color = colors[i % len(colors)]
+        label = f"Pore Zone {i+1} (Vol: {body.volume:.4f})"
         plotter.add_mesh(
-            body,
-            color=color,
-            opacity=0.85,
-            show_edges=True,
-            edge_color="#121214",
-            line_width=1.0,
-            label=f"Pore Zone {i+1} (Vol: {body.volume:.4f})"
+            mesh        = body,
+            color       = color,
+            opacity     = 0.85,
+            show_edges  = True,
+            edge_color  = "#121214",
+            line_width  = 1.0,
+            label       = label
         )
 
     plotter.add_legend(face="circle", bcolor=None)

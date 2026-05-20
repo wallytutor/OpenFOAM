@@ -74,39 +74,10 @@ if __name__ == "__main__":
 
     box = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
 
-    pore_trimesh = box.difference(
-        stl_physical, engine="blender", check_volume=False)
+    bodies = pg.get_porous_domain(stl_physical, box)
 
-    # print(f"Solid wall mesh watertight? {stl_physical.is_watertight}")
-    # print(f"Solid wall Euler number: {stl_physical.euler_number}")
-
-    # print(f"Pore volume watertight? {pore_trimesh.is_watertight}")
-    # print(f"Pore volume exact value: {pore_trimesh.volume:.4f}")
-
-    # Use trimesh.split to split the pore mesh based on face adjacency,
-    # which is topologically exact and unaffected by PyVista/VTK shared
-    # vertex mergers.
-    comps = pore_trimesh.split(only_watertight=False)
-
-    min_vertices = 100
-    bodies = []
-    for c in comps:
-        # Filter out tiny numerical boundary artifacts
-        if len(c.vertices) < min_vertices:
-            continue
-
-        c.fix_normals()
-        # Invert faces if volume is negative to ensure positive volume
-        # in PyVista
-        if c.volume < 0:
-            c.invert()
-        bodies.append(pv.wrap(c))
-
-    # Sort largest components first
-    bodies = sorted(bodies, key=lambda b: b.n_points, reverse=True)
-
-    print(f"Extracted pore space split into {len(bodies)} regions")
-    for i, b in enumerate(bodies):
-        print(f" - Region {i+1}: points={b.n_points}, cells={b.n_cells}, volume={b.volume:.4f}")
-
-    pg.plot_domain(stl_physical, box, bodies)
+    pg.plot_domain(
+        pore_bodies = bodies,
+        # subvolume   = box,
+        # stl_mesh    = stl_physical
+    )
