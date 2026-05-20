@@ -66,6 +66,8 @@ class FunctionalShapes:
         Fractional level for isosurface extraction.
     thickness : float, default=0.0
         Optional shell thickness.
+    centered : bool, default=False
+        Whether to center the sub-volume on the original bounding box.
     **kwargs : Any
         Extra keyword arguments.
     """
@@ -95,6 +97,7 @@ class FunctionalShapes:
             nz: int = 100,
             level: float = 0.0,
             thickness: float = 0.0,
+            centered: bool = False,
             **kwargs: Any,
         ) -> None:
         f = self._resolve_functional(functional)
@@ -667,11 +670,27 @@ class PorousDomainExtractor:
         list of trimesh.Trimesh
             The partitioned fluid and solid components.
         """
+        # Determine appropriate scale factor to avoid Blender tolerance issues
+        extents = stl_domain.extents
+        max_extent = float(np.max(extents))
+        scale_factor = 100.0 / max_extent if max_extent > 0.0 else 1.0
+
+        if scale_factor != 1.0:
+            stl_domain_scaled = stl_domain.copy()
+            stl_domain_scaled.apply_scale(scale_factor)
+            stl_physical_scaled = stl_physical.copy()
+            stl_physical_scaled.apply_scale(scale_factor)
+        else:
+            stl_domain_scaled = stl_domain
+            stl_physical_scaled = stl_physical
+
         def by_vertices(c):
             return len(c.vertices)
 
         # 1. Fluid domain: subtract the solid wall from the sub-volume
-        pore_trimesh = cls._operation(stl_domain, stl_physical, "difference")
+        pore_trimesh = cls._operation(
+            stl_domain_scaled, stl_physical_scaled, "difference"
+        )
         porous = pore_trimesh.split(only_watertight=False)
         porous = cls._filter_bodies(porous, min_vertices=min_vertices)
 
@@ -680,13 +699,23 @@ class PorousDomainExtractor:
 
         # 2. Solid domain: intersect the solid wall with the sub-volume
         solid_trimesh = cls._operation(
-            stl_domain, stl_physical, "intersection"
+            stl_domain_scaled, stl_physical_scaled, "intersection"
         )
         solids = solid_trimesh.split(only_watertight=False)
         solids = cls._filter_bodies(solids, min_vertices=min_vertices)
 
         for c in solids:
             c.metadata["type"] = "solid"
+
+        # Scale all bodies back down to original coordinate space
+        if scale_factor != 1.0:
+            inv_scale = 1.0 / scale_factor
+
+            for c in porous:
+                c.apply_scale(inv_scale)
+
+            for c in solids:
+                c.apply_scale(inv_scale)
 
         # Sort largest components first
         porous = sorted(porous, key=by_vertices, reverse=True)
@@ -858,6 +887,8 @@ def plot_domain(
             solid_pv.outline(), color="#000000", line_width=2
         )
 
+    has_labels = False
+
     if bodies is not None:
         fluid_colors = ["#012169", "#FF8200", "#A50033", "#009681"]
         fluid_idx = 0
@@ -890,8 +921,20 @@ def plot_domain(
                 show_edges  = False,
                 label       = label
             )
+            has_labels = True
 
-    plotter.add_legend(face="circle", bcolor=None)
+    if has_labels or parent is not None:
+        plotter.add_legend(face="circle", bcolor=None)
+
+    plotter.show_grid(
+        xtitle="X [m]",
+        ytitle="Y [m]",
+        ztitle="Z [m]",
+        color="#555555",
+        font_size=10,
+        location="outer",
+        fmt="{:.2e}",
+    )
     plotter.show_axes()
 
     if off_screen:
