@@ -39,17 +39,15 @@ def load_physical_mesh(filename, x_lims, y_lims, z_lims, nx, ny, nz):
 
 
 if __name__ == "__main__":
-    x_lims = (-pi, pi)
-    y_lims = (-pi, pi)
-    z_lims = (-pi, pi)
-    n = 200
-    box_frac = 0.8
+    n        = 200
+    x_lims   = (-pi, pi)
+    y_lims   = (-pi, pi)
+    z_lims   = (-pi, pi)
+    box_frac = 0.9
 
-    # Using 0.5001 instead of exactly 0.5 avoids saddle-point ambiguities in
-    # marching cubes, ensuring a perfectly closed and watertight solid wall.
     surface = pg.FunctionalShapes(
         functional = gyroid,
-        level      = 0.5001,
+        level      = 0.500,
         thickness  = 1.0,
         x_lims     = x_lims,
         y_lims     = y_lims,
@@ -75,7 +73,7 @@ if __name__ == "__main__":
     subvolume = pg.get_subvolume(x_lims, y_lims, z_lims, box_frac)
 
     stl_mesh = stl_mesh.intersection(
-        subvolume, engine="blender", check_volume=False
+        subvolume, engine="blender", check_volume=False, use_exact=False
     )
 
     # bodies = pg.get_porous_domain(stl_mesh, subvolume)

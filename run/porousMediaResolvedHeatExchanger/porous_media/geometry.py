@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+import os
 import functools
 import importlib.util
 from pathlib import Path
@@ -447,13 +448,32 @@ def thicken_surface_mesh(
     outer_faces = faces.copy()
     inner_faces = faces[:, ::-1] + n_vertices
 
-    boundary = _boundary_edges(faces)
-    if len(boundary) > 0:
-        a = boundary[:, 0]
-        b = boundary[:, 1]
+    # Find all directed boundary edges to enforce mathematically correct winding consistency
+    edges = np.vstack((
+        faces[:, [0, 1]],
+        faces[:, [1, 2]],
+        faces[:, [2, 0]],
+    ))
+    sorted_edges = np.sort(edges, axis=1)
+    unique_edges, counts = np.unique(sorted_edges, axis=0, return_counts=True)
+    boundary_undirected = set(tuple(e) for e in unique_edges[counts == 1])
 
-        side_1 = np.column_stack((a, b, b + n_vertices))
-        side_2 = np.column_stack((a, b + n_vertices, a + n_vertices))
+    boundary_directed = []
+    for face in faces:
+        for u, v in [(face[0], face[1]), (face[1], face[2]), (face[2], face[0])]:
+            if tuple(sorted((u, v))) in boundary_undirected:
+                boundary_directed.append((u, v))
+
+    if len(boundary_directed) > 0:
+        boundary_directed = np.array(boundary_directed, dtype=np.int32)
+        u = boundary_directed[:, 0]
+        v = boundary_directed[:, 1]
+        u_in = u + n_vertices
+        v_in = v + n_vertices
+
+        # Consistently wound triangles connecting outer and inner surfaces
+        side_1 = np.column_stack((v, u, u_in))
+        side_2 = np.column_stack((v, u_in, v_in))
         side_faces = np.vstack((side_1, side_2)).astype(np.int32)
         shell_faces = np.vstack((outer_faces, inner_faces, side_faces))
     else:
@@ -481,6 +501,12 @@ def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
     pts_physical[:, 1] = y_lims[0] + pts[:, 0] * delta_y
     pts_physical[:, 2] = z_lims[0] + pts[:, 2] * delta_z
     mesh.vertices = pts_physical
+
+    # Fix chiral reflection: a coordinate swap inverts the winding of all faces.
+    # We must fix normals and invert faces if volume is negative to keep the mesh as a solid volume.
+    mesh.fix_normals()
+    if mesh.volume < 0:
+        mesh.invert()
 
     return mesh
 
@@ -547,27 +573,34 @@ def get_porous_domain(
         min_vertices: int = 100,
     ) -> list[trimesh.Trimesh]:
 
+    def by_vertices(c):
+        return len(c.vertices)
+
     # 1. Fluid domain: subtract the solid wall from the sub-volume
     pore_trimesh = stl_domain.difference(
-        stl_physical, engine="blender", check_volume=False)
+        stl_physical, engine="blender", check_volume=False, use_exact=False)
+
     pore_bodies = pore_trimesh.split(only_watertight=False)
     pore_bodies = _filter_bodies(pore_bodies, min_vertices=min_vertices)
+
     for c in pore_bodies:
         c.metadata["type"] = "fluid"
 
     # Sort largest fluid components first
-    pore_bodies = sorted(pore_bodies, key=lambda b: len(b.vertices), reverse=True)
+    pore_bodies = sorted(pore_bodies, key=by_vertices, reverse=True)
 
     # 2. Solid domain (the gap): intersect the solid wall with the sub-volume
     solid_trimesh = stl_domain.intersection(
-        stl_physical, engine="blender", check_volume=False)
+        stl_physical, engine="blender", check_volume=False, use_exact=False)
+
     solid_bodies = solid_trimesh.split(only_watertight=False)
     solid_bodies = _filter_bodies(solid_bodies, min_vertices=min_vertices)
+
     for c in solid_bodies:
         c.metadata["type"] = "solid"
 
     # Sort largest solid components first
-    solid_bodies = sorted(solid_bodies, key=lambda b: len(b.vertices), reverse=True)
+    solid_bodies = sorted(solid_bodies, key=by_vertices, reverse=True)
 
     return pore_bodies + solid_bodies
 
@@ -589,7 +622,8 @@ def plot_domain(
         Original solid domain mesh.
     """
     print("Rendering final zones in PyVista...")
-    plotter = pv.Plotter(title="Watertight Pore Volume Zones")
+    off_screen = os.environ.get("OFF_SCREEN", "0") == "1"
+    plotter = pv.Plotter(title="Watertight Pore Volume Zones", off_screen=off_screen)
 
     # Add thin reference model of the solid wall shell
     if stl_mesh is not None:
@@ -602,19 +636,21 @@ def plot_domain(
             label       = "Solid Wall (Reference)"
         )
 
-    # Add wireframe bounding box
+    # Add wireframe bounding box (clean 12-edge outline with no diagonals)
     if subvolume is not None:
-        box_pv = pv.wrap(subvolume)
+        solid_pv = pv.wrap(subvolume)
         plotter.add_mesh(
-            mesh        = box_pv,
-            color       = "#ffffff",
-            style       = "wireframe",
+            mesh        = solid_pv.outline(),
+            color       = "#000000",
             line_width  = 2,
             label       = "Sub-Volume Bounds"
         )
 
     if pore_bodies is None:
-        plotter.show()
+        if off_screen:
+            plotter.screenshot("pore_networks.png")
+        else:
+            plotter.show()
         return
 
     # Vibrant color palettes
@@ -647,7 +683,11 @@ def plot_domain(
 
     plotter.add_legend(face="circle", bcolor=None)
     plotter.show_axes()
-    plotter.show()
+
+    if off_screen:
+        plotter.screenshot("pore_networks.png")
+    else:
+        plotter.show()
 
 
 
