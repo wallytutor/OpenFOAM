@@ -479,29 +479,58 @@ class FunctionalShapes:
 
 
 class PorousDomainExtractor:
-    def __init__(self, mesh, volume):
+    """ Extract fluid and solid domains from STL mesh and bounding volume.
+
+    This class computes the fluid (pore) domains by subtracting the
+    thickened surface from the bounding sub-volume, and computes
+    the solid domains by calculating the intersection between them.
+
+    Parameters
+    ----------
+    mesh : trimesh.Trimesh
+        The thickened physical solid surface mesh.
+    volume : trimesh.Trimesh
+        The bounding sub-volume mesh.
+    """
+
+    def __init__(self, mesh: trimesh.Trimesh, volume: trimesh.Trimesh) -> None:
         self._mesh   = mesh
         self._volume = volume
         self._bodies = self.get_porous_domain(mesh, volume)
 
-        self.porous_meshes = []
-        self.solid_meshes = []
+        self._fluid_meshes: list[trimesh.Trimesh] = []
+        self._solid_meshes: list[trimesh.Trimesh] = []
 
     @staticmethod
     def _filter_bodies(
             bodies: list[trimesh.Trimesh],
             min_vertices: int = 100,
         ) -> list[trimesh.Trimesh]:
+        """ Filter out small bodies based on vertex count and fix their orientation.
 
+        Parameters
+        ----------
+        bodies : list of trimesh.Trimesh
+            The list of bodies to filter.
+        min_vertices : int, default=100
+            Minimum number of vertices for a body to be retained.
+
+        Returns
+        -------
+        list of trimesh.Trimesh
+            The filtered and corrected list of bodies.
+        """
         result = []
 
         for c in bodies:
+
             if len(c.vertices) < min_vertices:
                 continue
 
             c.fix_normals()
             # Invert faces if volume is negative to ensure positive
             # volume in PyVista
+
             if c.volume < 0:
                 c.invert()
 
@@ -511,8 +540,29 @@ class PorousDomainExtractor:
         return result
 
     @staticmethod
-    def export_stl_ascii(mesh, filepath: str | Path) -> None:
+    def export_stl_ascii(mesh: trimesh.Trimesh, filepath: str | Path) -> None:
+        """ Export a trimesh to an ASCII STL file with custom solid name matching the filename.
+
+        Parameters
+        ----------
+        mesh : trimesh.Trimesh
+            The trimesh object to export.
+        filepath : str or Path
+            The file path where the exported STL file will be saved.
+        """
+        name = Path(filepath).stem
         ascii_stl_string = trimesh.exchange.stl.export_stl_ascii(mesh)
+        lines = ascii_stl_string.splitlines()
+
+        if lines:
+
+            if lines[0].startswith("solid"):
+                lines[0] = f"solid {name}"
+
+            if lines[-1].startswith("endsolid"):
+                lines[-1] = f"endsolid {name}"
+
+        ascii_stl_string = "\n".join(lines) + "\n"
 
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(ascii_stl_string)
@@ -524,20 +574,47 @@ class PorousDomainExtractor:
             that: trimesh.Trimesh,
             operation: str
         ) -> trimesh.Trimesh:
-        options = dict(engine="blender",check_volume=False,use_exact=False)
+        """ Perform robust CSG boolean operations via Blender.
+
+        Parameters
+        ----------
+        this : trimesh.Trimesh
+            First operand mesh.
+        that : trimesh.Trimesh
+            Second operand mesh.
+        operation : str
+            The name of the trimesh boolean operation (e.g. "difference", "intersection").
+
+        Returns
+        -------
+        trimesh.Trimesh
+            The resulting boolean mesh.
+        """
+        options = dict(engine="blender", check_volume=False, use_exact=False)
         return getattr(this, operation)(that, **options)
 
     @property
     def bodies(self) -> list[trimesh.Trimesh]:
+        """ Return all extracted fluid and solid bodies. """
         return self._bodies
 
     @property
     def solid_bodies(self) -> list[trimesh.Trimesh]:
-        return [b for b in self.bodies if b.metadata["type"] == "solid"]
+        """ Return all extracted solid bodies. """
+        if not self._solid_meshes:
+            self._solid_meshes = [b for b in self.bodies
+                                  if b.metadata["type"] == "solid"]
+
+        return self._solid_meshes
 
     @property
     def fluid_bodies(self) -> list[trimesh.Trimesh]:
-        return [b for b in self.bodies if b.metadata["type"] == "fluid"]
+        """ Return all extracted fluid bodies. """
+        if not self._fluid_meshes:
+            self._fluid_meshes = [b for b in self.bodies
+                                  if b.metadata["type"] == "fluid"]
+
+        return self._fluid_meshes
 
     @classmethod
     def get_porous_domain(cls,
@@ -545,7 +622,22 @@ class PorousDomainExtractor:
             stl_domain: trimesh.Trimesh,
             min_vertices: int = 100,
         ) -> list[trimesh.Trimesh]:
+        """ Extract and split fluid and solid components.
 
+        Parameters
+        ----------
+        stl_physical : trimesh.Trimesh
+            The physical solid wall mesh.
+        stl_domain : trimesh.Trimesh
+            The bounding domain box mesh.
+        min_vertices : int, default=100
+            Minimum vertex threshold for filtering extracted bodies.
+
+        Returns
+        -------
+        list of trimesh.Trimesh
+            The list of partitioned fluid and solid domain components.
+        """
         def by_vertices(c):
             return len(c.vertices)
 
@@ -576,6 +668,23 @@ class PorousDomainExtractor:
             overwrite: bool = False,
             save_sources: bool = False,
         ) -> None:
+        """ Save extracted domains as ASCII STL files in a target directory.
+
+        Parameters
+        ----------
+        project_dir : Path
+            The directory path where STL outputs will be written.
+        overwrite : bool, default=False
+            Whether to overwrite the directory if it already exists.
+        save_sources : bool, default=False
+            Whether to also save the original input source meshes.
+
+        Raises
+        ------
+        FileExistsError
+            If the project directory exists and overwrite is False.
+        """
+
         if project_dir.exists() and not overwrite:
             raise FileExistsError(f"{project_dir} already exists.")
 
@@ -687,12 +796,14 @@ def plot_domain(
 
     Parameters
     ----------
-    pore_bodies : list[trimesh.Trimesh]
+    bodies : list of trimesh.Trimesh, optional
         List of extracted domain components (fluid and solid).
-    subvolume : trimesh.Trimesh
+    volume : trimesh.Trimesh, optional
         Sub-volume box mesh.
-    stl_mesh : trimesh.Trimesh
+    parent : trimesh.Trimesh, optional
         Original solid domain mesh.
+    saveas : str or Path, optional
+        File path to save the generated rendering as a PNG screenshot.
     """
     off_screen = saveas is not None
     plotter = pv.Plotter(off_screen=off_screen, window_size=[800, 600])
