@@ -547,31 +547,29 @@ def get_porous_domain(
         min_vertices: int = 100,
     ) -> list[trimesh.Trimesh]:
 
+    # 1. Fluid domain: subtract the solid wall from the sub-volume
     pore_trimesh = stl_domain.difference(
         stl_physical, engine="blender", check_volume=False)
+    pore_bodies = pore_trimesh.split(only_watertight=False)
+    pore_bodies = _filter_bodies(pore_bodies, min_vertices=min_vertices)
+    for c in pore_bodies:
+        c.metadata["type"] = "fluid"
 
-    # print(f"Solid wall mesh watertight? {stl_physical.is_watertight}")
-    # print(f"Solid wall Euler number: {stl_physical.euler_number}")
+    # Sort largest fluid components first
+    pore_bodies = sorted(pore_bodies, key=lambda b: len(b.vertices), reverse=True)
 
-    # print(f"Pore volume watertight? {pore_trimesh.is_watertight}")
-    # print(f"Pore volume exact value: {pore_trimesh.volume:.4f}")
+    # 2. Solid domain (the gap): intersect the solid wall with the sub-volume
+    solid_trimesh = stl_domain.intersection(
+        stl_physical, engine="blender", check_volume=False)
+    solid_bodies = solid_trimesh.split(only_watertight=False)
+    solid_bodies = _filter_bodies(solid_bodies, min_vertices=min_vertices)
+    for c in solid_bodies:
+        c.metadata["type"] = "solid"
 
-    # Use trimesh.split to split the pore mesh based on face adjacency,
-    # which is topologically exact and unaffected by PyVista/VTK shared
-    # vertex mergers.
-    bodies = pore_trimesh.split(only_watertight=False)
-    bodies = _filter_bodies(bodies, min_vertices=min_vertices)
+    # Sort largest solid components first
+    solid_bodies = sorted(solid_bodies, key=lambda b: len(b.vertices), reverse=True)
 
-    # Sort largest components first
-    # bodies = [pv.wrap(b) for b in bodies]
-    # bodies = sorted(bodies, key=lambda b: b.n_points, reverse=True)
-
-    # print(f"Extracted pore space split into {len(bodies)} regions")
-    # for i, b in enumerate(bodies):
-    #     print(f" - Region {i+1}: points={b.n_points}, "
-    #           f"cells={b.n_cells}, volume={b.volume:.4f}")
-
-    return bodies
+    return pore_bodies + solid_bodies
 
 
 def plot_domain(
@@ -583,12 +581,12 @@ def plot_domain(
 
     Parameters
     ----------
-    stl_mesh : trimesh.Trimesh
-        Original solid domain mesh in physical coordinates.
+    pore_bodies : list[trimesh.Trimesh]
+        List of extracted domain components (fluid and solid).
     subvolume : trimesh.Trimesh
         Sub-volume box mesh.
-    pore_bodies : list[pyvista.PolyData]
-        Disconnected components representing the extracted pore spaces.
+    stl_mesh : trimesh.Trimesh
+        Original solid domain mesh.
     """
     print("Rendering final zones in PyVista...")
     plotter = pv.Plotter(title="Watertight Pore Volume Zones")
@@ -598,8 +596,8 @@ def plot_domain(
         solid_pv = pv.wrap(stl_mesh)
         plotter.add_mesh(
             mesh        = solid_pv,
-            color       = "#555555",
-            opacity     = 1.0,
+            color       = "#888888",
+            opacity     = 0.12,
             show_edges  = False,
             label       = "Solid Wall (Reference)"
         )
@@ -609,28 +607,36 @@ def plot_domain(
         box_pv = pv.wrap(subvolume)
         plotter.add_mesh(
             mesh        = box_pv,
-            color       = "#555555",
+            color       = "#ffffff",
             style       = "wireframe",
             line_width  = 2,
             label       = "Sub-Volume Bounds"
         )
 
-    colors = [
-        "#3A86FF",
-        "#FF006E",
-        "#8338EC",
-        "#FFBE0B",
-        "#FB5607",
-        "#06D6A0"
-    ]
+    # Vibrant color palettes
+    fluid_colors = ["#3A86FF", "#FF006E", "#8338EC", "#06D6A0", "#FB5607"]
+    solid_colors = ["#FFBE0B", "#E76F51", "#2A9D8F", "#F4A261"]
 
-    for i, body in enumerate(pore_bodies):
-        color = colors[i % len(colors)]
-        label = f"Pore Zone {i+1} (Vol: {body.volume:.4f})"
+    fluid_idx = 0
+    solid_idx = 0
+
+    for body in pore_bodies:
+        body_type = body.metadata.get("type", "fluid")
+        if body_type == "fluid":
+            color = fluid_colors[fluid_idx % len(fluid_colors)]
+            label = f"Pore Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
+            opacity = 0.85
+            fluid_idx += 1
+        else:
+            color = solid_colors[solid_idx % len(solid_colors)]
+            label = f"Solid Zone {solid_idx + 1} (Vol: {body.volume:.4f})"
+            opacity = 0.50  # Semi-translucent to see interpenetrating networks
+            solid_idx += 1
+
         plotter.add_mesh(
             mesh        = body,
             color       = color,
-            opacity     = 0.85,
+            opacity     = opacity,
             show_edges  = False,
             label       = label
         )
@@ -638,6 +644,7 @@ def plot_domain(
     plotter.add_legend(face="circle", bcolor=None)
     plotter.show_axes()
     plotter.show()
+
 
 
 def main() -> int:

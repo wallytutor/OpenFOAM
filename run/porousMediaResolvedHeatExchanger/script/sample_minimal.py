@@ -79,5 +79,5 @@ if __name__ == "__main__":
     pg.plot_domain(
         pore_bodies = bodies,
         # subvolume   = subvolume,
-        stl_mesh    = stl_mesh
+        # stl_mesh    = stl_mesh
     )
