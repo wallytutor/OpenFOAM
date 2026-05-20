@@ -21,7 +21,7 @@ description: Provides directives for working with OpenFOAM 13.
 
 ### Documentation sources
 
-- The primary source of information for OpenFOAM 13 documentation is found [here](https://cpp.openfoam.org/v13/index.html).
+- The primary source of information for OpenFOAM 13 documentation is found [here](https://cpp.openfoam.org/v13/index.html) and in its [repository](https://github.com/OpenFOAM/OpenFOAM-13) (where you also find the [tutorials](https://github.com/OpenFOAM/OpenFOAM-13/tree/master/tutorials) with sample cases).
 
 - Secondary sources of information are, in this order:
     - [User Guide](https://doc.cfd.direct/openfoam/user-guide-v13/contents)
