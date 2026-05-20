@@ -7,7 +7,7 @@ import functools
 import importlib.util
 from pathlib import Path
 from types import ModuleType
-from typing import Any
+from typing import Any, Self
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,11 +18,6 @@ from .utils import get_blender
 blender_exe = get_blender()
 
 import trimesh
-
-# XXX: check if this is necessary, for now it works without...
-# import trimesh.interfaces.blender
-# trimesh.interfaces.blender._blender_executable = blender_exe
-# trimesh.interfaces.blender.exists = True
 
 from numpy.typing import NDArray
 from ruamel.yaml import YAML
@@ -35,36 +30,32 @@ from trimesh import Trimesh
 class FunctionalType(Protocol):
     """ Protocol for a functional that generates a 3D surface. """
     def __call__(
-        self,
-        X: NDArray[Any],
-        Y: NDArray[Any],
-        Z: NDArray[Any],
-        **kwargs: Any
-    ) -> NDArray[Any]:
+            self,
+            X: NDArray[Any],
+            Y: NDArray[Any],
+            Z: NDArray[Any],
+            **kwargs: Any
+        ) -> NDArray[Any]:
         ...
 
 
 class FunctionalShapes:
-    """ Generate triangulated 3D isosurfaces from analytic scalar fields.
+    """ Generate 3D isosurfaces from scalar fields.
 
-    The class evaluates a scalar field on a regular grid and extracts an
-    isosurface with marching cubes. The resulting geometry is stored as raw
-    arrays (`vertices`, `faces`) and as a `trimesh.Trimesh` object (`mesh`).
+    The class evaluates a scalar field on a regular grid and
+    extracts an isosurface with marching cubes.
 
     Parameters
     ----------
     functional : str | FunctionalType
-        Name of a built-in functional (``"gyroid"`` or ``"schwarz"``),
-        a path to a Python module file (any string containing a ``.``
-        before a recognised extension such as ``.py``) that exposes
-        ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``, or a
-        plain callable with the same signature.
+        Name of a built-in functional ("gyroid" or "schwarz"),
+        a path to a Python module file, or a callable.
     x_lims : tuple[float, float]
-        Domain limits for x as ``(xmin, xmax)``.
+        Domain limits for x as (xmin, xmax).
     y_lims : tuple[float, float]
-        Domain limits for y as ``(ymin, ymax)``.
+        Domain limits for y as (ymin, ymax).
     z_lims : tuple[float, float]
-        Domain limits for z as ``(zmin, zmax)``.
+        Domain limits for z as (zmin, zmax).
     nx : int, default=100
         Number of grid points along x.
     ny : int, default=100
@@ -72,35 +63,29 @@ class FunctionalShapes:
     nz : int, default=100
         Number of grid points along z.
     level : float, default=0.0
-        Fractional level for isosurface extraction, where 0.0 corresponds
-        to the minimum value of the sampled field and 1.0 to the maximum.
-        For example, a value of 0.5 will extract the isosurface at the
-        midpoint between the minimum and maximum field values.
+        Fractional level for isosurface extraction.
     thickness : float, default=0.0
-        Optional shell thickness. If positive, the extracted surface is
-        transformed into a thickened shell using vertex-normal offsets.
+        Optional shell thickness.
     **kwargs : Any
-        Extra keyword arguments forwarded to the selected functional.
-
-    Raises
-    ------
-    RuntimeError
-        If marching cubes cannot extract any surface.
+        Extra keyword arguments.
     """
+
     __slots__ = (
         "_vertices",
         "_faces",
         "_mesh",
     )
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args: Any, **kwargs: Any) -> Self:
         obj = super().__new__(cls)
         obj._vertices = None
         obj._faces    = None
         obj._mesh     = None
         return obj
 
-    def __init__(self, *,
+    def __init__(
+            self,
+            *,
             functional: str | FunctionalType,
             x_lims: tuple[float, float],
             y_lims: tuple[float, float],
@@ -115,7 +100,9 @@ class FunctionalShapes:
         f = self._resolve_functional(functional)
 
         # XXX keep as a function (we may need hexagonal grids later!)
-        X, Y, Z = self.cube_meshgrid(x_lims, y_lims, z_lims, nx, ny, nz)
+        X, Y, Z = self.cube_meshgrid(
+            x_lims, y_lims, z_lims, nx, ny, nz
+        )
 
         surface = f(X, Y, Z, **kwargs)
         vertices, faces = self._extract_features(surface, level)
@@ -124,12 +111,7 @@ class FunctionalShapes:
         self._faces    = faces
         self._mesh     = Trimesh(vertices=vertices, faces=faces)
 
-        if thickness > 0.0:
-            thickened = self.thicken_surface_mesh(self._mesh, thickness)
-            self._mesh = thickened
-            self._vertices = thickened.vertices
-            self._faces = thickened.faces
-
+        # 1. Map the raw surface mesh to physical space first!
         self._mesh = self.map_voxel_to_physical(
             mesh   = self._mesh,
             x_lims = x_lims,
@@ -139,11 +121,26 @@ class FunctionalShapes:
             ny     = ny,
             nz     = nz,
         )
+
+        # 2. Thicken the physical surface mesh using physical thickness!
+        if thickness > 0.0:
+            thickened = self.thicken_surface_mesh(
+                self._mesh, thickness
+            )
+            self._mesh = thickened
+
+        # 3. Always fix normals and volume if it is a closed shell!
+        self._mesh.fix_normals()
+
+        if self._mesh.is_volume and self._mesh.volume < 0:
+            self._mesh.invert()
+
         self._vertices = self._mesh.vertices
         self._faces    = self._mesh.faces
 
-    def _resolve_functional(self,
-            functional: str | FunctionalType
+    def _resolve_functional(
+            self,
+            functional: str | FunctionalType,
         ) -> FunctionalType:
         """ Resolve a functional to be used for mesh generation. """
         if callable(functional):
@@ -157,9 +154,10 @@ class FunctionalShapes:
 
         raise ValueError("Functional must be a string or a callable")
 
-    def _extract_features(self,
+    def _extract_features(
+            self,
             surface: NDArray[Any],
-            fractional_level: float
+            fractional_level: float,
         ) -> tuple[NDArray, NDArray]:
         """ Extract features from a scalar field using marching cubes. """
         vmin, vmax = surface.min(), surface.max()
@@ -182,20 +180,21 @@ class FunctionalShapes:
         Parameters
         ----------
         path : Path
-            Absolute or relative path to a Python source file that defines
-            ``implicit_surface(X, Y, Z, **kwargs) -> NDArray``.
+            Path to a Python file defining ``implicit_surface``.
 
         Raises
         ------
         FileNotFoundError
-            If *path* does not point to an existing file.
+            If path does not point to an existing file.
         AttributeError
             If the loaded module does not expose ``implicit_surface``.
         """
         if not (resolved := path.resolve()).is_file():
             raise FileNotFoundError(f"No such file: {resolved}")
 
-        spec = importlib.util.spec_from_file_location(resolved.stem, resolved)
+        spec = importlib.util.spec_from_file_location(
+            resolved.stem, resolved
+        )
 
         if spec is None or spec.loader is None:
             raise ImportError(f"Cannot load module from: {resolved}")
@@ -217,7 +216,7 @@ class FunctionalShapes:
             z_lims: tuple[float, float],
             nx: int,
             ny: int,
-            nz: int
+            nz: int,
         ) -> tuple[NDArray, NDArray, NDArray]:
         """ Generate a 3D mesh grid within specified limits.
 
@@ -242,15 +241,18 @@ class FunctionalShapes:
         return np.meshgrid(x, y, z)
 
     @staticmethod
-    def cube_subvolume(stl_mesh, box_frac=0.98):
+    def cube_subvolume(
+            stl_mesh: Trimesh,
+            box_frac: float = 0.98,
+        ) -> Trimesh:
         """ Create a region that is a fraction of the bounding box.
 
         Parameters
         ----------
         stl_mesh : trimesh.Trimesh
             The STL mesh of the gyroid.
-        box_frac : float, default=0.8
-            Fraction of the original bounding box dimensions to scale by.
+        box_frac : float, default=0.98
+            Fraction of the bounding box dimensions to scale by.
 
         Returns
         -------
@@ -279,10 +281,10 @@ class FunctionalShapes:
             *,
             centered: bool = True,
         ) -> Trimesh:
-        """ Create a shell with finite thickness from a triangulated surface.
+        """ Create a shell with finite thickness from a surface.
 
-        The algorithm offsets vertices along vertex normals to form two surfaces
-        and connects boundary edges (if present) with side triangles.
+        The algorithm offsets vertices along vertex normals to form
+        two surfaces and connects boundary edges with side triangles.
 
         Parameters
         ----------
@@ -291,8 +293,8 @@ class FunctionalShapes:
         thickness : float
             Total shell thickness (must be positive).
         centered : bool, default=True
-            If true, offsets equally to both sides of the original surface.
-            If false, keeps original surface as the outer side and offsets inward.
+            If true, offsets equally to both sides of the surface.
+            If false, keeps original surface as outer side.
 
         Returns
         -------
@@ -326,8 +328,7 @@ class FunctionalShapes:
         outer_faces = faces.copy()
         inner_faces = faces[:, ::-1] + n_vertices
 
-        # Find all directed boundary edges to enforce mathematically
-        # correct winding consistency
+        # Find all directed boundary edges to enforce winding
         edges = np.vstack((
             faces[:, [0, 1]],
             faces[:, [1, 2]],
@@ -337,9 +338,12 @@ class FunctionalShapes:
         sorted_edges = np.sort(edges, axis=1)
 
         unique_edges, counts = np.unique(
-            sorted_edges, axis=0, return_counts=True)
+            sorted_edges, axis=0, return_counts=True
+        )
 
-        boundary_undirected = set(tuple(e) for e in unique_edges[counts == 1])
+        boundary_undirected = set(
+            tuple(e) for e in unique_edges[counts == 1]
+        )
 
         boundary_directed = []
 
@@ -363,7 +367,6 @@ class FunctionalShapes:
             u_in = u + n_vertices
             v_in = v + n_vertices
 
-            # Consistently wound triangles connecting outer and inner surfaces
             side_1 = np.column_stack((v, u, u_in))
             side_2 = np.column_stack((v, u_in, v_in))
 
@@ -373,16 +376,26 @@ class FunctionalShapes:
             shell_faces = np.vstack((outer_faces, inner_faces))
 
         shell_vertices = np.vstack((outer_vertices, inner_vertices))
-        return Trimesh(vertices=shell_vertices, faces=shell_faces, process=True)
+        return Trimesh(
+            vertices=shell_vertices, faces=shell_faces, process=True
+        )
 
     @staticmethod
-    def map_voxel_to_physical(mesh, x_lims, y_lims, z_lims, nx, ny, nz):
-        """ Scale mesh vertices from voxel space to physical coordinates.
+    def map_voxel_to_physical(
+            mesh: Trimesh,
+            x_lims: tuple[float, float],
+            y_lims: tuple[float, float],
+            z_lims: tuple[float, float],
+            nx: int,
+            ny: int,
+            nz: int,
+        ) -> Trimesh:
+        """ Scale mesh vertices from voxel to physical coordinates.
 
-        Marching cubes extracts vertices in index space [0, N-1], which
-        needs to be mapped back to the physical x_lims, y_lims, z_lims range.
+        Marching cubes extracts vertices in index space [0, N-1],
+        which needs to be mapped back to the physical ranges.
 
-        Note: We must account for the 'xy' indexing of np.meshgrid in
+        Note: We account for the 'xy' indexing of np.meshgrid in
         FunctionalShapes.cube_meshgrid, which swaps the X and Y axes.
         """
         pts = mesh.vertices.copy()
@@ -403,7 +416,7 @@ class FunctionalShapes:
         # negative to keep the mesh as a solid volume.
         mesh.fix_normals()
 
-        if mesh.volume < 0:
+        if mesh.is_volume and mesh.volume < 0:
             mesh.invert()
 
         return mesh
@@ -493,7 +506,18 @@ class PorousDomainExtractor:
         The bounding sub-volume mesh.
     """
 
-    def __init__(self, mesh: trimesh.Trimesh, volume: trimesh.Trimesh) -> None:
+    __slots__ = (
+        "_mesh",
+        "_volume",
+        "_bodies",
+        "_fluid_meshes",
+        "_solid_meshes",
+    )
+
+    def __init__(self,
+            mesh: trimesh.Trimesh,
+            volume: trimesh.Trimesh
+        ) -> None:
         self._mesh   = mesh
         self._volume = volume
         self._bodies = self.get_porous_domain(mesh, volume)
@@ -506,7 +530,7 @@ class PorousDomainExtractor:
             bodies: list[trimesh.Trimesh],
             min_vertices: int = 100,
         ) -> list[trimesh.Trimesh]:
-        """ Filter out small bodies based on vertex count and fix their orientation.
+        """ Filter out small bodies and fix their orientation.
 
         Parameters
         ----------
@@ -528,27 +552,29 @@ class PorousDomainExtractor:
                 continue
 
             c.fix_normals()
-            # Invert faces if volume is negative to ensure positive
-            # volume in PyVista
 
             if c.volume < 0:
                 c.invert()
 
             result.append(c)
 
-        # Sort largest components first
         return result
 
     @staticmethod
-    def export_stl_ascii(mesh: trimesh.Trimesh, filepath: str | Path) -> None:
-        """ Export a trimesh to an ASCII STL file with custom solid name matching the filename.
+    def export_stl_ascii(
+            mesh: trimesh.Trimesh,
+            filepath: str | Path,
+        ) -> None:
+        """ Export a trimesh to an ASCII STL file.
+
+        The first line of the solid name matches the filename.
 
         Parameters
         ----------
         mesh : trimesh.Trimesh
             The trimesh object to export.
         filepath : str or Path
-            The file path where the exported STL file will be saved.
+            The file path where the STL file will be saved.
         """
         name = Path(filepath).stem
         ascii_stl_string = trimesh.exchange.stl.export_stl_ascii(mesh)
@@ -572,7 +598,7 @@ class PorousDomainExtractor:
             cls,
             this: trimesh.Trimesh,
             that: trimesh.Trimesh,
-            operation: str
+            operation: str,
         ) -> trimesh.Trimesh:
         """ Perform robust CSG boolean operations via Blender.
 
@@ -583,7 +609,7 @@ class PorousDomainExtractor:
         that : trimesh.Trimesh
             Second operand mesh.
         operation : str
-            The name of the trimesh boolean operation (e.g. "difference", "intersection").
+            The name of the trimesh boolean operation.
 
         Returns
         -------
@@ -602,8 +628,9 @@ class PorousDomainExtractor:
     def solid_bodies(self) -> list[trimesh.Trimesh]:
         """ Return all extracted solid bodies. """
         if not self._solid_meshes:
-            self._solid_meshes = [b for b in self.bodies
-                                  if b.metadata["type"] == "solid"]
+            self._solid_meshes = [
+                b for b in self.bodies if b.metadata["type"] == "solid"
+            ]
 
         return self._solid_meshes
 
@@ -611,13 +638,15 @@ class PorousDomainExtractor:
     def fluid_bodies(self) -> list[trimesh.Trimesh]:
         """ Return all extracted fluid bodies. """
         if not self._fluid_meshes:
-            self._fluid_meshes = [b for b in self.bodies
-                                  if b.metadata["type"] == "fluid"]
+            self._fluid_meshes = [
+                b for b in self.bodies if b.metadata["type"] == "fluid"
+            ]
 
         return self._fluid_meshes
 
     @classmethod
-    def get_porous_domain(cls,
+    def get_porous_domain(
+            cls,
             stl_physical: trimesh.Trimesh,
             stl_domain: trimesh.Trimesh,
             min_vertices: int = 100,
@@ -631,12 +660,12 @@ class PorousDomainExtractor:
         stl_domain : trimesh.Trimesh
             The bounding domain box mesh.
         min_vertices : int, default=100
-            Minimum vertex threshold for filtering extracted bodies.
+            Minimum vertex threshold for filtering.
 
         Returns
         -------
         list of trimesh.Trimesh
-            The list of partitioned fluid and solid domain components.
+            The partitioned fluid and solid components.
         """
         def by_vertices(c):
             return len(c.vertices)
@@ -650,7 +679,9 @@ class PorousDomainExtractor:
             c.metadata["type"] = "fluid"
 
         # 2. Solid domain: intersect the solid wall with the sub-volume
-        solid_trimesh = cls._operation(stl_domain, stl_physical, "intersection")
+        solid_trimesh = cls._operation(
+            stl_domain, stl_physical, "intersection"
+        )
         solids = solid_trimesh.split(only_watertight=False)
         solids = cls._filter_bodies(solids, min_vertices=min_vertices)
 
@@ -663,19 +694,20 @@ class PorousDomainExtractor:
 
         return porous + solids
 
-    def save_project(self,
+    def save_project(
+            self,
             project_dir: Path,
             overwrite: bool = False,
             save_sources: bool = False,
         ) -> None:
-        """ Save extracted domains as ASCII STL files in a target directory.
+        """ Save extracted domains to a target directory.
 
         Parameters
         ----------
         project_dir : Path
             The directory path where STL outputs will be written.
         overwrite : bool, default=False
-            Whether to overwrite the directory if it already exists.
+            Whether to overwrite the directory if it exists.
         save_sources : bool, default=False
             Whether to also save the original input source meshes.
 
@@ -691,8 +723,12 @@ class PorousDomainExtractor:
         project_dir.mkdir(parents=True, exist_ok=True)
 
         if save_sources:
-            self.export_stl_ascii(self._mesh, project_dir / "source_mesh.stl")
-            self.export_stl_ascii(self._volume, project_dir / "source_volume.stl")
+            self.export_stl_ascii(
+                self._mesh, project_dir / "source_mesh.stl"
+            )
+            self.export_stl_ascii(
+                self._volume, project_dir / "source_volume.stl"
+            )
 
         for i, body in enumerate(self.fluid_bodies):
             self.export_stl_ascii(body, project_dir / f"fluid_{i}.stl")
@@ -757,7 +793,7 @@ def wavy_surface(
 
 
 def decorate_surface(func: FunctionalType) -> FunctionalType:
-    """ Decorator to apply noise and/or sinusoidal modulation to a surface. """
+    """ Decorator to apply noise and sinusoidal modulation. """
     @functools.wraps(func)
     def decorated(
             X: NDArray[Any],
@@ -771,15 +807,11 @@ def decorate_surface(func: FunctionalType) -> FunctionalType:
 
         surface = func(X, Y, Z, **kwargs)
         vmin, vmax = surface.min(), surface.max()
-        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
 
         surface = noisy_surface(surface, A * abs(vmax - vmin))
         vmin, vmax = surface.min(), surface.max()
-        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
 
         surface = wavy_surface(surface, Z, B * abs(vmax - vmin), f)
-        # vmin, vmax = surface.min(), surface.max()
-        # print(f"Functional range: [{vmin:.3f}, {vmax:.3f}]")
 
         return surface
 
@@ -787,9 +819,9 @@ def decorate_surface(func: FunctionalType) -> FunctionalType:
 
 
 def plot_domain(
-        bodies: list[trimesh.Trimesh] | None = None,
-        volume: trimesh.Trimesh | None = None,
-        parent: trimesh.Trimesh | None = None,
+        bodies: list[Trimesh] | None = None,
+        volume: Trimesh | None = None,
+        parent: Trimesh | None = None,
         saveas: str | Path | None = None,
     ) -> None:
     """ Display the extracted domain components.
@@ -803,7 +835,7 @@ def plot_domain(
     parent : trimesh.Trimesh, optional
         Original solid domain mesh.
     saveas : str or Path, optional
-        File path to save the generated rendering as a PNG screenshot.
+        File path to save the generated rendering as a PNG.
     """
     off_screen = saveas is not None
     plotter = pv.Plotter(off_screen=off_screen, window_size=[800, 600])
@@ -820,12 +852,11 @@ def plot_domain(
         )
 
     # Add wireframe bounding box.
-    # XXX this only works if subvolume is cuboidal, which is the case in
-    # the current implementation, but TPMS surfaces could have hexagonal
-    # bounding boxes, for instance, what could be needed in the future.
     if volume is not None:
         solid_pv = pv.wrap(volume)
-        plotter.add_mesh(solid_pv.outline(), color="#000000", line_width=2)
+        plotter.add_mesh(
+            solid_pv.outline(), color="#000000", line_width=2
+        )
 
     if bodies is not None:
         fluid_colors = ["#012169", "#FF8200", "#A50033", "#009681"]
@@ -834,14 +865,21 @@ def plot_domain(
 
         for body in bodies:
             body_type = body.metadata.get("type", "fluid")
+
             if body_type == "fluid":
                 color = fluid_colors[fluid_idx % len(fluid_colors)]
-                label = f"Fluid Zone {fluid_idx + 1} (Vol: {body.volume:.4f})"
+                label = (
+                    f"Fluid Zone {fluid_idx + 1} "
+                    f"(Vol: {body.volume:.4f})"
+                )
                 opacity = 0.5
                 fluid_idx += 1
             else:
                 color = "#7F7F7F"
-                label = f"Solid Zone {solid_idx + 1} (Vol: {body.volume:.4f})"
+                label = (
+                    f"Solid Zone {solid_idx + 1} "
+                    f"(Vol: {body.volume:.4f})"
+                )
                 opacity = 1.0
                 solid_idx += 1
 
@@ -866,7 +904,7 @@ def main() -> int:
     #region: build parser
     parser = argparse.ArgumentParser(
         prog="porous-media-geometry",
-        description="Generate porous media geometry from YAML configuration.",
+        description="Generate porous media geometry from YAML config.",
     )
 
     parser.add_argument(
@@ -878,7 +916,7 @@ def main() -> int:
     parser.add_argument(
         "--overwrite",
         action="store_true",
-        help="Allow overwriting existing output files (default: false).",
+        help="Allow overwriting existing output files.",
     )
 
     args = parser.parse_args()
