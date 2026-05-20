@@ -510,6 +510,13 @@ class PorousDomainExtractor:
         # Sort largest components first
         return result
 
+    @staticmethod
+    def export_stl_ascii(mesh, filepath: str | Path) -> None:
+        ascii_stl_string = trimesh.exchange.stl.export_stl_ascii(mesh)
+
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(ascii_stl_string)
+
     @classmethod
     def _operation(
             cls,
@@ -563,6 +570,26 @@ class PorousDomainExtractor:
         solids = sorted(solids, key=by_vertices, reverse=True)
 
         return porous + solids
+
+    def save_project(self,
+            project_dir: Path,
+            overwrite: bool = False,
+            save_sources: bool = False,
+        ) -> None:
+        if project_dir.exists() and not overwrite:
+            raise FileExistsError(f"{project_dir} already exists.")
+
+        project_dir.mkdir(parents=True, exist_ok=True)
+
+        if save_sources:
+            self.export_stl_ascii(self._mesh, project_dir / "source_mesh.stl")
+            self.export_stl_ascii(self._volume, project_dir / "source_volume.stl")
+
+        for i, body in enumerate(self.fluid_bodies):
+            self.export_stl_ascii(body, project_dir / f"fluid_{i}.stl")
+
+        for i, body in enumerate(self.solid_bodies):
+            self.export_stl_ascii(body, project_dir / f"solid_{i}.stl")
 
 
 def noisy_surface(

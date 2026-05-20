@@ -46,3 +46,9 @@ if __name__ == "__main__":
         parent = mesh,
         saveas = filename.with_suffix(".png"),
     )
+
+    domain.save_project(
+        project_dir  = filename.parent / "sample_minimal",
+        overwrite    = True,
+        save_sources = False,
+    )
