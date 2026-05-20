@@ -598,8 +598,8 @@ def plot_domain(
         solid_pv = pv.wrap(stl_mesh)
         plotter.add_mesh(
             mesh        = solid_pv,
-            color       = "#888888",
-            opacity     = 0.12,
+            color       = "#555555",
+            opacity     = 1.0,
             show_edges  = False,
             label       = "Solid Wall (Reference)"
         )
@@ -631,9 +631,7 @@ def plot_domain(
             mesh        = body,
             color       = color,
             opacity     = 0.85,
-            show_edges  = True,
-            edge_color  = "#121214",
-            line_width  = 1.0,
+            show_edges  = False,
             label       = label
         )
 
