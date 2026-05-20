@@ -13,6 +13,8 @@ description: Provides directives for generating and modifying Python code.
 
 ## How to use this skill
 
+**Important:** scripts outside packages are not meant to be typed and single line (summary) docstrings are expected, overriding what is said below.
+
 ### Code style
 
 - Use PEP8 for style guidelines, unless the user explicitly requests otherwise or manually modifies the code for readability. Code line should be wrapped in an 80–character limit.
@@ -23,6 +25,16 @@ description: Provides directives for generating and modifying Python code.
 for x in [1, 2, 3]:
     if x > 1:
         y = x + 1
+```
+
+- Indentation of function arguments and return values must be like this:
+
+```python
+def some_function(
+        arg1: Any,
+        arg2: Any
+    ) -> Self:
+    ...
 ```
 
 ### Code structure
