@@ -20,6 +20,8 @@ internalField   uniform 0;
 
 boundaryField
 {
+    #includeEtc "caseDicts/setConstraintTypes"
+
     inlet
     {
         type            fixedFluxPressure;
@@ -32,10 +34,6 @@ boundaryField
     walls
     {
         type            zeroGradient;
-    }
-    "(front|back)"
-    {
-        type            empty;
     }
 }
 

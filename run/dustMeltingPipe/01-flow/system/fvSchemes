@@ -31,6 +31,8 @@ divSchemes
     div(phi,U)       Gauss linearUpwind limited;
     div(phi,K)       Gauss linearUpwind limited;
     div(phi,e)       Gauss linearUpwind limited;
+    div(phi,k)       Gauss upwind;
+    div(phi,omega)   Gauss upwind;
 }
 
 laplacianSchemes
@@ -46,6 +48,11 @@ interpolationSchemes
 snGradSchemes
 {
     default          corrected;
+}
+
+wallDist
+{
+    method           meshWave;
 }
 
 // ************************************************************************* //

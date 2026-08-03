@@ -14,14 +14,14 @@ if [ ! -d constant/polyMesh ]; then
         # Convert base Gmsh mesh to OpenFOAM:
         gmshToFoam ../domain.msh
 
-        # Perform preliminary renumbering:
-        renumberMesh
-
         # Fix patches types:
         file=constant/polyMesh/boundary
-        foamDictionary $file -entry entry0/front/type -set empty
-        foamDictionary $file -entry entry0/back/type  -set empty
+        foamDictionary $file -entry entry0/front/type -set wedge
+        foamDictionary $file -entry entry0/back/type  -set wedge
         foamDictionary $file -entry entry0/walls/type -set wall
+
+        # Perform preliminary renumbering:
+        renumberMesh
 
         # Check global mesh:
         checkMesh

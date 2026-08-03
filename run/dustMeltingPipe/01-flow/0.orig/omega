@@ -8,20 +8,37 @@
 FoamFile
 {
     format      ascii;
-    class       dictionary;
-    object      momentumTransport;
+    class       volScalarField;
+    object      omega;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-simulationType  laminar;
-// simulationType RAS;
+omegaInlet      0.1;
 
-RAS
+dimensions      [0 0 -1 0 0 0 0];
+
+internalField   uniform $omegaInlet;
+
+boundaryField
 {
-    model           kOmegaSST;
+    #includeEtc "caseDicts/setConstraintTypes"
 
-    turbulence      on;
-
+    inlet
+    {
+        type            fixedValue;
+        value           uniform $omegaInlet;
+    }
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform $omegaInlet;
+        value           uniform $omegaInlet;
+    }
+    wall
+    {
+        type            omegaWallFunction;
+        value           uniform $omegaInlet;
+    }
 }
 
 // ************************************************************************* //
