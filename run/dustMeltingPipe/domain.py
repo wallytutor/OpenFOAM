@@ -35,10 +35,11 @@ occ.rotate([(2, 1)], 0, 0, 0, 1, 0, 0, -wedge_angle / 2.0)
 occ.synchronize()
 
 # 5. Discretize before going 3-D:
+q = 0.95
 msh.set_transfinite_curve(1, 100, "Progression", 1.0)
 msh.set_transfinite_curve(3, 100, "Progression", 1.0)
-msh.set_transfinite_curve(2, 15, "Progression", 0.95)
-msh.set_transfinite_curve(4, 15, "Progression", 1/0.95)
+msh.set_transfinite_curve(2, 20, "Progression", q)
+msh.set_transfinite_curve(4, 20, "Progression", 1/q)
 msh.set_transfinite_surface(tag=1)
 msh.set_recombine(dim=2, tag=1)
 
