@@ -8,6 +8,7 @@ dependencies = [
     "gmsh>=4.15.2",
     "ipython>=9.16.1",
     "majordome-build",
+    "polars>=1.43.2",
 ]
 
 [tool.uv.sources.majordome-build]
