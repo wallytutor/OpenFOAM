@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-
-# Run from this directory:
-cd ${0%/*} || exit 1
-
-rm -rf 0/
-rm -rf constant/polyMesh/
-rm -rf case.foam
-rm -rf log.*

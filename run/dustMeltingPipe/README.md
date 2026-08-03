@@ -13,9 +13,7 @@ Before running anything for the first time consider syncing the environment:
 uv sync
 ```
 
-> If updating the mesh is required, please edit `constant/domain.py` and
-> then run `uv run python constant/domain.py` before running `Allrun`. The
-> validated grid is commited within the project for reproducibility.
+> If updating the mesh is required, please edit `domain.py` and then run `uv run python domain.py` before running `Allrun`. The validated grid is commited within the project for reproducibility.
 
 ## 📃 Generating the report
 
