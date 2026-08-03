@@ -16,7 +16,8 @@ FoamFile
 
 ddtSchemes
 {
-    default          steadyState;
+    // default          steadyState;
+    default          localEuler;
 }
 
 gradSchemes
@@ -38,6 +39,8 @@ divSchemes
     div(phi,h)       $flow;
     div(phi,k)       $flow;
     div(phi,omega)   $flow;
+
+    div(phi,Yi_h)    Gauss upwind;
     div(phid,p)      Gauss upwind;
 
     div(((rho*nuEff)*dev2(T(grad(U)))))      Gauss linear;

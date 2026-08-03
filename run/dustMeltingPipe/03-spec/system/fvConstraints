@@ -21,4 +21,12 @@ limitp
     maxFactor  2;
 }
 
+limitT
+{
+    type       limitTemperature;
+    cellZone   all;
+    min        300.0;
+    max        500.0;
+}
+
 // ************************************************************************* //

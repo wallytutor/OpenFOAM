@@ -23,35 +23,40 @@ solvers
         tolerance       1e-6;
         relTol          0.01;
     }
+    "(p|rho)Final"
+    {
+        $p;
+        relTol           0;
+    }
 
-    // "(p|rho)Final"
-    // {
-    //     $p;
-    //     relTol          0;
-    // }
-
-    "(U|e|h|k|omega)"
+    "(U|Yi|e|h|k|omega)"
     {
         solver          smoothSolver;
         smoother        symGaussSeidel;
         tolerance       1e-6;
         relTol          0.01;
     }
+    "(U|Yi|e|h|k|omega)Final"
+    {
+        $U;
+        relTol           0;
+    }
+}
 
-    // "(U|e|h|k|omega)Final"
-    // {
-    //     $U;
-    //     tolerance       1e-05;
-    //     relTol          0;
-    // }
+potentialFlow
+{
+    nNonOrthogonalCorrectors 5;
 }
 
 PIMPLE
 {
-    nNonOrthogonalCorrectors 0;
-
-    // transonic       no;
-    // consistent      yes;
+    maxCo                    1.0;
+    maxDeltaT                0.1;
+    nCorrectors              1;
+    nOuterCorrectors         1;
+    // nNonOrthogonalCorrectors 0;
+    // transonic                no;
+    // consistent               yes;
 
     residualControl
     {
@@ -59,6 +64,7 @@ PIMPLE
         U               1e-4;
         h               1e-3;
         "(k|omega)"     1e-3;
+        ".*"            1e-3;
     }
 }
 
@@ -76,6 +82,7 @@ relaxationFactors
         h               0.7;
         k               0.7;
         omega           0.7;
+        ".*"            0.7;
     }
 }
 
