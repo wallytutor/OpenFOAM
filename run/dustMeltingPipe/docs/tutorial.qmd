@@ -1,0 +1,44 @@
+---
+title: Melting Dust in a Pipe
+author: Walter Dal'Maz Silva
+date: today
+toc: true
+toc-depth: 2
+
+execute:
+  cache: true
+  echo: false
+
+format:
+  typst:
+    margin: {x: 2.5cm, top: 3.0cm, bottom: 2.0cm}
+    fontsize: 12pt
+    linestretch: 1.25
+    fig-format: png
+    fig-dpi: 300
+---
+
+```{=typst}
+#show table: align.with(center)
+```
+
+{{< pagebreak >}}
+
+```bash
+> cd /opt/openfoam13/tutorials
+> find . -name cloudProperties
+```
+
+```plaintext
+...
+./multicomponentFluid/verticalChannelLTS/constant/cloudProperties
+./multicomponentFluid/verticalChannelSteady/constant/cloudProperties
+./multicomponentFluid/parcelInBox/constant/cloudProperties
+./multicomponentFluid/verticalChannel/constant/cloudProperties
+./multicomponentFluid/filter/constant/cloudProperties
+./multicomponentFluid/aachenBomb/constant/cloudProperties
+./incompressibleFluid/hopperParticles/hopperInitialState/constant/cloudProperties
+./incompressibleFluid/hopperParticles/hopperEmptying/constant/cloudProperties
+./incompressibleFluid/mixerVesselHorizontal2DParticles/constant/cloudProperties
+...
+```

@@ -7,20 +7,18 @@
 
 ## 🤷‍♂️ Usage
 
-- Run the desired geometry script:
+Before running anything for the first time consider syncing the environment:
 
 ```bash
-uv run wedge-straight-pipe.py
+uv sync
 ```
 
-- Call `gmshToFoam` for the generated mesh:
+> If updating the mesh is required, please edit `constant/domain.py` and
+> then run `uv run python constant/domain.py` before running `Allrun`. The
+> validated grid is commited within the project for reproducibility.
+
+## 📃 Generating the report
 
 ```bash
-gmshToFoam wedge-straight-pipe.msh
-```
-
-- Verify mesh generation with `checkMesh`:
-
-```bash
-checkMesh
+uv run majordome-build-qmd --file docs/tutorial.qmd
 ```

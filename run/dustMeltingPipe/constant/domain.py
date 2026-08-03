@@ -5,7 +5,8 @@ import gmsh
 
 from pathlib import Path
 
-name = Path(__file__).stem
+here = Path(__file__).parent
+name = str((here / Path(__file__).stem).with_suffix(".msh"))
 wedge_angle = math.radians(5.0)
 
 # 1. Initialize the model:
@@ -65,7 +66,7 @@ mod.add_physical_group(dim=3, tags=[1], tag=100, name="volume")
 
 # 8. Generate mesh and dump to file:
 msh.generate(dim=3)
-gmsh.write(f"{name}.msh")
+gmsh.write(name)
 
 # 9. Display and finalize:
 gmsh.fltk.run()

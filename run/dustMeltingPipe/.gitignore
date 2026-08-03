@@ -1,2 +1,10 @@
+# Any log:
+log.*
+*.log
+
+# Generated files:
+.jupyter_cache/
+docs/*.pdf
+
 # Keep mesh:
 !constant/domain.msh
