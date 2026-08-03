@@ -5,7 +5,7 @@ $PhysicalNames
 6
 2 10 "inlet"
 2 20 "outlet"
-2 30 "wall"
+2 30 "walls"
 2 40 "front"
 2 50 "back"
 3 100 "volume"
