@@ -61,7 +61,8 @@ occ.synchronize()
 mod.add_physical_group(dim=2, tags=[4], tag=10, name="inlet")
 mod.add_physical_group(dim=2, tags=[2], tag=20, name="outlet")
 mod.add_physical_group(dim=2, tags=[3], tag=30, name="wall")
-mod.add_physical_group(dim=2, tags=[1, 5], tag=40, name="frontAndBack")
+mod.add_physical_group(dim=2, tags=[1], tag=40, name="front")
+mod.add_physical_group(dim=2, tags=[5], tag=50, name="back")
 mod.add_physical_group(dim=3, tags=[1], tag=100, name="volume")
 
 # 8. Generate mesh and dump to file:
