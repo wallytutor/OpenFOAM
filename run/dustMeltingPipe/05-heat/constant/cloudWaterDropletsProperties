@@ -155,7 +155,6 @@ subModels
     }
 }
 
-
 cloudFunctions
 {
     funcMassFlux
@@ -169,6 +168,5 @@ cloudFunctions
         patches          ( outlet );
     }
 }
-
 
 // ************************************************************************* //

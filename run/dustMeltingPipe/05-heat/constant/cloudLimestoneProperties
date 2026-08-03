@@ -14,7 +14,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-type        thermoCloud;
+// Need to implement CaCO3 = CaO + CO2 with one of:
+// type reactingCloud;
+// type reactingMultiphaseCloud;
+type thermoCloud;
 
 solution
 {
@@ -152,8 +155,16 @@ subModels
 
 cloudFunctions
 {
-
+    funcMassFlux
+    {
+        type massFlux;
+    }
+    funcPatchPostProcessing
+    {
+        type             patchPostProcessing;
+        maxStoredParcels 10000;
+        patches          ( outlet );
+    }
 }
-
 
 // ************************************************************************* //
