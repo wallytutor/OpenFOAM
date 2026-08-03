@@ -68,13 +68,17 @@ def load_outlet_post(
 
 if __name__ == "__main__":
     script_dir = os.path.dirname(os.path.abspath(__file__))
+
+    cloud_name = "cloudLimestone"
+    cloud_time = "500"
+
     outlet_post_path = os.path.join(
         script_dir,
         "postProcessing",
         "lagrangian",
-        "cloud",
+        cloud_name,
         "funcPatchPostProcessing",
-        "1000",
+        cloud_time,
         "outlet.post",
     )
 
