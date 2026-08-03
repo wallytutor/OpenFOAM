@@ -19,7 +19,7 @@ type reactingCloud;
 solution
 {
     coupled                   false;
-    transient                 yes;
+    transient                 false;
     cellValueSourceCorrection off;
     calcFrequency             10;
     maxTrackTime              0.25;
@@ -79,7 +79,7 @@ subModels
             type              patchInjection;
             patchName         inlet;
 
-            U0                (1.0 0.0 0.0);
+            U0                (0.1 0.0 0.0);
             flowRateProfile   constant 1;
             uniformParcelSize nParticle;
 
@@ -88,14 +88,13 @@ subModels
             f    = 5/360    # Fraction of total pipe
             D    = 100e-6   # sizeDistribution.value
             rho  = 1000     # constantProperties.rho0
-            mdot = 0.0001   # mass flow rate
-            N    = 1        # nParticle
+            mdot = 0.001    # mass flow rate
+            N    = 10       # nParticle
             n = mdot / (rho * math.pi * (D**3) / 6)
-            print(int(f * n / N)) # parcelsPerSecond
-            "
+            print(f"parcelsPerSecond {f * n / N:.0f}")
             */
             parcelsPerSecond  2650;
-            nParticle         1;
+            nParticle         10;
 
             SOI               0;
             duration          1.0e+304;
