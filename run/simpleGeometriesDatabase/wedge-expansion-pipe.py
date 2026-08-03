@@ -105,7 +105,7 @@ occ.revolve(
 )
 occ.synchronize()
 
-# 7. Provide labels to the domain:
+# 8. Provide labels to the domain:
 fnb = [1, 2, 3, 8, 12, 15]
 vol = [1, 2, 3]
 mod.add_physical_group(dim=2, tags=[7],      tag=10, name="inlet")
@@ -115,10 +115,10 @@ mod.add_physical_group(dim=2, tags=[4, 14],  tag=40, name="wallInt")
 mod.add_physical_group(dim=2, tags=fnb,      tag=50, name="frontAndBack")
 mod.add_physical_group(dim=3, tags=vol,      tag=100, name="volume")
 
-# # 8. Generate mesh and dump to file:
+# 9. Generate mesh and dump to file:
 msh.generate(dim=3)
 gmsh.write(f"{name}.msh")
 
-# 9. Display and finalize:
+# 10. Display and finalize:
 gmsh.fltk.run()
 gmsh.finalize()
