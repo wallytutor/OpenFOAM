@@ -15,10 +15,12 @@ if [ ! -d constant/polyMesh ]; then
         gmshToFoam ../domain.msh
 
         # Fix patches types:
-        file=constant/polyMesh/boundary
-        foamDictionary $file -entry entry0/front/type -set wedge
-        foamDictionary $file -entry entry0/back/type  -set wedge
-        foamDictionary $file -entry entry0/walls/type -set wall
+        createPatch
+
+        # file=constant/polyMesh/boundary
+        # foamDictionary $file -entry entry0/front/type -set wedge
+        # foamDictionary $file -entry entry0/back/type  -set wedge
+        # foamDictionary $file -entry entry0/walls/type -set wall
 
         # Perform preliminary renumbering:
         renumberMesh

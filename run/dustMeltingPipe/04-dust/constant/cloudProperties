@@ -18,12 +18,12 @@ type reactingCloud;
 
 solution
 {
-    coupled                   false;
+    coupled                   true;
     transient                 false;
     cellValueSourceCorrection off;
     calcFrequency             10;
-    maxTrackTime              0.25;
-    maxCo                     0.3;
+    maxTrackTime              0.2;
+    maxCo                     0.2;
 
     sourceTerms
     {
@@ -35,6 +35,8 @@ solution
             h               explicit 1;
             radiation       explicit 1;
         }
+
+        resetOnStartup true;
     }
 
     interpolationSchemes
@@ -79,7 +81,7 @@ subModels
             type              patchInjection;
             patchName         inlet;
 
-            U0                (0.1 0.0 0.0);
+            U0                (0.25 0.0 0.0);
             flowRateProfile   constant 1;
             uniformParcelSize nParticle;
 

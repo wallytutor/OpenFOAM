@@ -22,7 +22,10 @@ internalField   uniform $omegaInlet;
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
-
+    "(fluidCyclicFront|fluidCyclicBack)"
+    {
+        type            cyclic;
+    }
     inlet
     {
         type            fixedValue;
@@ -34,7 +37,7 @@ boundaryField
         inletValue      uniform $omegaInlet;
         value           uniform $omegaInlet;
     }
-    wall
+    walls
     {
         type            omegaWallFunction;
         value           uniform $omegaInlet;

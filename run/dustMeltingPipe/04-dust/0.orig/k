@@ -21,7 +21,10 @@ internalField   uniform 1;
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
-
+    "(fluidCyclicFront|fluidCyclicBack)"
+    {
+        type            cyclic;
+    }
     inlet
     {
         type            turbulentIntensityKineticEnergyInlet;

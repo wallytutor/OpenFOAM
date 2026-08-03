@@ -21,7 +21,10 @@ internalField   uniform 573.0;
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
-
+    "(fluidCyclicFront|fluidCyclicBack)"
+    {
+        type            cyclic;
+    }
     inlet
     {
         type            fixedValue;
