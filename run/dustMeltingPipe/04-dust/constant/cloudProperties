@@ -22,7 +22,7 @@ solution
     transient                 false;
     cellValueSourceCorrection off;
     calcFrequency             10;
-    maxTrackTime              0.2;
+    maxTrackTime              0.3;
     maxCo                     0.2;
 
     sourceTerms
@@ -81,7 +81,7 @@ subModels
             type              patchInjection;
             patchName         inlet;
 
-            U0                (0.25 0.0 0.0);
+            U0                (0.2 0.0 0.0);
             flowRateProfile   constant 1;
             uniformParcelSize nParticle;
 
@@ -90,12 +90,12 @@ subModels
             f    = 5/360    # Fraction of total pipe
             D    = 100e-6   # sizeDistribution.value
             rho  = 1000     # constantProperties.rho0
-            mdot = 0.001    # mass flow rate
+            mdot = 0.0001   # mass flow rate
             N    = 10       # nParticle
             n = mdot / (rho * math.pi * (D**3) / 6)
             print(f"parcelsPerSecond {f * n / N:.0f}")
             */
-            parcelsPerSecond  2650;
+            parcelsPerSecond  265;
             nParticle         10;
 
             SOI               0;

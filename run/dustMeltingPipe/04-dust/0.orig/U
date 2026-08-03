@@ -29,10 +29,6 @@ boundaryField
     {
         type            fixedValue;
         value           uniform (1.0  0.0  0.0);
-        // python -c "import math; print(math.pi * (0.025)**2 * 5/180)"
-        // type                flowRateInletVelocity;
-        // volumetricFlowRate  6.0e-05;
-        // profile             laminarBL;
     }
     outlet
     {
