@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+
+# Run from this directory:
+cd ${0%/*} || exit 1
+
+# To open with ParaView:
+touch case.foam
+
+# Copy initial conditions:
+cp -avr 0.orig/ 0/ &> log.initial
+
+# Convert base Gmsh mesh to OpenFOAM:
+gmshToFoam constant/domain.msh &> log.gmshToFoam
+
+# Perform preliminary renumbering:
+renumberMesh &> log.renumberMesh
+
+# Fix patches types:
+file=constant/polyMesh/boundary
+foamDictionary $file -entry entry0/front/type -set wedge &> log.foamDictionary
+foamDictionary $file -entry entry0/back/type  -set wedge &> log.foamDictionary
+foamDictionary $file -entry entry0/wall/type  -set wall  &> log.foamDictionary
+
+# Check global mesh:
+checkMesh &> log.checkMesh
