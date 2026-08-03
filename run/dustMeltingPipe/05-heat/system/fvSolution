@@ -1,0 +1,90 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      fvSolution;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+solvers
+{
+    "(p|rho|G)"
+    {
+        solver          PCG;
+        preconditioner  DIC;
+        tolerance       1e-6;
+        relTol          0.01;
+    }
+    "(p|rho|G)Final"
+    {
+        $p;
+        relTol           0;
+    }
+
+    "(U|Yi|e|h|k|omega)"
+    {
+        solver          smoothSolver;
+        smoother        symGaussSeidel;
+        tolerance       1e-6;
+        relTol          0.01;
+    }
+    "(U|Yi|e|h|k|omega)Final"
+    {
+        $U;
+        relTol           0;
+    }
+}
+
+potentialFlow
+{
+    nNonOrthogonalCorrectors 5;
+}
+
+PIMPLE
+{
+    nCorrectors              1;
+    nOuterCorrectors         1;
+    nNonOrthogonalCorrectors 0;
+    momentumPredictor        yes;
+    maxCo                    1.0;
+    maxDeltaT                0.1;
+    transonic                no;
+    consistent               yes;
+
+    residualControl
+    {
+        p               1e-3;
+        U               1e-4;
+        h               1e-3;
+        "(k|omega)"     1e-3;
+        ".*"            1e-3;
+    }
+}
+
+relaxationFactors
+{
+    fields
+    {
+        p               0.3;
+    }
+
+    equations
+    {
+        p               0.3;
+        U               0.7;
+        h               0.7;
+        k               0.7;
+        omega           0.7;
+        ".*"            0.7;
+    }
+}
+
+// ************************************************************************* //
