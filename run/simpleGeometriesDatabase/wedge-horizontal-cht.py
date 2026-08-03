@@ -123,7 +123,7 @@ mod.add_physical_group(dim=3, tags=vol_base,  tag=200, name="solid")
 #endregion: 8. Provide labels to the domain:
 
 #region: 9. Generate mesh and dump to file:
-msh.generate(dim=2)
+msh.generate(dim=3)
 gmsh.write(f"{name}.msh")
 #endregion: 9. Generate mesh and dump to file:
 
