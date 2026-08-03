@@ -15,7 +15,6 @@ renumberMesh
 # Check global mesh:
 checkMesh -allTopology
 
-
 # Split regions:
 splitMeshRegions -cellZones
 
