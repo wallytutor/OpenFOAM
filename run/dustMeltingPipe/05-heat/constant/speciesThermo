@@ -10,6 +10,7 @@ species
 (
     air
     H2O
+    CO2
 );
 
 air
@@ -52,6 +53,27 @@ H2O
     {
         As              1.67212e-06;
         Ts              170.672;
+    }
+}
+
+CO2
+{
+    specie
+    {
+        molWeight       44.01;
+    }
+    thermodynamics
+    {
+        Tlow            0;
+        Thigh           5000;
+        Tcommon         1000;
+        highCpCoeffs    ( 3.85746 0.00441437 -2.21481e-06 5.2349e-10 -4.72084e-14 -48759.2 2.27164 );
+        lowCpCoeffs     ( 2.35677 0.0089846 -7.12356e-06 2.45919e-09 -1.437e-13 -48372 9.90105 );
+    }
+    transport
+    {
+        As              1.67212e-06;
+        Ts              170.6;
     }
 }
 

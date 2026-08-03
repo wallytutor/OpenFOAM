@@ -36,16 +36,7 @@ liquids
 
 solids
 {
-    C
-    {
-        rho             2010;
-        Cp              710;
-        kappa           0.04;
-        hf              0;
-        emissivity      1.0;
-    }
-
-    ash;
+    // CaO;
 
     CaCO3;
 }
