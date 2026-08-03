@@ -23,13 +23,15 @@ rm -rf constant/polyMesh
 
 # Fix patch types after splitting:
 file=constant/solid/polyMesh/boundary
-foamDictionary $file -entry entry0/wedgeSolid/type -set wedge
+foamDictionary $file -entry entry0/solidFront/type -set wedge
+foamDictionary $file -entry entry0/solidBack/type  -set wedge
 foamDictionary $file -entry entry0/wallSolid/type  -set wall
 
 file=constant/fluid/polyMesh/boundary
-foamDictionary $file -entry entry0/wedgeFluid/type -set wedge
+foamDictionary $file -entry entry0/fluidFront/type -set wedge
+foamDictionary $file -entry entry0/fluidBack/type  -set wedge
 foamDictionary $file -entry entry0/surfFluid/type  -set wall
 
-# Check mesh (it will fail!):
+# Check mesh:
 checkMesh -region solid
 checkMesh -region fluid

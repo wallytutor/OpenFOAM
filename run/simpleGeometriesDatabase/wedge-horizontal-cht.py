@@ -103,23 +103,18 @@ occ.synchronize()
 #endregion: 7. Key step of revolution to get 3-D:
 
 #region: 8. Provide labels to the domain:
-fnb_melt  = [1, 8]
-fnb_base  = [2, 3, 4, 12, 15, 18]
-
 wall_base = [10, 11, 13, 16, 17]
-surf_melt = [7]
 
-vol_base  = [2, 3, 4]
-vol_melt  = [1]
+mod.add_physical_group(dim=2, tags=[1],          tag=10, name="fluidFront")
+mod.add_physical_group(dim=2, tags=[8],          tag=11, name="fluidBack")
+mod.add_physical_group(dim=2, tags=[7],          tag=12, name="surfFluid")
 
-mod.add_physical_group(dim=2, tags=fnb_melt,  tag=10, name="wedgeFluid")
-mod.add_physical_group(dim=2, tags=fnb_base,  tag=20, name="wedgeSolid")
+mod.add_physical_group(dim=2, tags=[2, 3, 4],    tag=20, name="solidFront")
+mod.add_physical_group(dim=2, tags=[12, 15, 18], tag=21, name="solidBack")
+mod.add_physical_group(dim=2, tags=wall_base,    tag=22, name="wallSolid")
 
-mod.add_physical_group(dim=2, tags=surf_melt, tag=11, name="surfFluid")
-mod.add_physical_group(dim=2, tags=wall_base, tag=21, name="wallSolid")
-
-mod.add_physical_group(dim=3, tags=vol_melt,  tag=100, name="fluid")
-mod.add_physical_group(dim=3, tags=vol_base,  tag=200, name="solid")
+mod.add_physical_group(dim=3, tags=[1],          tag=100, name="fluid")
+mod.add_physical_group(dim=3, tags=[2, 3, 4],    tag=200, name="solid")
 #endregion: 8. Provide labels to the domain:
 
 #region: 9. Generate mesh and dump to file:

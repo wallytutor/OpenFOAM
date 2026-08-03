@@ -106,14 +106,13 @@ occ.revolve(
 occ.synchronize()
 
 # 8. Provide labels to the domain:
-fnb = [1, 2, 3, 8, 12, 15]
-vol = [1, 2, 3]
-mod.add_physical_group(dim=2, tags=[7],      tag=10, name="inlet")
-mod.add_physical_group(dim=2, tags=[10, 13], tag=20, name="outlet")
-mod.add_physical_group(dim=2, tags=[6, 11],  tag=30, name="wallExt")
-mod.add_physical_group(dim=2, tags=[4, 14],  tag=40, name="wallInt")
-mod.add_physical_group(dim=2, tags=fnb,      tag=50, name="frontAndBack")
-mod.add_physical_group(dim=3, tags=vol,      tag=100, name="volume")
+mod.add_physical_group(dim=2, tags=[7],         tag=10,  name="inlet")
+mod.add_physical_group(dim=2, tags=[10, 13],    tag=20,  name="outlet")
+mod.add_physical_group(dim=2, tags=[6, 11],     tag=30,  name="wallExt")
+mod.add_physical_group(dim=2, tags=[4, 14],     tag=40,  name="wallInt")
+mod.add_physical_group(dim=2, tags=[1, 2, 3],   tag=50,  name="front")
+mod.add_physical_group(dim=2, tags=[8, 12, 15], tag=60,  name="back")
+mod.add_physical_group(dim=3, tags=[1, 2, 3],   tag=100, name="volume")
 
 # 9. Generate mesh and dump to file:
 msh.generate(dim=3)

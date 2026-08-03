@@ -10,7 +10,7 @@
 - Run the desired geometry script:
 
 ```bash
-uv run wedge-straight-pipe.py
+uv run python wedge-straight-pipe.py
 ```
 
 - Call `gmshToFoam` for the generated mesh:
