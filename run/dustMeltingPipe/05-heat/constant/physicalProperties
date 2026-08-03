@@ -36,6 +36,8 @@ liquids
 
 solids
 {
+    // TODO Implement following template of CaCO3 under:
+    // src/thermophysicalModels/thermophysicalProperties/solidProperties
     // CaO;
 
     CaCO3;

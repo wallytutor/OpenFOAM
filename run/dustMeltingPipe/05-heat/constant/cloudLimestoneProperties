@@ -14,10 +14,10 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Need to implement CaCO3 = CaO + CO2 with one of:
-// type reactingCloud;
-// type reactingMultiphaseCloud;
-type thermoCloud;
+// Need to artificially implement CaCO3 = CaO + CO2 with one of:
+// type thermoCloud;   // No, only singlePhaseMixtureCoeffs
+// type reactingCloud; // No, only singlePhaseMixtureCoeffs
+type reactingMultiphaseCloud;
 
 solution
 {
@@ -35,6 +35,10 @@ solution
             U               explicit 1;
             h               explicit 1;
             radiation       explicit 1;
+
+            // For reactingMultiphaseCloud
+            rho             explicit 1;
+            Yi              explicit 1;
         }
 
         resetOnStartup true;
@@ -61,14 +65,22 @@ solution
 
 constantProperties
 {
-    parcelTypeId    2;
+    // https://cpp.openfoam.org/v13/classFoam_1_1MomentumParcel.html
+    // parcelTypeId    2;
 
+    // https://cpp.openfoam.org/v13/classFoam_1_1ThermoParcel_1_1constantProperties.html
     rho0            2500;
     T0              300;
     Cp0             900;
-
     epsilon0        1;
     f0              0.5;
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1ReactingMultiphaseParcel_1_1constantProperties.html
+    TDevol          1143.0;
+    LDevol          1e6;
+    hRetentionCoeff 1;
+
+    constantVolume  true;
 }
 
 subModels
@@ -115,19 +127,17 @@ subModels
         }
     }
 
+    // ----------------------------------------------------------------
+
+    radiation on;
+
+    // ----------------------------------------------------------------
+
     dispersionModel stochasticDispersionRAS;
 
+    // ----------------------------------------------------------------
+
     patchInteractionModel standardWallInteraction;
-
-    heatTransferModel RanzMarshall;
-
-    stochasticCollisionModel none;
-
-    surfaceFilmModel none;
-
-    radiation       on;
-
-    compositionModel singlePhaseMixture;
 
     standardWallInteractionCoeffs
     {
@@ -136,10 +146,51 @@ subModels
         mu              0;
     }
 
+    // ----------------------------------------------------------------
+
+    heatTransferModel RanzMarshall;
+
     RanzMarshallCoeffs
     {
         BirdCorrection  false;
     }
+
+    // ----------------------------------------------------------------
+
+    phaseChangeModel none;
+
+    // ----------------------------------------------------------------
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1ConstantRateDevolatilisation.html
+    devolatilisationModel constantRateDevolatilisation;
+
+    constantRateDevolatilisationCoeffs
+    {
+        volatileData
+        (
+            (CO2 12)
+        );
+        residualCoeff   0.001;
+    }
+
+    // ----------------------------------------------------------------
+
+    stochasticCollisionModel none;
+
+    // ----------------------------------------------------------------
+
+    surfaceFilmModel none;
+
+    // ----------------------------------------------------------------
+
+    surfaceReactionModel none;
+
+    // ----------------------------------------------------------------
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1SinglePhaseMixture.html
+    // compositionModel singlePhaseMixture;
+
+    compositionModel singleMixtureFraction;
 
     singlePhaseMixtureCoeffs
     {
@@ -150,6 +201,36 @@ subModels
                 CaCO3   1;
             }
         );
+    }
+
+    /*
+    M_CA = 40.078
+    M_CC = 12.011
+    M_OO = 15.999
+    M_CaCO3 = M_CA + M_CC + 3*M_OO
+    Y_gas = (M_CC + 2*M_OO) / M_CaCO3
+    Y_sol = 1.0 - Y_gas
+    */
+    singleMixtureFractionCoeffs
+    {
+        phases
+        (
+            gas
+            {
+                CO2 1.0;
+            }
+            liquid
+            {}
+            solid
+            {
+                // CaO 1.0;
+                CaCO3 1.0;
+            }
+        );
+
+        YGasTot0        0.44;
+        YLiquidTot0     0.00;
+        YSolidTot0      0.56;
     }
 }
 
