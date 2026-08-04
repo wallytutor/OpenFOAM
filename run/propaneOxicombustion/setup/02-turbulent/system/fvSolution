@@ -58,16 +58,25 @@ solvers
 
 PIMPLE
 {
-    momentumPredictor no;
-    nOuterCorrectors  1;
-    nCorrectors     1;
+    momentumPredictor        yes;
+    nOuterCorrectors         1;
+    nCorrectors              2;
     nNonOrthogonalCorrectors 0;
 
-    maxDeltaT       1e-2;
-    maxCo           1;
-    alphaTemp       0.05;
+    maxDeltaT             1.0e-03;
+    maxCo                 0.25;
+
+    alphaTemp             0.05;
+    alphaY                0.05;
+
+    Yref
+    {
+        O2                0.1;
+        CH4               0.1;
+    }
+
     rDeltaTSmoothingCoeff 1;
-    rDeltaTDampingCoeff 1;
+    rDeltaTDampingCoeff   1;
 }
 
 relaxationFactors

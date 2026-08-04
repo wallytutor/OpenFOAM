@@ -9,16 +9,33 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant";
-    object      combustionProperties;
+    location    "system";
+    object      decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-combustionModel  EDC;
+numberOfSubdomains 6;
 
-EDCCoeffs
+method          simple;
+
+simpleCoeffs
 {
-    version v2005;
+    n               (1 1 6);
 }
+
+hierarchicalCoeffs
+{
+    n               ( 1 1 1 );
+    order           xyz;
+}
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+distributed     no;
+
+roots           ( );
 
 // ************************************************************************* //
