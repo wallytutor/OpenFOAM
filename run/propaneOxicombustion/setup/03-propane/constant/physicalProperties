@@ -27,6 +27,8 @@ thermoType
 
 defaultSpecie O2;
 
+fuel C3H8;
+
 species
 (
     O2
