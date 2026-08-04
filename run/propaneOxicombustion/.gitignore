@@ -10,8 +10,5 @@ docs/*.pdf
 !domain.msh
 
 # Keep steps:
-!01-flow/
-!02-flow/
-!03-spec/
-!04-dust/
-!05-heat/
+!setup/01-laminar/
+!setup/02-turbulent/
