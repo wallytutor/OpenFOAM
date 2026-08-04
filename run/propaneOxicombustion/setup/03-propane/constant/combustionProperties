@@ -15,10 +15,55 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 combustionModel  EDC;
+// combustionModel  infinitelyFastChemistry;
+// combustionModel  FSD;
 
 EDCCoeffs
 {
     version v2005;
+}
+
+infinitelyFastChemistryCoeffs
+{
+    semiImplicit no;
+    C            5.0;
+}
+
+// FSDCoeffs
+// {
+//     Cv          0.1;
+//     ftVarMin    1e-2;
+//
+//     reactionRateFlameArea relaxation;
+//
+//     fuel                Methane;
+//
+//     semiImplicit        no;
+//
+//     relaxationCoeffs
+//     {
+//         C                     2.0;
+//         alpha                 1.0;
+//         Methane
+//         {
+//             omega0            0.5;
+//             eta               -0.013;
+//             omegaMin          0.01;
+//             sigmaExt          470;
+//         }
+//         Propane
+//         {
+//             omega0            0.4;
+//             eta               -0.00656;
+//             omegaMin          0.01;
+//             sigmaExt          450;
+//         }
+//     }
+// }
+
+reaction
+{
+    reaction     "C3H8 + 5O2 = 3CO2 + 4H2O";
 }
 
 // ************************************************************************* //
