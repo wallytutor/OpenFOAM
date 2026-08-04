@@ -1,0 +1,77 @@
+
+```{python}
+import numpy as np
+from IPython.display import Markdown, display
+from majordome.engineering import CombustionPowerSupply
+from majordome.utilities import sci_to_latex_decimal
+from tabulate import tabulate
+```
+
+```{python}
+supply = CombustionPowerSupply(
+    100.0,       # power
+    1.0,         # equivalence
+    "C3H8: 1.0", # fuel
+    "O2: 1.0",   # oxidizer
+    "gri30.yaml" # mechanism
+)
+
+# Retrieve normal densities for velocity calculation [kg/Nm³]
+rho_f = supply.fuel_normal_density
+rho_o = supply.oxidizer_normal_density
+
+# Retrieve mass flow rates for velocity calculation [kg/s]
+mdot_f = supply.fuel_mass
+mdot_o = supply.oxidizer_mass
+
+supply.display()
+```
+
+```{python}
+# Diameter of axial inlet [m]
+D_ax = 0.025
+
+# Diameters of annular inlet [m]
+D_an_in  = D_ax / 2.0 + 0.003
+D_an_out = D_an_in + 0.003
+
+# Evaluate injection sections [m²]
+A_f = (np.pi / 4.0) * (D_an_out**2 - D_an_in** 2)
+A_o = (np.pi / 4.0) * D_ax**2
+
+# Normal mean flow velocities [Nm/s]
+Vdot_f = mdot_f / (rho_f * A_f)
+Vdot_o = mdot_o / (rho_o * A_o)
+```
+
+```{python}
+table_data = [
+    (
+        "Axial inlet area",
+        "m²",
+        f"${sci_to_latex_decimal(A_o, sig=4)}$"
+    ),
+    (
+        "Annular inlet area",
+        "m²",
+        f"${sci_to_latex_decimal(A_f, sig=4)}$"
+    ),
+    (
+        "Axial mean flow velocity",
+        "m/s",
+        f"${sci_to_latex_decimal(Vdot_f, sig=4)}$"
+    ),
+    (
+        "Annular mean flow velocity",
+        "m/s",
+        f"${sci_to_latex_decimal(Vdot_o, sig=4)}$"
+    ),
+
+]
+
+display(Markdown(tabulate(
+    table_data,
+    headers  = ["Name", "Unit", "Value"],
+    tablefmt = "github"
+)))
+```
