@@ -14,8 +14,8 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// combustionModel  EDC;
-combustionModel  infinitelyFastChemistry;
+combustionModel  EDC;
+// combustionModel  infinitelyFastChemistry;
 // combustionModel  FSD;
 
 EDCCoeffs
