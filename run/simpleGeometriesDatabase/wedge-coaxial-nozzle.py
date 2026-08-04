@@ -6,12 +6,12 @@ import gmsh
 from pathlib import Path
 
 #region: 0. Configuration
-name = Path(__file__).stem
-wedge_angle = math.radians(5.0)
+path = Path(__file__)
+wedge_angle = math.radians(2.0)
 
 len_inlet_ax = 0.05
 len_inlet_an = 0.03
-len_disperse = 0.50
+len_disperse = 1.00
 len_flue_out = 0.50
 
 dia_inlet_ax = 0.025
@@ -19,22 +19,21 @@ thk_inlet_wl = 0.003
 thk_inlet_an = 0.003
 thk_side_box = 0.100
 
-extended = True
-#endregion: 0. Configuration
+extended = False
+#endregion
 
 #region: 1. Initialize the model
 gmsh.initialize()
-gmsh.model.add(name)
-#endregion: 1. Initialize the model
+gmsh.model.add(path.stem)
 
-#region: 2. Get practical aliases
+# Get practical aliases
 opt = gmsh.option
 mod = gmsh.model
 occ = gmsh.model.occ
 msh = gmsh.model.mesh
-#endregion: 2. Get practical aliases
+#endregion
 
-#region: 3. Configure gmsh options
+#region: 2. Configure gmsh options
 # Note: using 3 during concept design is helpful!
 opt.set_number("General.Axes", 0)
 
@@ -54,9 +53,9 @@ opt.set_number("Mesh.MshFileVersion", 2.2)
 
 # XXX: mesh-specific settings
 opt.set_number("Mesh.MeshSizeMax", 0.01)
-#endregion: 3. Configure gmsh options
+#endregion
 
-#region: 4. Create base geometry
+#region: 3. Create base geometry
 # - Axial inlet (negative x-direction)
 occ.add_rectangle(
     x   = 0.0,
@@ -171,9 +170,9 @@ occ.synchronize()
 # Ensure shared boundaries are merged
 occ.fragment(all_surf, [])
 occ.synchronize()
-#endregion: 4. Create base geometry
+#endregion
 
-#region: 5. Discretize before going 3-D
+#region: 4. Discretize before going 3-D
 # ---------------------------------------------------------------------
 # AXIAL INLET ZONE
 # ---------------------------------------------------------------------
@@ -213,7 +212,7 @@ msh.set_transfinite_curve(15, ny2, "Bump", qy2)
 # ---------------------------------------------------------------------
 
 # - Dispersion zone over x-axis
-nx3 = 100
+nx3 = 200
 qx3 = 1.0
 msh.set_transfinite_curve(5,  nx3, "Progression", qx3)
 msh.set_transfinite_curve(7,  nx3, "Progression", qx3)
@@ -251,7 +250,7 @@ if extended:
     msh.set_transfinite_curve(28, nx, "Progression", qx)
 
     # Axial inlet zone
-    msh.set_transfinite_curve(21, ny1, "Progression", 1.0)
+    msh.set_transfinite_curve(21, ny1, "Progression", qy1)
 
     # Annular inlet zone
     msh.set_transfinite_curve(25, ny2, "Bump", qy2)
@@ -265,75 +264,89 @@ if extended:
 for _, tag in all_surf:
     msh.set_transfinite_surface(tag=tag)
     msh.set_recombine(dim=2, tag=tag)
-#endregion: 5. Discretize before going 3-D
+#endregion
 
-#region: 6. Key step of revolution to get 3-D
-# occ.revolve(
-#     dimTags     = all_surf,
-#     x           = 0,
-#     y           = 0,
-#     z           = 0,
-#     ax          = 1,
-#     ay          = 0,
-#     az          = 0,
-#     angle       = wedge_angle,
-#     numElements = [1],
-#     recombine   = True
-# )
-# occ.synchronize()
-#endregion: 6. Key step of revolution to get 3-D
+#region: 5. Key step of revolution to get 3-D
+occ.revolve(
+    dimTags     = all_surf,
+    x           = 0,
+    y           = 0,
+    z           = 0,
+    ax          = 1,
+    ay          = 0,
+    az          = 0,
+    angle       = wedge_angle,
+    numElements = [1],
+    recombine   = True
+)
+occ.synchronize()
+#endregion
 
-#region: 7. Provide labels to the domain:
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = list(range(1,10+1)),
-#     tag  = 10,
-#     name = "back"
-# )
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = [14, 17, 21, 26, 29, 33, 36, 39, 42, 45],
-#     tag  = 11,
-#     name = "front"
-# )
+#region: 6. Provide labels to the domain:
+s_back = [k for _, k in all_surf]
+v_tags = s_back.copy()
 
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = [11],
-#     tag  = 20,
-#     name = "inletAxial"
-# )
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = [23],
-#     tag  = 21,
-#     name = "inletAnnular"
-# )
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = [34, 37, 40, 43],
-#     tag  = 22,
-#     name = "outlet"
-# )
-# mod.add_physical_group(
-#     dim  = 2,
-#     tags = [12, 20, 22, 24, 31, 32, 44],
-#     tag  = 23,
-#     name = "walls"
-# )
+if extended:
+    s_front    = [14, 17, 21, 26, 29, 33, 36, 39, 42, 45]
+    s_inlet_ax = [11]
+    s_inlet_an = [23]
+    s_outlet   = [34, 37, 40, 43]
+    s_walls    = [12, 20, 22, 24, 31, 32, 44]
+else:
+    s_front    = [10, 13, 17, 22, 25, 29]
+    s_inlet_ax = [7]
+    s_inlet_an = [19]
+    s_outlet   = [11, 14, 23, 26]
+    s_walls    = [8, 16, 18, 20, 27, 28]
 
-# mod.add_physical_group(
-#     dim  = 3,
-#     tags = list(range(1,10+1)),
-#     tag  = 100,
-#     name = "fluid"
-# )
-#endregion: 7. Provide labels to the domain
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_back,
+    tag  = 10,
+    name = "back"
+)
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_front,
+    tag  = 11,
+    name = "front"
+)
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_inlet_ax,
+    tag  = 20,
+    name = "inletAxial"
+)
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_inlet_an,
+    tag  = 21,
+    name = "inletAnnular"
+)
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_outlet,
+    tag  = 22,
+    name = "outlet"
+)
+mod.add_physical_group(
+    dim  = 2,
+    tags = s_walls,
+    tag  = 23,
+    name = "walls"
+)
+mod.add_physical_group(
+    dim  = 3,
+    tags = v_tags,
+    tag  = 100,
+    name = "fluid"
+)
+#endregion
 
-#region: 8. Generate, dump, display and finalize
-msh.generate(dim=2)
-# gmsh.write(f"{name}.msh")
+#region: 7. Generate, dump, display and finalize
+msh.generate(dim=3)
+gmsh.write(fileName=str(path.with_suffix(".msh")))
 
 gmsh.fltk.run()
 gmsh.finalize()
-#endregion: 8. Display and finalize
+#endregion
