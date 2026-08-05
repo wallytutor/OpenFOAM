@@ -39,11 +39,12 @@ reactions
 {
     propaneSingleStep
     {
+        // 10.1080/00102208108946970
         type     irreversibleArrhenius;
-        reaction "C3H8 + 5O2 = 3CO2 + 4H2O";
-        A        5.2e16;
+        reaction "C3H8^0.1 + 5O2^1.65 = 3CO2 + 4H2O";
+        A        8.6e+11;
         beta     0;
-        Ta       14906;
+        Ta       15097.0;
     }
 }
 
