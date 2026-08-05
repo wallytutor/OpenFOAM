@@ -1,25 +1,35 @@
 # Search database
 
-## Compiling OpenFOAM docs
+## OpenFOAM *CFD Book*
 
 ```bash
+# Example recursive crawl converting HTML pages to a clean text/PDF bundle
+wget --recursive --level=2 --no-clobber --page-requisites --convert-links --no-parent http://example.com
+```
+
+## OpenFOAM Documentation
+
+```bash
+# Install required tools:
 sudo apt install \
     doxygen \
     graphviz \
+    pandoc \
     texlive \
     texlive-latex-recommended \
     texlive-latex-extra
 
-cp -avr /opt/openfoam13/doc openFOAM
-cd openFOAM
+# Copy documentation directory:
+cp -avr /opt/openfoam13/doc docs/ && cd docs/Doxygen
 
-# GENERATE_LATEX = YES
+# Enable LaTeX generation:
+sed -i 's/\(GENERATE_LATEX[[:space:]]*=[[:space:]]*\)NO/\1YES/' Doxyfile
 
-# XXX: update the Doxyfile
-# doxygen -u
+# Update the Doxyfile to latest standard:
+doxygen -u
 
-./Allmake latex
-
-# cd latex
-# make
+# Generate the documentation:
+./Allmake
 ```
+
+## Gmsh Documentation
