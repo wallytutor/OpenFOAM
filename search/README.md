@@ -15,6 +15,9 @@ cd openFOAM
 
 # GENERATE_LATEX = YES
 
+# XXX: update the Doxyfile
+# doxygen -u
+
 ./Allmake latex
 
 # cd latex
