@@ -5,6 +5,7 @@
 ```bash
 sudo apt install \
     doxygen \
+    graphviz \
     texlive \
     texlive-latex-recommended \
     texlive-latex-extra
