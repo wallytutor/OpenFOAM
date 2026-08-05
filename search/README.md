@@ -30,6 +30,9 @@ doxygen -u
 
 # Generate the documentation:
 ./Allmake
+
+# Build final PDF:
+cd latex && make
 ```
 
 ## Gmsh Documentation
