@@ -11,7 +11,7 @@ wedge_angle = math.radians(2.0)
 
 len_inlet_ax = 0.05
 len_inlet_an = 0.03
-len_disperse = 1.00
+len_disperse = 0.50
 len_flue_out = 0.50
 
 dia_inlet_ax = 0.025
@@ -19,7 +19,7 @@ thk_inlet_wl = 0.003
 thk_inlet_an = 0.003
 thk_side_box = 0.100
 
-extended = False
+f_side_struc = 0.3
 #endregion
 
 #region: 1. Initialize the model
@@ -41,28 +41,51 @@ opt.set_number("Geometry.Points", 0)
 opt.set_number("Geometry.Lines", 1)
 opt.set_number("Geometry.Surfaces", 1)
 
-opt.set_number("Mesh.Algorithm", 6)
+# 5 is better for mesh expansion
+opt.set_number("Mesh.Algorithm", 5)
 opt.set_number("Mesh.SurfaceFaces", 1)
 
 # Show each named surface with a different color
 opt.set_number("Mesh.ColorCarousel", 2)
+
+# Turn off automatic interpolation/constraints from boundary entities
+opt.setNumber("Mesh.MeshSizeExtendFromBoundary", 0)
+opt.setNumber("Mesh.MeshSizeFromPoints", 0)
+opt.setNumber("Mesh.MeshSizeFromCurvature", 0)
 
 # XXX: mandatory for OpenFOAM meshing!
 opt.set_number("Mesh.ElementOrder", 1)
 opt.set_number("Mesh.MshFileVersion", 2.2)
 
 # XXX: mesh-specific settings
-opt.set_number("Mesh.MeshSizeMax", 0.01)
+# opt.set_number("Mesh.MeshSizeMax", 0.008)
 #endregion
 
 #region: 3. Create base geometry
+# Radius of axial inlet:
+r_ax = dia_inlet_ax / 2.0
+
+# Inner radius of annular inlet:
+r_an = dia_inlet_ax / 2.0 + thk_inlet_wl
+
+# Position and step of structured side:
+h_1  = dia_inlet_ax / 2.0 + thk_inlet_wl + thk_inlet_an
+dh_1 = thk_side_box * f_side_struc
+
+# Position and step of unstructured side:
+h_2  = h_1 + dh_1
+dh_2 = thk_side_box * (1 - f_side_struc)
+
+# Total height of slice:
+dh_t = h_2 + dh_2
+
 # - Axial inlet (negative x-direction)
 occ.add_rectangle(
     x   = 0.0,
     y   = 0.0,
     z   = 0.0,
     dx  = -len_inlet_ax,
-    dy  = dia_inlet_ax / 2.0,
+    dy  = r_ax,
     tag = 1
 )
 
@@ -72,14 +95,14 @@ occ.add_rectangle(
     y   = 0.0,
     z   = 0.0,
     dx  = len_disperse,
-    dy  = dia_inlet_ax / 2.0,
+    dy  = r_ax,
     tag = 2
 )
 
 # - Dispersion length over wall
 occ.add_rectangle(
     x   = 0.0,
-    y   = dia_inlet_ax / 2.0,
+    y   = r_ax,
     z   = 0.0,
     dx  = len_disperse,
     dy  = thk_inlet_wl,
@@ -89,7 +112,7 @@ occ.add_rectangle(
 # - Annular inlet (negative x-direction)
 occ.add_rectangle(
     x   = 0.0,
-    y   = dia_inlet_ax / 2.0 + thk_inlet_wl,
+    y   = r_an,
     z   = 0.0,
     dx  = -len_inlet_an,
     dy  = thk_inlet_an,
@@ -99,62 +122,47 @@ occ.add_rectangle(
 # - Dispersion length for annular inlet
 occ.add_rectangle(
     x   = 0.0,
-    y   = dia_inlet_ax / 2.0 + thk_inlet_wl,
+    y   = r_an,
     z   = 0.0,
     dx  = len_disperse,
     dy  = thk_inlet_an,
     tag = 5
 )
 
-# - Side expansion width
+# - Side expansion width (structured)
 occ.add_rectangle(
     x   = 0.0,
-    y   = dia_inlet_ax / 2.0 + thk_inlet_wl + thk_inlet_an,
+    y   = h_1,
     z   = 0.0,
     dx  = len_disperse,
-    dy  = thk_side_box,
+    dy  = dh_1,
     tag = 6
 )
 
-if not extended:
-    all_surf = [(2, k) for k in range(1, 6+1)]
-else:
-    # - Flue outlet (4 regions)
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = 0.0,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = dia_inlet_ax / 2.0,
-        tag = 7
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_inlet_wl,
-        tag = 8
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0 + thk_inlet_wl,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_inlet_an,
-        tag = 9
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0 + thk_inlet_wl + thk_inlet_an,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_side_box,
-        tag = 10
-    )
+# - Side expansion width (unstructured)
+occ.add_rectangle(
+    x   = 0.0,
+    y   = h_2,
+    z   = 0.0,
+    dx  = len_disperse,
+    dy  = dh_2,
+    tag = 7
+)
 
-    all_surf = [(2, k) for k in range(1, 10+1)]
+# - Flue outlet
+occ.add_rectangle(
+    x   = len_disperse,
+    y   = 0.0,
+    z   = 0.0,
+    dx  = len_flue_out,
+    dy  = dh_t,
+    tag = 8
+)
 
+# Get list of all surfaces:
+all_surf = [(2, k) for k in range(1, 8+1)]
+
+# Rotate the whole system by half wedge angle:
 occ.rotate(
     dimTags = all_surf,
     x       = 0,
@@ -202,10 +210,10 @@ msh.set_transfinite_curve(13, nx2, "Progression", qx2)
 
 # - Annular inlet zone over y-axis
 ny2 = 7
-qy2 = 0.4
+qy2 = 0.25
 msh.set_transfinite_curve(12, ny2, "Bump", qy2)
 msh.set_transfinite_curve(14, ny2, "Bump", qy2)
-msh.set_transfinite_curve(15, ny2, "Bump", qy2)
+msh.set_transfinite_curve(15, ny2) # XXX no bump
 
 # ---------------------------------------------------------------------
 # DISPERSION ZONE
@@ -231,38 +239,79 @@ msh.set_transfinite_curve(10, ny3, "Progression", 1/qy3)
 # ---------------------------------------------------------------------
 
 ny4 = 25
-qy4 = 0.85
-msh.set_transfinite_curve(17, ny4, "Progression", 1/qy4)
+qy4 = 0.93
+msh.set_transfinite_curve(17, ny4, "Progression", 1.0)
 msh.set_transfinite_curve(19, ny4, "Progression", qy4)
 
+ny = 10
+qy = 0.9
+msh.set_transfinite_curve(22, ny, "Progression", qy)
+
 # ---------------------------------------------------------------------
-# OTHER
+# EXTENSION
 # ---------------------------------------------------------------------
 
-if extended:
-    # - Flue outlet over x-axis
-    nx = 100
-    qx = 1.0
-    msh.set_transfinite_curve(20, nx, "Progression", qx)
-    msh.set_transfinite_curve(22, nx, "Progression", qx)
-    msh.set_transfinite_curve(24, nx, "Progression", qx)
-    msh.set_transfinite_curve(26, nx, "Progression", qx)
-    msh.set_transfinite_curve(28, nx, "Progression", qx)
+# - Flue outlet over x-axis
+nx = 100
+qx = 1.0
+# msh.set_transfinite_curve(23, nx, "Progression", qx)
 
-    # Axial inlet zone
-    msh.set_transfinite_curve(21, ny1, "Progression", qy1)
+# ---------------------------------------------------------------------
+# BACKGROUND FIELDS
+# ---------------------------------------------------------------------
 
-    # Annular inlet zone
-    msh.set_transfinite_curve(25, ny2, "Bump", qy2)
+def threshold_restricted(
+        curves_list,
+        size_min = 0.003,
+        size_max = 0.015,
+        dist_min = 0.005,
+        dist_max = 0.100,
+        sampling = 100,
+        sigmoid  = 0,
+        restrict = None
+    ):
+    dist_field = msh.field.add("Distance")
+    msh.field.setNumbers(dist_field, "CurvesList", curves_list)
+    msh.field.setNumber(dist_field, "Sampling", sampling)
 
-    # Inlet wall thickness
-    msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
+    thresh_field = msh.field.add("Threshold")
+    msh.field.setNumber(thresh_field, "InField", dist_field)
+    msh.field.setNumber(thresh_field, "SizeMin", size_min)
+    msh.field.setNumber(thresh_field, "SizeMax", size_max)
+    msh.field.setNumber(thresh_field, "DistMin", dist_min)
+    msh.field.setNumber(thresh_field, "DistMax", dist_max)
+    msh.field.setNumber(thresh_field, "Sigmoid", sigmoid)
 
-    # Side expansion
-    msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
+    if restrict is None:
+        return thresh_field
 
-for _, tag in all_surf:
+    field = msh.field.add("Restrict")
+    msh.field.setNumber(field, "InField", thresh_field)
+    msh.field.setNumbers(field, "SurfacesList", restrict)
+    return field
+
+
+field1 = threshold_restricted(
+    curves_list = [6, 8, 15, 17, 23],
+    restrict    = [8]
+)
+field2 = threshold_restricted(
+    curves_list = [18],
+    restrict    = [7],
+)
+
+min_field = msh.field.add("Min")
+msh.field.setNumbers(min_field, "FieldsList", [field1, field2])
+msh.field.setAsBackgroundMesh(min_field)
+
+# ---------------------------------------------------------------------
+# TRANSFINITE/RECOMBINE
+# ---------------------------------------------------------------------
+
+for _, tag in all_surf[:6]:
     msh.set_transfinite_surface(tag=tag)
+
+for _, tag in all_surf[:6]:
     msh.set_recombine(dim=2, tag=tag)
 #endregion
 
@@ -286,18 +335,11 @@ occ.synchronize()
 s_back = [k for _, k in all_surf]
 v_tags = s_back.copy()
 
-if extended:
-    s_front    = [14, 17, 21, 26, 29, 33, 36, 39, 42, 45]
-    s_inlet_ax = [11]
-    s_inlet_an = [23]
-    s_outlet   = [34, 37, 40, 43]
-    s_walls    = [12, 20, 22, 24, 31, 32, 44]
-else:
-    s_front    = [10, 13, 17, 22, 25, 29]
-    s_inlet_ax = [7]
-    s_inlet_an = [19]
-    s_outlet   = [11, 14, 23, 26]
-    s_walls    = [8, 16, 18, 20, 27, 28]
+s_front    = [12, 15, 19, 24, 27, 31, 35, 38]
+s_inlet_ax = [9]
+s_inlet_an = [21]
+s_outlet   = [36]
+s_walls    = [10, 18, 20, 22, 30, 33, 34, 37]
 
 mod.add_physical_group(
     dim  = 2,
