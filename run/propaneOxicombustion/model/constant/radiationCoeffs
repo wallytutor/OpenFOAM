@@ -1,3 +1,10 @@
+constantCoeffs
+{
+    absorptivity    0.01;
+    emissivity      0.01;
+    E               0;
+}
+
 // --------------------------------------------------------------------
 // Data format specification:
 //

@@ -35,21 +35,64 @@ radiationModel  P1;
 
 // --------------------------------------------------------------------
 
-#include "radiation/fluid"
-// #include "radiation/cloud"
+// If not modeling particles, then use these:
+// absorptionEmissionModel constant;
+// absorptionEmissionModel greyMeanCombustion;
+// scatterModel            none;
+
+// If modeling particles, then these are suitable:
+absorptionEmissionModel binary;
+scatterModel            cloud;
+
+// These are in external files to keep a single source of truth as
+// they are also used in `binaryCoeffs` below:
+#include "radiationCoeffs"
+
+binaryCoeffs
+{
+    model1
+    {
+        // absorptionEmissionModel constant;
+        absorptionEmissionModel greyMeanCombustion;
+
+        #include "radiationCoeffs"
+    }
+
+    model2
+    {
+        absorptionEmissionModel cloud;
+
+        cloudCoeffs
+        {
+            cloudNames
+            (
+                cloudLimestone
+            );
+        }
+    }
+}
+
+cloudCoeffs
+{
+    cloudNames
+    (
+        cloudLimestone
+    );
+}
 
 // --------------------------------------------------------------------
 
+// If soothing is to be added, then the mixtureFractionCoeffs need a fix
+// https://cpp.openfoam.org/v13/classFoam_1_1radiationModels_1_1sootModels_1_1mixtureFraction.html
+// Please notice that it is purely an state model with forced fraction.
+// sootModel  mixtureFraction;
 sootModel  none;
 
-// TODO fix reaction to be able to use this
-// sootModel       mixtureFraction;
-//
 // mixtureFractionCoeffs
 // {
-//     // CH4 + 2O2 + 7.5N2 = CO2 + 2H2O + 7.5N2 + nuSoot soot
-//     nuSoot              0.055;
-//     Wsoot               12;
+//     nuSoot        0.05;
+//     Wsoot         12;
+//     mappingField  P;
 // }
 
 // ************************************************************************* //
