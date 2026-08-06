@@ -22,8 +22,11 @@
 )
 
 #set par(justify: true, leading: 0.7em)
-#set heading(numbering: "1.1")
 
+// Override the default "Section" used at all levels:
+#show heading.where(level: 1): set heading(supplement: [Chapter])
+
+// Ensure page break and vertical spacing before each chapter:
 #show heading.where(level: 1): it => [
   #pagebreak(weak: true)
   #v(3em)
@@ -31,6 +34,7 @@
   #v(1.5em)
 ]
 
+// Define preamble function to create unnumbered and unlisted heading:
 #let preamble(title) = {
   heading(title, level: 1, numbering: none, outlined: false)
 }
@@ -72,7 +76,13 @@ Notes on Computational Fluid Dynamics (CFD) was written for people who use CFD i
 // CONTENTS
 // ----------------------------------------------------------------------------
 
+#set heading(numbering: none)
+
 #include "_preface.typ"
+#include "_symbols.typ"
+
+#set heading(numbering: "1.1")
+
 #include "_chapter1.typ"
 #include "_chapter2.typ"
 #include "_chapter3.typ"
