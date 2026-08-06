@@ -22,7 +22,7 @@ solution
     transient                 no;
     cellValueSourceCorrection on;
     calcFrequency             10;
-    maxTrackTime              0.3;
+    maxTrackTime              0.02;
     maxCo                     0.2;
 
     sourceTerms
@@ -90,38 +90,8 @@ subModels
 
     injectionModels
     {
-        dust
-        {
-            type              patchInjection;
-            patchName         inletAxial;
-
-            U0                (1.0 0.0 0.0);
-            flowRateProfile   constant 1;
-            uniformParcelSize nParticle;
-
-            /*
-            import math
-            f    = 2/360    # Fraction of total pipe
-            D    = 50e-6    # sizeDistribution.value
-            rho  = 2500     # constantProperties.rho0
-            mdot = 0.1      # mass flow rate
-            N    = 100      # nParticle
-            n = mdot / (rho * math.pi * (D**3) / 6)
-            print(f"parcelsPerSecond {f * n / N:.0f};")
-            print(f"nParticle        {N:.0f};")
-            */
-            parcelsPerSecond  33953;
-            nParticle         100;
-
-            SOI               0;
-            duration          1.0e+304;
-
-            sizeDistribution
-            {
-                type            fixedValue;
-                value           50e-06;
-            }
-        }
+        #include "injections/dust-patch"
+        // #include "injections/dust-cone"
     }
 
     // ----------------------------------------------------------------

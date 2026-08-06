@@ -11,5 +11,6 @@ find . \
 
 rm -rf 0/
 rm -rf constant/polyMesh/
+rm -rf postProcessing/
 rm -rf case.foam
 rm -rf log.*

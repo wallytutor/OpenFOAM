@@ -1,0 +1,34 @@
+dust
+{
+    type              coneInjection;
+
+    position          (0.0  0.0  0.0);
+    direction         (1.0  0.01 0.0);
+
+    injectionMethod   disc;
+
+    thetaInner        constant 0.0;
+    thetaOuter        constant 0.0;
+
+    dInner            0.001;
+    dOuter            0.010;
+
+
+    flowType          constantVelocity;
+    flowRateProfile   constant 1;
+    Umag              146.8;
+    uniformParcelSize nParticle;
+
+    massFlowRate      0.01;
+    parcelsPerSecond  3395;
+    nParticle         100;
+
+    SOI               0;
+    duration          1.0e+304;
+
+    sizeDistribution
+    {
+        type            fixedValue;
+        value           50e-06;
+    }
+}
