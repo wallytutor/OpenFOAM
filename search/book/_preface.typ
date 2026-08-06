@@ -2,11 +2,11 @@
 
 This book is written for people who use, or are planning to use, computational fluid dynamics (CFD) in their work, research, study or recreation time.
 
-Its purpose is to provide the knowledge to help the reader build their confidence to undertake CFD analysis, repeatedly, to a defined standard, in a timely manner1. It forms part of our mission to make CFD accessible and inclusive, alongside our work to manage, maintain and develop the free, open source software OpenFOAM on behalf of The OpenFOAM Foundation Ltd.
+Its purpose is to provide the _knowledge_ to help the reader build their confidence to undertake CFD analysis, repeatedly, to a defined standard, in a timely manner#footnote[from Robin Hoyle's definition of 'competence', in _Complete training: from recruitment to retirement_, 2013, p69.]. It forms part of our mission to _make CFD accessible and inclusive_, alongside our work to manage, maintain and develop the free, open source software OpenFOAM on behalf of #link("https://openfoam.org")[The OpenFOAM Foundation Ltd].
 
-The book taps into our experience in CFD, in particular with OpenFOAM. At the time of publication in 2022, it is 33 years since Henry Weller (HW) wrote the first lines of code of the "Field Operation and Manipulation" (FOAM) software which became OpenFOAM in 2004.
+The book taps into our experience in CFD, in particular with OpenFOAM. At the time of publication in 2022, it is 33 years since Henry Weller (HW) wrote the first lines of code of the “Field Operation and Manipulation” (FOAM) software which became OpenFOAM in 2004.
 
-Since 2008 Chris Greenshields (CG) has provided CFD training with OpenFOAM, delivering over 300 courses (over 650 days) to 3,000 participants around the world. The training continues today at CFD Direct Ltd, teaching repeatable procedures and workflows and the use of OpenFOAM and supporting software to deliver reliable CFD solutions.
+Since 2008 Chris Greenshields (CG) has provided CFD training with OpenFOAM, delivering over 300 courses (over 650 days) to 3,000 participants around the world. The training continues today at #link("https://cfd.direct/training")[CFD Direct Ltd], teaching repeatable _procedures_ and _workflows_ and the use of OpenFOAM and supporting software to deliver reliable CFD solutions.
 
 This book does not replace training, but provides the supporting knowledge of the physics and numerical methods that underpin CFD. The user of any CFD software should benefit from reading this book, but they can only relate its contents back to the software if the code is open source, as it is with OpenFOAM.
 
@@ -22,7 +22,7 @@ This book concentrates mainly on fluid dynamics, modelling and numerical methods
 - the practical application and numerical implementation of common boundary conditions;
 - some sample problems.
 
-We named the book Notes on Computational Fluid Dynamics because we present the subject matter as a set of short topics, or notes, spanning exactly two pages of the print book, and one web page of this online version. Each topic appears in its entirety on the left and right pages of the opened, printed book. We use this format to break down the material into small pieces that are easier for the reader to digest.
+We named the book _Notes on Computational Fluid Dynamics_ because we present the subject matter as a set of short topics, or _notes_, spanning exactly two pages of the print book, and one web page of this online version. Each topic appears in its entirety on the left and right pages of the opened, printed book. We use this format to break down the material into small pieces that are easier for the reader to digest.
 
 The book presents CFD from the perspective of an engineer (or scientist), rather than a mathematician. CFD is an application of science so requires the qualities of an engineer to design, analyse, build and test, in order to create and run CFD simulations and interpret the results.
 
@@ -36,7 +36,7 @@ We avoid the excessive use of sub- and superscripts within our mathematical nota
 
 Numerical methods are ultimately programmed into a computer, so it is better that the mathematical notation represents typical programming language. The assignment notation "$t :=$", for example, clearly indicates a change to $t$ already stored in computer memory.
 
-We have tried to reduce the need for the reader to search back through the book for information, to make it easier to follow. One way we hope to achieve this is by reminding the reader what the mathematical symbols represent, e.g. specific internal energy $e$ is defined in Sec. 2.15, but the reader is reminded what $e$ represents in Sec. 2.17 and Sec. 6.13.
+We have tried to reduce the need for the reader to search back through the book for information, to make it easier to follow. One way we hope to achieve this is by reminding the reader what the mathematical symbols represent, _e.g._ specific internal energy $e$ is defined in Sec. 2.15, but the reader is reminded what $e$ represents in Sec. 2.17 and Sec. 6.13.
 
 When a topic refers back to something previously discussed, we have included references to direct the reader to the relevant section, page or equation number. To help the reader find something quickly, we have provided a fairly extensive index and list of symbols.
 
@@ -57,5 +57,5 @@ Thanks to our colleagues Will Bainbridge and Jenya Collings for their support an
 We hope you find the book useful.
 
 Chris Greenshields and Henry Weller \
-CFD Direct Ltd / The OpenFOAM Foundation Ltd \
+_CFD Direct Ltd_ / _The OpenFOAM Foundation Ltd_ \
 April 2022.
