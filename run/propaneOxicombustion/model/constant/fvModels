@@ -14,10 +14,25 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// radiation
+// buoyancyForce
 // {
-//     type    radiation;
-//     libs    ("libradiationModels.so");
+//     type        buoyancyForce;
 // }
+
+clouds
+{
+    type    clouds;
+    libs    ("liblagrangianParcel.so");
+
+    clouds  (
+        cloudLimestone
+    );
+}
+
+radiation
+{
+    type    radiation;
+    libs    ("libradiationModels.so");
+}
 
 // ************************************************************************* //
