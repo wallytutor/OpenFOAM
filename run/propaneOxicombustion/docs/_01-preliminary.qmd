@@ -2,10 +2,12 @@
 ```{python}
 import numpy as np
 from IPython.display import Markdown, display
-from majordome import constants as mc
-from majordome.engineering import CombustionPowerSupply
-from majordome.engineering import SolutionDimless
-from majordome.utilities import sci_to_latex_decimal
+from majordome import (
+    constants as mc,
+    CombustionPowerSupply,
+    SolutionDimless,
+    sci_to_latex_decimal
+)
 from tabulate import tabulate
 ```
 
