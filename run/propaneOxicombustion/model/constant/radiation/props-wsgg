@@ -1,15 +1,49 @@
+// --------------------------------------------------------------------
+// Data format specification:
+//
+// speciesName
+// {
+//     invTemp  false; // Is the polynomial using inverse temperature.
+//     Tlow     200;   // Low Temp
+//     Tcommon  1000;  // Common Temp
+//     Thigh    200;   // High Temp
+//
+//      loTcoeffs      // coefss for T < Tcommon
+//      (
+//          0          //  a0            +
+//          0          //  a1*T          +
+//          0          //  a2*T^(+/-)2   +
+//          0          //  a3*T^(+/-)3   +
+//          0          //  a4*T^(+/-)4   +
+//          0          //  a5*T^(+/-)5   +
+//      );
+//      hiTcoeffs      // coefss for T > Tcommon
+//      (
+//          0          //  a0            +
+//          0          //  a1*T          +
+//          0          //  a2*T^(+/-)2   +
+//          0          //  a3*T^(+/-)3   +
+//          0          //  a4*T^(+/-)4   +
+//          0          //  a5*T^(+/-)5   +
+//      );
+// }
+// --------------------------------------------------------------------
+
+// XXX: Thigh was originally 2500, modified to 3500 to avoid warnings;
+// A new set of coefficients for oxicombustion is required here!
+
 greyMeanCombustionCoeffs
 {
     lookUpTableFileName     none;
 
-    EhrrCoeff                0.0;
+    EhrrCoeff               0.0;
 
     // FIXME properties are actually from CH4
     C3H8
     {
         Tcommon         200;
         Tlow            200;
-        Thigh           2500;
+        Thigh           3500;
         invTemp         false;
 
         loTcoeffs
@@ -34,21 +68,21 @@ greyMeanCombustionCoeffs
 
     CO2
     {
-        Tcommon         200;   // Common Temp
-        invTemp         true;   // Is the polynomial using inverse temperature.
-        Tlow            200;   // Low Temp
-        Thigh           2500;  // High Temp
+        Tcommon         200;
+        invTemp         true;
+        Tlow            200;
+        Thigh           3500;
 
-        loTcoeffs       // coefss for T < Tcommon
+        loTcoeffs
         (
-            0           //  a0            +
-            0           //  a1*T          +
-            0           //  a2*T^(+/-)2   +
-            0           //  a3*T^(+/-)3   +
-            0           //  a4*T^(+/-)4   +
-            0           //  a5*T^(+/-)5   +
+            0
+            0
+            0
+            0
+            0
+            0
         );
-        hiTcoeffs        // coefss for T > Tcommon
+        hiTcoeffs
         (
             18.741
             -121.31e3
@@ -57,7 +91,6 @@ greyMeanCombustionCoeffs
             56.31e12
             -5.8169e15
         );
-
     }
 
     H2O
@@ -65,7 +98,7 @@ greyMeanCombustionCoeffs
         Tcommon         200;
         invTemp         true;
         Tlow            200;
-        Thigh           2500;
+        Thigh           3500;
 
         loTcoeffs
         (
@@ -92,7 +125,7 @@ greyMeanCombustionCoeffs
         Tcommon         200;
         invTemp         true;
         Tlow            200;
-        Thigh           2500;
+        Thigh           3500;
 
         loTcoeffs
         (
@@ -114,13 +147,12 @@ greyMeanCombustionCoeffs
         );
     }
 
-
     N2
     {
         Tcommon         200;
         invTemp         true;
         Tlow            200;
-        Thigh           2500;
+        Thigh           3500;
 
         loTcoeffs
         (
