@@ -4,6 +4,8 @@ log.*
 
 # Generated files:
 .jupyter_cache/
+docs/*.quarto_ipynb
+docs/*.typ
 docs/*.pdf
 
 # Keep mesh:

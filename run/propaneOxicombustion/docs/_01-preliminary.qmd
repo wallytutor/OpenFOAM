@@ -1,3 +1,4 @@
+# Case preparation
 
 ```{python}
 import numpy as np
@@ -57,11 +58,6 @@ def tabulate_bc(
             "Hydraulic diameter",
             "m",
             f"${sci_to_latex_decimal(D, sig=4)}$"
-        ),
-        (
-            "Cross-section",
-            "m²",
-            f"${sci_to_latex_decimal(A, sig=4)}$"
         ),
         # -------------------------------------------------------------
         # FLOW
@@ -136,14 +132,15 @@ supply.display()
 ```
 
 ```{python}
-# Retrieve normal densities for velocity calculation [kg/Nm³]
 rho_f = supply.fuel_normal_density
-rho_o = supply.oxidizer_normal_density
-
-# Retrieve mass flow rates for velocity calculation [kg/s]
 mdot_f = supply.fuel_mass
-mdot_o = supply.oxidizer_mass
 
 tabulate_bc(A_f, X_f, rho_f, mdot_f)
+```
+
+```{python}
+rho_o = supply.oxidizer_normal_density
+mdot_o = supply.oxidizer_mass
+
 tabulate_bc(A_o, X_o, rho_o, mdot_o)
 ```
