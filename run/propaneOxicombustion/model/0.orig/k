@@ -20,7 +20,7 @@ internalField   uniform 10;
 
 boundaryField
 {
-    #includeEtc "caseDicts/setConstraintTypes"
+    #include "_setConstraintTypes"
 
     inletAnnular
     {
