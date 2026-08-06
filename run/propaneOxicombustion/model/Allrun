@@ -34,3 +34,6 @@ fi
 
 # Run simulation:
 foamRun &> log.simulation
+
+# Extract results:
+# foamToVTK -latestTime
