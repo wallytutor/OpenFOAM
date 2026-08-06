@@ -3,8 +3,16 @@
 ## OpenFOAM *CFD Book*
 
 ```bash
-# Example recursive crawl converting HTML pages to a clean text/PDF bundle
-wget --recursive --level=2 --no-clobber --page-requisites --convert-links --no-parent http://example.com
+mkdir book/download && cd book/download
+
+wget \
+    --recursive \
+    --level=2 \
+    --no-clobber \
+    --page-requisites \
+    --convert-links \
+    --no-parent \
+    https://doc.cfd.direct/notes/cfd-general-principles/index
 ```
 
 ## OpenFOAM Documentation
