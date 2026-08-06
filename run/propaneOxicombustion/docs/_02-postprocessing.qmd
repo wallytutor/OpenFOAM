@@ -1,1 +1,41 @@
 # Postprocessing
+
+```{python}
+import numpy as np
+
+from majordome import (
+    FoamPostProcessingLoader,
+    FoamLagrangianTable,
+    plot_xy,
+)
+```
+
+```{python}
+def bound_percentile(y, pct, vmin=0.0):
+    """ Bound a value within a percentile range. """
+    return np.clip(y, vmin, np.percentile(y, pct))
+```
+
+```{python}
+loader = FoamPostProcessingLoader(root="../model")
+df = loader.load_report("lagrangian", loader=FoamLagrangianTable, n_last=1)
+df.describe().T
+```
+
+```{python}
+y = bound_percentile(df["T"], 95)
+
+p = plot_xy()
+p.axes[0].hist(y, bins=10, edgecolor="k", alpha=0.7)
+p.xlabel("Temperature [K]")
+p.ylabel("Frequency")
+```
+
+```{python}
+y = bound_percentile(df["age"], 95)
+
+p = plot_xy()
+p.axes[0].hist(y, bins=10, edgecolor="k", alpha=0.7)
+p.xlabel("Age [s]")
+p.ylabel("Frequency")
+```
