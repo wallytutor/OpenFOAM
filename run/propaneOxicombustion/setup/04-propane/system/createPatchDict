@@ -1,0 +1,52 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      createPatchDict;
+}
+
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// Following the discussion here:
+// https://www.cfd-online.com/Forums/openfoam-meshing/
+// 143087-pointwise-foam-cyclic-bc-points-order.html
+
+patches
+(
+    {
+        name cyclicFront;
+        patchInfo
+        {
+            type           cyclic;
+            neighbourPatch cyclicBack;
+            transform      rotational;
+            rotationAxis   (1 0 0);
+            rotationCentre (0 0 0);
+        }
+        constructFrom patches;
+        patches ( front );
+    }
+    {
+        name cyclicBack;
+        patchInfo
+        {
+            type           cyclic;
+            neighbourPatch cyclicFront;
+            transform      rotational;
+            rotationAxis   (1 0 0);
+            rotationCentre (0 0 0);
+        }
+        constructFrom patches;
+        patches ( back );
+    }
+);
+
+// ************************************************************************* //

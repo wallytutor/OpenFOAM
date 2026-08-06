@@ -1,0 +1,177 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      limestoneCloudProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type thermoCloud;
+
+solution
+{
+    coupled                   true;
+    transient                 no;
+    cellValueSourceCorrection on;
+    calcFrequency             10;
+    maxTrackTime              0.02;
+    maxCo                     0.2;
+
+    sourceTerms
+    {
+        schemes
+        {
+            U               explicit 1;
+            h               explicit 1;
+            radiation       explicit 1;
+
+            // For reactingMultiphaseCloud
+            // rho             explicit 1;
+            // Yi              explicit 1;
+        }
+
+        resetOnStartup true;
+    }
+
+    interpolationSchemes
+    {
+        rho             cell;
+        mu              cell;
+        U               cellPoint;
+        Cp              cell;
+        kappa           cell;
+        p               cell;
+        T               cell;
+        G               cell;
+    }
+
+    integrationSchemes
+    {
+        U               Euler;
+        T               analytical;
+    }
+}
+
+constantProperties
+{
+    // https://cpp.openfoam.org/v13/classFoam_1_1MomentumParcel.html
+    // parcelTypeId    2;
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1ThermoParcel_1_1constantProperties.html
+    rho0            2500;
+    T0              300;
+    Cp0             900;
+    epsilon0        1;
+    f0              0.5;
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1ReactingMultiphaseParcel_1_1constantProperties.html
+    // TDevol          1143.0;
+    // LDevol          1e6;
+    // hRetentionCoeff 1;
+
+    constantVolume  true;
+}
+
+subModels
+{
+    particleForces
+    {
+        sphereDrag;
+        gravity;
+    }
+
+    injectionModels
+    {
+        #include "injections/dust-patch"
+        // #include "injections/dust-cone"
+    }
+
+    // ----------------------------------------------------------------
+
+    radiation on;
+
+    // ----------------------------------------------------------------
+
+    dispersionModel stochasticDispersionRAS;
+
+    // ----------------------------------------------------------------
+
+    patchInteractionModel standardWallInteraction;
+
+    standardWallInteractionCoeffs
+    {
+        type            rebound;
+        e               1;
+        mu              0;
+    }
+
+    // ----------------------------------------------------------------
+
+    heatTransferModel RanzMarshall;
+
+    RanzMarshallCoeffs
+    {
+        BirdCorrection  false;
+    }
+
+    // ----------------------------------------------------------------
+
+    phaseChangeModel none;
+
+    // ----------------------------------------------------------------
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1ConstantRateDevolatilisation.html
+    devolatilisationModel none;
+
+    // ----------------------------------------------------------------
+
+    stochasticCollisionModel none;
+
+    // ----------------------------------------------------------------
+
+    surfaceFilmModel none;
+
+    // ----------------------------------------------------------------
+
+    surfaceReactionModel none;
+
+    // ----------------------------------------------------------------
+
+    // https://cpp.openfoam.org/v13/classFoam_1_1SinglePhaseMixture.html
+    compositionModel singlePhaseMixture;
+
+    singlePhaseMixtureCoeffs
+    {
+        phases
+        (
+            solid
+            {
+                CaCO3   1;
+            }
+        );
+    }
+}
+
+cloudFunctions
+{
+    funcMassFlux
+    {
+        type massFlux;
+    }
+    funcPatchPostProcessing
+    {
+        type             patchPostProcessing;
+        maxStoredParcels 10000;
+        patches          ( outlet );
+    }
+}
+
+// ************************************************************************* //

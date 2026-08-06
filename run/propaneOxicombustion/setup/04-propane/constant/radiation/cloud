@@ -1,0 +1,36 @@
+absorptionEmissionModel binary;
+
+binaryCoeffs
+{
+    model1
+    {
+        absorptionEmissionModel constant;
+        absorptionEmissionModel greyMeanCombustion;
+
+        #include "props-const"
+        #include "props-wsgg"
+    }
+
+    model2
+    {
+        absorptionEmissionModel cloud;
+
+        cloudCoeffs
+        {
+            cloudNames
+            (
+                cloudLimestone
+            );
+        }
+    }
+}
+
+scatterModel    cloud;
+
+cloudCoeffs
+{
+    cloudNames
+    (
+        cloudLimestone
+    );
+}

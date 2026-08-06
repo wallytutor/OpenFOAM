@@ -15,3 +15,4 @@ docs/*.pdf
 !setup/01-laminar/
 !setup/02-turbulent/
 !setup/03-propane/
+!setup/04-propane/
