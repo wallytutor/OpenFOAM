@@ -25,12 +25,12 @@ boundaryField
     inletAnnular
     {
         type            fixedValue;
-        value           uniform (11.17 0 0);
+        value           uniform (119.8 0 0);
     }
     inletAxial
     {
         type            fixedValue;
-        value           uniform (13.69 0 0);
+        value           uniform (146.8 0 0);
     }
     outlet
     {

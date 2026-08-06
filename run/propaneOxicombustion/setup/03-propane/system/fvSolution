@@ -79,11 +79,20 @@ PIMPLE
     rDeltaTDampingCoeff   1;
 }
 
+
 relaxationFactors
 {
+    fields
+    {
+        p               0.3;
+        rho             1;
+    }
+
     equations
     {
-        ".*" 1;
+        U               0.7;
+        h               0.7;
+        ".*"            0.7;
     }
 }
 

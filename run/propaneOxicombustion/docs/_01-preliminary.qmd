@@ -2,32 +2,113 @@
 ```{python}
 import numpy as np
 from IPython.display import Markdown, display
+from majordome import constants as mc
 from majordome.engineering import CombustionPowerSupply
+from majordome.engineering import SolutionDimless
 from majordome.utilities import sci_to_latex_decimal
 from tabulate import tabulate
 ```
 
 ```{python}
-supply = CombustionPowerSupply(
-    100.0,       # power
-    1.0,         # equivalence
-    "C3H8: 1.0", # fuel
-    "O2: 1.0",   # oxidizer
-    "gri30.yaml" # mechanism
-)
+# Kinetics mechanism to use
+MECHANISM = "gri30.yaml"
 
-# Retrieve normal densities for velocity calculation [kg/Nm³]
-rho_f = supply.fuel_normal_density
-rho_o = supply.oxidizer_normal_density
 
-# Retrieve mass flow rates for velocity calculation [kg/s]
-mdot_f = supply.fuel_mass
-mdot_o = supply.oxidizer_mass
+def turbulent_kinetic_energy(U, I):
+    """ Computes the turbulent kinetic energy. """
+    return 1.5 * (U * I)**2
 
-supply.display()
+
+def turbulent_dissipation_rate(k, L, C_mu):
+    """ Computes the turbulent dissipation rate. """
+    return (C_mu**0.75) * (k**1.5) / L
+
+
+def tabulate_bc(
+        A: float,
+        X: str | dict[str, float],
+        rho: float,
+        mdot: float,
+        T: float = 293.0,
+        P: float = 101325.0,
+        I: float = 0.05,
+        C_mu: float = 0.09,
+        f: float = 0.07,
+        mech: str = MECHANISM,
+    ):
+    """ Produces a table with BC parameters. """
+    # Corrected velocity under operating conditions [m/s]
+    U = (T / mc.T_NORMAL) * mdot / (rho * A)
+
+    D = np.sqrt(4.0 * A / np.pi)
+    L = f * D
+
+    dimless = SolutionDimless(mech)
+    dimless.set_state(T, P, X, tuple_name="TPX")
+    Re = dimless.reynolds(U, D)
+
+    k = turbulent_kinetic_energy(U, I)
+    epsilon = turbulent_dissipation_rate(k, L, C_mu)
+
+    table_data = [
+        (
+            "Hydraulic diameter",
+            "m",
+            f"${sci_to_latex_decimal(D, sig=4)}$"
+        ),
+        (
+            "Cross-section",
+            "m²",
+            f"${sci_to_latex_decimal(A, sig=4)}$"
+        ),
+        # -------------------------------------------------------------
+        # FLOW
+        # -------------------------------------------------------------
+        (
+            "Mean flow velocity",
+            "m/s",
+            f"${sci_to_latex_decimal(U, sig=4)}$"
+        ),
+        (
+            "Reynolds number",
+            "-",
+            f"${sci_to_latex_decimal(Re, sig=4)}$"
+        ),
+        # -------------------------------------------------------------
+        # TURBULENCE
+        # -------------------------------------------------------------
+        (
+            "Characteristic length",
+            "m",
+            f"${sci_to_latex_decimal(L, sig=4)}$"
+        ),
+        (
+            "Turbulent kinetic energy",
+            "m²/s²",
+            f"${sci_to_latex_decimal(k, sig=4)}$"
+        ),
+        (
+            "Turbulent dissipation rate",
+            "m²/s³",
+            f"${sci_to_latex_decimal(epsilon, sig=4)}$"
+        )
+    ]
+
+    display(Markdown(tabulate(
+        table_data,
+        headers  = ["Name", "Unit", "Value"],
+        tablefmt = "github"
+    )))
 ```
 
 ```{python}
+# Operating power [kW]
+power = 1000.0
+
+# Composition of fuel/oxidizer:
+X_f = "C3H8: 1.0"
+X_o = "O2: 1.0"
+
 # Diameter of axial inlet [m]
 D_ax = 0.025
 
@@ -38,40 +119,29 @@ D_an_out = D_an_in + 0.003
 # Evaluate injection sections [m²]
 A_f = (np.pi / 4.0) * (D_an_out**2 - D_an_in** 2)
 A_o = (np.pi / 4.0) * D_ax**2
-
-# Normal mean flow velocities [Nm/s]
-Vdot_f = mdot_f / (rho_f * A_f)
-Vdot_o = mdot_o / (rho_o * A_o)
 ```
 
 ```{python}
-table_data = [
-    (
-        "Axial inlet area",
-        "m²",
-        f"${sci_to_latex_decimal(A_o, sig=4)}$"
-    ),
-    (
-        "Annular inlet area",
-        "m²",
-        f"${sci_to_latex_decimal(A_f, sig=4)}$"
-    ),
-    (
-        "Axial mean flow velocity",
-        "m/s",
-        f"${sci_to_latex_decimal(Vdot_f, sig=4)}$"
-    ),
-    (
-        "Annular mean flow velocity",
-        "m/s",
-        f"${sci_to_latex_decimal(Vdot_o, sig=4)}$"
-    ),
+# Create a power supply entity to recover operation:
+supply = CombustionPowerSupply(
+    power,     # power [kW]
+    1.0,       # equivalence
+    X_f,       # fuel
+    X_o,       # oxidizer
+    MECHANISM  # mechanism
+)
+supply.display()
+```
 
-]
+```{python}
+# Retrieve normal densities for velocity calculation [kg/Nm³]
+rho_f = supply.fuel_normal_density
+rho_o = supply.oxidizer_normal_density
 
-display(Markdown(tabulate(
-    table_data,
-    headers  = ["Name", "Unit", "Value"],
-    tablefmt = "github"
-)))
+# Retrieve mass flow rates for velocity calculation [kg/s]
+mdot_f = supply.fuel_mass
+mdot_o = supply.oxidizer_mass
+
+tabulate_bc(A_f, X_f, rho_f, mdot_f)
+tabulate_bc(A_o, X_o, rho_o, mdot_o)
 ```
