@@ -45,6 +45,7 @@ boundaryField
     "(ductWalls|pipeEndWall|pipeInnerWall|pipeOuterWall)"
     {
         type            epsilonWallFunction;
+        value           uniform 1000;
     }
 }
 

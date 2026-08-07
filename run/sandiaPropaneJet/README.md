@@ -79,9 +79,9 @@ The following files are used for preliminary meshing:
 
 - **[surfaceFeaturesDict](model/system/surfaceFeaturesDict)**: extracts feature edges from all STL files for explicit snapping.
 
-- **[meshQualityDict](/model/system/meshQualityDict)**: sources the default values for mesh quality controls required by `snappyHexMesh`.
+- **[meshQualityDict](model/system/meshQualityDict)**: sources the default values for mesh quality controls required by `snappyHexMesh`.
 
-- **[snappyHexMeshDict](/model/system/snappyHexMeshDict)**: the main meshing script, it sources all geometry files and defines the required refinement/boundary layer controls.
+- **[snappyHexMeshDict](model/system/snappyHexMeshDict)**: the main meshing script, it sources all geometry files and defines the required refinement/boundary layer controls.
 
 ---
 
