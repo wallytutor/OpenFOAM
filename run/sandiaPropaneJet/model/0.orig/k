@@ -23,13 +23,13 @@ boundaryField
     inletFuel
     {
         type            turbulentIntensityKineticEnergyInlet;
-        intensity       0.05;
+        intensity       0.004; // FIXME this should be higher, compute!
         value           uniform 1;
     }
     inletCoflow
     {
         type            turbulentIntensityKineticEnergyInlet;
-        intensity       0.05;
+        intensity       0.004;
         value           uniform 1;
     }
     outlet

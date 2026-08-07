@@ -16,7 +16,7 @@ FoamFile
 
 dimensions      [];
 
-internalField   uniform 1;
+internalField   uniform 0.76;
 
 boundaryField
 {
@@ -28,13 +28,13 @@ boundaryField
     inletCoflow
     {
         type            fixedValue;
-        value           uniform 0;
+        value           uniform 0.76;
     }
     outlet
     {
         type            inletOutlet;
-        inletValue      uniform 1;
-        value           uniform 1;
+        inletValue      uniform 0.76;
+        value           uniform 0.76;
     }
     "(ductWalls|pipeEndWall|pipeInnerWall|pipeOuterWall)"
     {
