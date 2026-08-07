@@ -1,0 +1,13 @@
+
+```{python}
+from pathlib import Path
+
+import pandas as pd
+```
+
+
+```{python}
+root_path = Path(__file__).resolve().parents[1]
+data_path = root_path / "reference/SandiaPropaneJet/SANDC3H8.JET"
+data_prof = data_path / "vel/velstat"
+```
