@@ -1,3 +1,6 @@
 # Downloaded data
 /reference/
 /*.zip
+
+# Generated STL
+*.stl
