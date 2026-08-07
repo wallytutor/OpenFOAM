@@ -1,0 +1,32 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      surfaceFeaturesDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+surfaces
+(
+    "ductWalls.stl"
+    "inletCoflow.stl"
+    "inletFuel.stl"
+    "outlet.stl"
+    "pipeEndWall.stl"
+    "pipeInnerWall.stl"
+    "pipeOuterWall.stl"
+);
+
+includedAngle   150;
+
+writeObj        yes;
+
+// ************************************************************************* //
