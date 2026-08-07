@@ -94,47 +94,46 @@ occ.synchronize()
 #endregion
 
 #region: add physical surfaces
-mod.add_physical_group(
-    dim  = 2,
-    tags = [pipe_inlet],
-    name = "inletFuel"
-)
-mod.add_physical_group(
-    dim  = 2,
-    tags = [coflow_inlet],
-    name = "inletCoflow"
-)
+config_groups = [
 
-mod.add_physical_group(
-    dim  = 2,
-    tags = [pipe_outer],
-    name = "pipeOuterWall"
-)
-mod.add_physical_group(
-    dim  = 2,
-    tags = [pipe_inner],
-    name = "pipeInnerWall"
-)
-mod.add_physical_group(
-    dim  = 2,
-    tags = [pipe_end],
-    name = "pipeEndWall"
-)
+    {
+        "name": "inletFuel",
+        "tags": [pipe_inlet]
+    },
+    {
+        "name": "inletCoflow",
+        "tags": [coflow_inlet]
+    },
+    {
+        "name": "outlet",
+        "tags": [outlet]
+    },
+    {
+        "name": "pipeOuterWall",
+        "tags": [pipe_outer]
+    },
+    {
+        "name": "pipeInnerWall",
+        "tags": [pipe_inner]
+    },
+    {
+        "name": "pipeEndWall",
+        "tags": [pipe_end]
+    },
+    {
+        "name": "ductWalls",
+        "tags": duct_walls
+    }
+]
 
-mod.add_physical_group(
-    dim  = 2,
-    tags = duct_walls,
-    name = "ductWalls"
-)
-mod.add_physical_group(
-    dim  = 2,
-    tags = [outlet],
-    name = "outlet"
-)
+for config in config_groups:
+    mod.remove_physical_groups()
+    mod.add_physical_group(dim=2, **config)
+    this_path = path.resolve().parent / f"{config["name"]}.stl"
+    gmsh.write(fileName=str(this_path))
 #endregion
 
 #region: generate and dump
-gmsh.write(fileName=str(path.with_suffix(".stl")))
 
 gmsh.fltk.run()
 gmsh.finalize()

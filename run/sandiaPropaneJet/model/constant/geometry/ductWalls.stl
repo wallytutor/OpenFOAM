@@ -1,0 +1,58 @@
+solid ductWalls
+facet normal 0 1 0
+  outer loop
+    vertex 0.15 -0.15 -0.05
+    vertex -0.15 -0.15 -0.05
+    vertex -0.15 -0.15 2
+  endloop
+endfacet
+facet normal 0 1 -0
+  outer loop
+    vertex 0.15 -0.15 -0.05
+    vertex -0.15 -0.15 2
+    vertex 0.15 -0.15 2
+  endloop
+endfacet
+facet normal 1 0 0
+  outer loop
+    vertex -0.15 -0.15 -0.05
+    vertex -0.15 0.15 -0.05
+    vertex -0.15 0.15 2
+  endloop
+endfacet
+facet normal 1 0 0
+  outer loop
+    vertex -0.15 -0.15 -0.05
+    vertex -0.15 0.15 2
+    vertex -0.15 -0.15 2
+  endloop
+endfacet
+facet normal -1 0 0
+  outer loop
+    vertex 0.15 0.15 -0.05
+    vertex 0.15 -0.15 -0.05
+    vertex 0.15 -0.15 2
+  endloop
+endfacet
+facet normal -1 0 0
+  outer loop
+    vertex 0.15 0.15 -0.05
+    vertex 0.15 -0.15 2
+    vertex 0.15 0.15 2
+  endloop
+endfacet
+facet normal 0 -1 0
+  outer loop
+    vertex -0.15 0.15 -0.05
+    vertex 0.15 0.15 -0.05
+    vertex 0.15 0.15 2
+  endloop
+endfacet
+facet normal 0 -1 0
+  outer loop
+    vertex -0.15 0.15 -0.05
+    vertex 0.15 0.15 2
+    vertex -0.15 0.15 2
+  endloop
+endfacet
+endsolid ductWalls
