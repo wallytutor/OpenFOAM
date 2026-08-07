@@ -3,21 +3,15 @@
 # Run from this directory:
 cd ${0%/*} || exit 1
 
-# For steady state cases:
-# find . \
-#     -mindepth 1 -maxdepth 1 -type d \
-# 	-regextype posix-extended \
-# 	-regex './[0-9]+' \
-# 	-exec rm -rf -- {} +
-
-# For transient cases (use scientific notation for time values):
-# find . \
-#     -mindepth 1 -maxdepth 1 -type d \
-#     -regextype posix-extended \
-#     -regex './[0-9]+\.[0-9]+e[+-][0-9]+' \
-#     -exec rm -rf -- {} +
+find . \
+    -mindepth 1 -maxdepth 1 -type d \
+	-regextype posix-extended \
+	-regex './[0-9]+' \
+	-exec rm -rf -- {} +
 
 rm -rf 0/
+rm -rf constant/extendedFeatureEdgeMesh/
+rm -rf constant/geometry/*.eMesh
 rm -rf constant/polyMesh/
 rm -rf postProcessing/
 rm -rf case.foam

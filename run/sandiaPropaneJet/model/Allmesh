@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+
+# Run from this directory
+cd "${0%/*}" || exit 1
+
+# Sourcing OpenFOAM v13 environment
+if [ -f /opt/openfoam13/etc/bashrc ]; then
+    . /opt/openfoam13/etc/bashrc
+fi
+
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+# Parse core count
+CORES=${1:-1}
+if [ "$CORES" != "1" ] && [ "$CORES" != "4" ] && [ "$CORES" != "20" ]; then
+    echo "Error: Unsupported core count: $CORES. Supported values: 1, 4, 20"
+    exit 1
+fi
+
+echo "=========================================="
+echo "Starting mesh generation with $CORES core(s)"
+echo "=========================================="
+
+# Clean previous runs
+./Allclean
+
+# Extract feature edges from STL surfaces
+runApplication surfaceFeatures
+
+# Create background mesh
+runApplication blockMesh
+
+# Run snappyHexMesh
+if [ "$CORES" = "1" ]; then
+    # Sequential execution
+    runApplication snappyHexMesh -overwrite
+else
+    # Configure decomposeParDict based on selected core count
+    file="system/decomposeParDict"
+
+    if [ "$CORES" = "4" ]; then
+        foamDictionary "$file" -entry numberOfSubdomains -set 4
+        foamDictionary "$file" -entry simpleCoeffs/n -set "(1 2 2)"
+    elif [ "$CORES" = "20" ]; then
+        foamDictionary "$file" -entry numberOfSubdomains -set 20
+        foamDictionary "$file" -entry simpleCoeffs/n -set "(2 2 5)"
+    fi
+
+    # Decompose domain
+    runApplication decomposePar
+
+    # Run snappyHexMesh in parallel
+    runParallel snappyHexMesh -overwrite
+
+    # Reconstruct parallel mesh
+    runApplication reconstructPar -constant
+
+    # Clean up processor directories
+    rm -rf processor*
+fi
+
+# Split inlet patch into inletFuel and inletCoflow
+runApplication topoSet
+runApplication createPatch -overwrite
+
+# Check mesh quality
+runApplication checkMesh
+
+echo "=========================================="
+echo "Mesh generation complete!"
+echo "=========================================="
