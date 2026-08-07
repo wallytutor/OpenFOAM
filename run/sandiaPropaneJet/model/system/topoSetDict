@@ -1,0 +1,56 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      topoSetDict;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+actions
+(
+    // 1. Create a faceSet for the fuel inlet (radius < 0.00263)
+    {
+        name    inletFuelFaces;
+        type    faceSet;
+        action  new;
+        source  patchToFace;
+        patch   inlet;
+    }
+    {
+        name    inletFuelFaces;
+        type    faceSet;
+        action  subset;
+        source  cylinderToFace;
+        p1      (0 0 -0.0501);
+        p2      (0 0 -0.0499);
+        radius  0.00263;
+    }
+
+    // 2. Create a faceSet for the coflow inlet (radius > 0.0045)
+    {
+        name    inletCoflowFaces;
+        type    faceSet;
+        action  new;
+        source  patchToFace;
+        patch   inlet;
+    }
+    {
+        name    inletCoflowFaces;
+        type    faceSet;
+        action  delete;
+        source  cylinderToFace;
+        p1      (0 0 -0.0501);
+        p2      (0 0 -0.0499);
+        radius  0.0045;
+    }
+);
+
+// ************************************************************************* //
