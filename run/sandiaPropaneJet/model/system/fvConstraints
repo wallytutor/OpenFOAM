@@ -13,21 +13,21 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-limitp
-{
-    type       limitPressure;
-    min        9.0e+04;
-    max        1.1e+05;
-    // minFactor  0.1;
-    // maxFactor  2;
-}
-
-limitT
-{
-    type       limitTemperature;
-    cellZone   all;
-    min        250.0;
-    max        3500.0;
-}
+// limitp
+// {
+//     type       limitPressure;
+//     min        9.0e+04;
+//     max        1.1e+05;
+//     // minFactor  0.1;
+//     // maxFactor  2;
+// }
+//
+// limitT
+// {
+//     type       limitTemperature;
+//     cellZone   all;
+//     min        250.0;
+//     max        3500.0;
+// }
 
 // ************************************************************************* //
