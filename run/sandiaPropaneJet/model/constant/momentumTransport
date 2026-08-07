@@ -7,36 +7,25 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format          ascii;
-    class           dictionary;
-    location        "system";
-    object          decomposeParDict;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      momentumTransport;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 20;
+simulationType   RAS;
 
-method          simple;
-
-simpleCoeffs
+RAS
 {
-    n               ( 2 2 5 );
+    model           kEpsilon;
+
+    kEpsilonCoeffs
+    {
+        Prt 0.85;
+    }
+
+    turbulence      on;
 }
-
-hierarchicalCoeffs
-{
-    n               ( 1 1 1 );
-    order           xyz;
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
-
 
 // ************************************************************************* //

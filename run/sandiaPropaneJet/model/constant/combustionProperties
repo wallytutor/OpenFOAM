@@ -7,36 +7,18 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format          ascii;
-    class           dictionary;
-    location        "system";
-    object          decomposeParDict;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      combustionProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 20;
+combustionModel  EDC;
 
-method          simple;
-
-simpleCoeffs
+EDCCoeffs
 {
-    n               ( 2 2 5 );
+    version v2005;
 }
-
-hierarchicalCoeffs
-{
-    n               ( 1 1 1 );
-    order           xyz;
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
-
 
 // ************************************************************************* //

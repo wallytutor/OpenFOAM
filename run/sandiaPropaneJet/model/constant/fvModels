@@ -7,36 +7,22 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format          ascii;
-    class           dictionary;
-    location        "system";
-    object          decomposeParDict;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      fvModels;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-numberOfSubdomains 20;
-
-method          simple;
-
-simpleCoeffs
-{
-    n               ( 2 2 5 );
-}
-
-hierarchicalCoeffs
-{
-    n               ( 1 1 1 );
-    order           xyz;
-}
-
-manualCoeffs
-{
-    dataFile        "";
-}
-
-distributed     no;
-
-roots           ( );
-
+// buoyancyForce
+// {
+//     type        buoyancyForce;
+// }
+//
+// radiation
+// {
+//     type    radiation;
+//     libs    ("libradiationModels.so");
+// }
 
 // ************************************************************************* //
