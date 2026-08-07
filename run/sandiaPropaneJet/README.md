@@ -55,13 +55,21 @@ An automation script **[Allmesh](model/Allmesh)** is provided for meshing genera
 
 This script orchestrates the full sequence of meshing:
 
-1. Cleans the case.
-2. Runs `surfaceFeatures` and `blockMesh`.
-3. Decomposes the domain if parallel cores (4 or 20) are specified.
-4. Executes `snappyHexMesh` (in parallel or sequentially).
-5. Reconstructs the mesh using `reconstructPar -constant`.
-6. Runs `topoSet` and `createPatch -overwrite` to split the inlet boundaries.
-7. Runs `checkMesh` to verify the mesh.
+- Cleans the case.
+
+- Runs `surfaceFeatures` and `blockMesh`.
+
+- Decomposes the domain if parallel cores (4 or 20) are specified.
+
+- Executes `snappyHexMesh` (in parallel or sequentially).
+
+- Reconstructs the mesh using `reconstructPar -constant`.
+
+- Runs `topoSet` and `createPatch -overwrite` to split the inlet boundaries.
+
+- Runs `renumberMesh` to reduce bandwidth.
+
+- Runs `checkMesh` to verify the mesh.
 
 ---
 

@@ -36,19 +36,8 @@ if [ "$CORES" = "1" ]; then
     # Sequential execution
     runApplication snappyHexMesh -overwrite
 else
-    # Configure decomposeParDict based on selected core count
-    file="system/decomposeParDict"
-
-    if [ "$CORES" = "4" ]; then
-        foamDictionary "$file" -entry numberOfSubdomains -set 4
-        foamDictionary "$file" -entry simpleCoeffs/n -set "(1 2 2)"
-    elif [ "$CORES" = "20" ]; then
-        foamDictionary "$file" -entry numberOfSubdomains -set 20
-        foamDictionary "$file" -entry simpleCoeffs/n -set "(2 2 5)"
-    fi
-
-    # Decompose domain
-    runApplication decomposePar
+    # Decompose domain:
+    source ./parallel
 
     # Run snappyHexMesh in parallel
     runParallel snappyHexMesh -overwrite
@@ -63,6 +52,9 @@ fi
 # Split inlet patch into inletFuel and inletCoflow
 runApplication topoSet
 runApplication createPatch -overwrite
+
+# Re-number the mesh to reduce bandwidth
+runApplication renumberMesh
 
 # Check mesh quality
 runApplication checkMesh

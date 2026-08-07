@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Clean from a previous run:
+rm -rf log.decomposePar
+
+# Configure decomposeParDict based on selected core count
+file="system/decomposeParDict"
+
+if [ "$CORES" = "4" ]; then
+    foamDictionary "$file" -entry numberOfSubdomains -set 4
+    foamDictionary "$file" -entry simpleCoeffs/n -set "(1 2 2)"
+elif [ "$CORES" = "20" ]; then
+    foamDictionary "$file" -entry numberOfSubdomains -set 20
+    foamDictionary "$file" -entry simpleCoeffs/n -set "(2 2 5)"
+fi
+
+# Decompose domain
+runApplication decomposePar

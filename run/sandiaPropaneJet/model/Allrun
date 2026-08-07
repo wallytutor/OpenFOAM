@@ -6,34 +6,46 @@ cd ${0%/*} || exit 1
 # To open with ParaView:
 touch case.foam
 
-# if [ ! -d constant/polyMesh ]; then
-#     (
-#         # Copy initial conditions:
-#         cp -avr 0.orig/ 0/
+# Sourcing OpenFOAM v13 environment
+if [ -f /opt/openfoam13/etc/bashrc ]; then
+    . /opt/openfoam13/etc/bashrc
+fi
 
-#         # Convert base Gmsh mesh to OpenFOAM:
-#         gmshToFoam ../domain.msh
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-#         # Fix patches types:
-#         createPatch
+# Parse core count
+CORES=${1:-1}
+if [ "$CORES" != "1" ] && [ "$CORES" != "4" ] && [ "$CORES" != "20" ]; then
+    echo "Error: Unsupported core count: $CORES. Supported values: 1, 4, 20"
+    exit 1
+fi
 
-#         file=constant/polyMesh/boundary
-#         foamDictionary $file -entry entry0/walls/type -set wall
-#         # foamDictionary $file -entry entry0/front/type -set wedge
-#         # foamDictionary $file -entry entry0/back/type  -set wedge
+echo "=========================================="
+echo "Starting simulation with $CORES core(s)"
+echo "=========================================="
 
-#         # Perform preliminary renumbering:
-#         renumberMesh
-
-#         # Check global mesh:
-#         checkMesh
-#     ) &> log.initialize
-# else
-#     echo "Case already initialized, run Allclean before reinitializing."
-# fi
+# Copy initial conditions:
+cp -avr 0.orig/ 0/
 
 # Run simulation:
-# foamRun &> log.simulation
+if [ "$CORES" = "1" ]; then
+    # Sequential execution
+    runApplication foamRun &> log.foamRun
+else
+    # Decompose domain:
+    source ./parallel
 
-# Extract results:
-# foamToVTK -latestTime
+    # Run snappyHexMesh in parallel
+    runParallel foamRun
+
+    # # Reconstruct parallel mesh
+    # runApplication reconstructPar -constant
+
+    # # Clean up processor directories
+    # rm -rf processor*
+fi
+
+echo "=========================================="
+echo "Simulation complete!"
+echo "=========================================="
