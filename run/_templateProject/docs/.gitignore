@@ -1,0 +1,11 @@
+# Dot-folders:
+/**/.ipynb_checkpoints/
+/**/.jupyter_cache/
+/**/.quarto/
+
+# Folders:
+/_book/
+/*_files/
+
+# Files:
+**/*.quarto_ipynb
