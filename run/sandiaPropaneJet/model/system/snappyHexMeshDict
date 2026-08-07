@@ -61,8 +61,8 @@ geometry
     {
         type cylinder;
         point1 (0.0  0.0  0.0);
-        point2 (0.0  0.0  0.5);
-        radius 0.05;
+        point2 (0.0  0.0  0.25);
+        radius 0.025;
     }
 }
 
@@ -80,7 +80,7 @@ castellatedMeshControls
         }
         {
             file "inletFuel.eMesh";
-            level 2;
+            level 1;
         }
         {
             file "outlet.eMesh";
@@ -88,15 +88,15 @@ castellatedMeshControls
         }
         {
             file "pipeEndWall.eMesh";
-            level 2;
+            level 1;
         }
         {
             file "pipeInnerWall.eMesh";
-            level 4;
+            level 3;
         }
         {
             file "pipeOuterWall.eMesh";
-            level 2;
+            level 1;
         }
     );
 
@@ -120,7 +120,7 @@ castellatedMeshControls
         }
         inletFuel
         {
-            level (2 2);
+            level (1 1);
             patchInfo
             {
                 type patch;
@@ -136,7 +136,7 @@ castellatedMeshControls
         }
         pipeEndWall
         {
-            level (2 2);
+            level (1 1);
             patchInfo
             {
                 type wall;
@@ -144,7 +144,7 @@ castellatedMeshControls
         }
         pipeInnerWall
         {
-            level (4 5);
+            level (2 3);
             patchInfo
             {
                 type wall;
@@ -152,7 +152,7 @@ castellatedMeshControls
         }
         pipeOuterWall
         {
-            level (2 3);
+            level (1 2);
             patchInfo
             {
                 type wall;
@@ -164,8 +164,9 @@ castellatedMeshControls
     {
         refinementCylinder
         {
-            mode inside;
-            levels ((0.0 3));
+            // mode inside; // refine only inside the region
+            mode distance; // produce a smooth transition
+            levels ((0.025 2) (0.05 1));
         }
     }
 
