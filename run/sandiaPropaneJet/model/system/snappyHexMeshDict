@@ -151,7 +151,7 @@ castellatedMeshControls
         }
         pipeInnerWall
         {
-            level (4 5);
+            level (3 4);
             patchInfo
             {
                 type wall;
@@ -172,7 +172,7 @@ castellatedMeshControls
         refinementCylinderTip
         {
             mode distance;
-            levels ((0.008 4) (0.016 3));
+            levels ((0.008 3) (0.016 2));
         }
         refinementCylinderMain
         {
@@ -200,15 +200,15 @@ addLayersControls
         }
         pipeEndWall
         {
-            nSurfaceLayers 2;
+            nSurfaceLayers 4;
         }
         pipeOuterWall
         {
-            nSurfaceLayers 3;
+            nSurfaceLayers 4;
         }
         pipeInnerWall
         {
-            nSurfaceLayers 5;
+            nSurfaceLayers 4;
         }
     }
 
