@@ -57,14 +57,7 @@ geometry
         type triSurfaceMesh;
         file "pipeOuterWall.stl";
     }
-    refinementCylinderTip
-    {
-        type cylinder;
-        point1 (0.0  0.0  0.0);
-        point2 (0.0  0.0  0.05);
-        radius 0.008;
-    }
-    refinementCylinderMain
+    refinementCylinder
     {
         type cylinder;
         point1 (0.0  0.0  0.0);
@@ -87,7 +80,7 @@ castellatedMeshControls
         }
         {
             file "inletFuel.eMesh";
-            level 2;
+            level 1;
         }
         {
             file "outlet.eMesh";
@@ -95,15 +88,15 @@ castellatedMeshControls
         }
         {
             file "pipeEndWall.eMesh";
-            level 2;
+            level 1;
         }
         {
             file "pipeInnerWall.eMesh";
-            level 4;
+            level 3;
         }
         {
             file "pipeOuterWall.eMesh";
-            level 2;
+            level 1;
         }
     );
 
@@ -127,7 +120,7 @@ castellatedMeshControls
         }
         inletFuel
         {
-            level (2 2);
+            level (1 1);
             patchInfo
             {
                 type patch;
@@ -143,7 +136,7 @@ castellatedMeshControls
         }
         pipeEndWall
         {
-            level (2 2);
+            level (1 1);
             patchInfo
             {
                 type wall;
@@ -151,7 +144,7 @@ castellatedMeshControls
         }
         pipeInnerWall
         {
-            level (4 5);
+            level (2 3);
             patchInfo
             {
                 type wall;
@@ -159,7 +152,7 @@ castellatedMeshControls
         }
         pipeOuterWall
         {
-            level (2 3);
+            level (1 2);
             patchInfo
             {
                 type wall;
@@ -169,14 +162,10 @@ castellatedMeshControls
 
     refinementRegions
     {
-        refinementCylinderTip
+        refinementCylinder
         {
-            mode distance;
-            levels ((0.008 4) (0.016 3));
-        }
-        refinementCylinderMain
-        {
-            mode distance;
+            // mode inside; // refine only inside the region
+            mode distance; // produce a smooth transition
             levels ((0.025 2) (0.05 1));
         }
     }
