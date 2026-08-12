@@ -20,6 +20,57 @@
 
 == General variables
 
+#let general-variables = (
+  (
+    key: "x",
+    short: $x$,
+    description: [Cartesian axis direction $x$]
+  ),
+  (
+    key: "y",
+    short: $y$,
+    description: [Cartesian axis direction $y$]
+  ),
+  (
+    key: "z",
+    short: $z$,
+    description: [Cartesian axis direction $z$]
+  ),
+  (
+    key: "r",
+    short: $r$,
+    description: [Spherical radial coordinate $r$]
+  ),
+  (
+    key: "theta",
+    short: $theta$,
+    description: [Spherical polar coordinate $theta$]
+  ),
+  (
+    key: "phi",
+    short: $phi$,
+    description: [Spherical azimual coordinate $phi$]
+  ),
+  (
+    key: "V",
+    short: $V$,
+    description: [Volume or control volume $V$]
+  ),
+  (
+    key: "S",
+    short: $S$,
+    description: [Surface or control surface $S$]
+  ),
+  // (
+  //   key: "",
+  //   short: $$,
+  //   description: []
+  // ),
+)
+
+#register-glossary(general-variables)
+#user-print-glossary(general-variables)
+
 == Geometry and mesh
 
 == Numerical methods
