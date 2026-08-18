@@ -6,8 +6,6 @@ $T B D$ , $T B D$ , $T B D$ vectors
 
 $T B D$ , $T B D$ , $T B D$ tensors
 
-$T B D$ , $T B D$ , $T B D$ Cartesian axis directions
-
 $T B D$ identity tensor
 
 $T B D$ general parameter: scalar, vector or tensor
