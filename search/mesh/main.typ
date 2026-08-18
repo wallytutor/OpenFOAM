@@ -3,6 +3,7 @@
 #let book-title = "Meshing for OpenFOAM"
 #let book-subtitle = "A guide for snappyHexMesh"
 #let authors = "Walter Dal'Maz Silva"
+#let margins = 1.75cm
 
 // ----------------------------------------------------------------------------
 
@@ -12,10 +13,10 @@
 #set page(
   paper: "a5",
   margin: (
-    inside: 2cm,
-    outside: 2cm,
-    top: 2cm,
-    bottom: 2cm
+    inside:  margins,
+    outside: margins,
+    top:     margins,
+    bottom:  margins
   ),
   numbering: none,
   number-align: center,
@@ -38,6 +39,40 @@
 #let preamble(title) = {
   heading(title, level: 1, numbering: none, outlined: false)
 }
+
+// ----------------------------------------------------------------------------
+// CODE FOMATTING
+// ----------------------------------------------------------------------------
+
+#show raw.where(block: true): it => {
+  // Smaller font size:
+  set text(size: 8pt)
+
+  // Add line numbrers:
+  show raw.line: line => {
+    box(
+      width: 2em,
+      align(
+        right,
+        text(fill: luma(130), str(line.number))
+      )
+    )
+    h(0.8em)
+    line.body
+  }
+
+  // Add background and rounded corners:
+  block(
+    fill: rgb("#f6f8fa"),
+    inset: 10pt,
+    radius: 4pt,
+    width: 100%,
+    it,
+  )
+}
+
+#show figure.where(kind: raw): set align(left)
+#show figure.where(kind: raw): set figure(supplement: [Listing])
 
 // ----------------------------------------------------------------------------
 // COVER
@@ -89,6 +124,7 @@ We will discuss refinement controls, including the placement of _refinement regi
 #include "_chapter3.typ"
 #include "_chapter4.typ"
 #include "_chapter5.typ"
+#include "_chapter6.typ"
 
 // ----------------------------------------------------------------------------
 // LISTS
@@ -108,6 +144,11 @@ We will discuss refinement controls, including the placement of _refinement regi
 #outline(
   title: [List of Tables],
   target: figure.where(kind: table),
+)
+
+#outline(
+  title: [List of Listings],
+  target: figure.where(kind: raw),
 )
 
 // ----------------------------------------------------------------------------
