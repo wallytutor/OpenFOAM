@@ -1,101 +1,12 @@
-// ----------------------------------------------------------------------------
+#import "../book.typ": bookstyle, preamble
 
-#let book-title = "Meshing for OpenFOAM"
-#let book-subtitle = "A guide for snappyHexMesh"
-#let authors = "Walter Dal'Maz Silva"
-#let margins = 1.75cm
-
-// ----------------------------------------------------------------------------
-
-#set document(title: book-title, author: authors)
-#set text(lang: "en")
-
-#set page(
-  paper: "a5",
-  margin: (
-    inside:  margins,
-    outside: margins,
-    top:     margins,
-    bottom:  margins
-  ),
-  numbering: none,
-  number-align: center,
+#show: bookstyle.with(
+  book-title: "Meshing for OpenFOAM",
+  book-subtitle: "A guide for snappyHexMesh",
+  authors: "Walter Dal'Maz Silva",
+  references: "book.bib",
+  margins: 1.75cm,
 )
-
-#set par(justify: true, leading: 0.7em)
-
-// Override the default "Section" used at all levels:
-#show heading.where(level: 1): set heading(supplement: [Chapter])
-
-// Ensure page break and vertical spacing before each chapter:
-#show heading.where(level: 1): it => [
-  #pagebreak(weak: true)
-  #v(3em)
-  #it
-  #v(1.5em)
-]
-
-// Define preamble function to create unnumbered and unlisted heading:
-#let preamble(title) = {
-  heading(title, level: 1, numbering: none, outlined: false)
-}
-
-// ----------------------------------------------------------------------------
-// CODE FOMATTING
-// ----------------------------------------------------------------------------
-
-#show raw.where(block: true): it => {
-  // Smaller font size:
-  set text(size: 8pt)
-
-  // Add line numbrers:
-  show raw.line: line => {
-    box(
-      width: 2em,
-      align(
-        right,
-        text(fill: luma(130), str(line.number))
-      )
-    )
-    h(0.8em)
-    line.body
-  }
-
-  // Add background and rounded corners:
-  block(
-    fill: rgb("#f6f8fa"),
-    inset: 10pt,
-    radius: 4pt,
-    width: 100%,
-    it,
-  )
-}
-
-#show figure.where(kind: raw): set align(left)
-#show figure.where(kind: raw): set figure(supplement: [Listing])
-
-// ----------------------------------------------------------------------------
-// COVER
-// ----------------------------------------------------------------------------
-
-#align(center + horizon)[
-  #text(16pt, weight: "bold")[#book-title] \
-  #v(1em)
-  #text(16pt)[#book-subtitle] \
-  #v(4em)
-  #text(14pt)[#authors]
-]
-
-// ----------------------------------------------------------------------------
-// TOC
-// ----------------------------------------------------------------------------
-
-#pagebreak()
-
-#set page(numbering: "1")
-#counter(page).update(1)
-
-#outline(indent: 1.5em)
 
 // ----------------------------------------------------------------------------
 // PREAMBLE
@@ -125,31 +36,6 @@ We will discuss refinement controls, including the placement of _refinement regi
 #include "_chapter4.typ"
 #include "_chapter5.typ"
 #include "_chapter6.typ"
-
-// ----------------------------------------------------------------------------
-// LISTS
-// ----------------------------------------------------------------------------
-
-#bibliography(
-  "references.bib",
-  style: "ieee",
-  title: "References"
-)
-
-#outline(
-  title: [List of Figures],
-  target: figure.where(kind: image),
-)
-
-#outline(
-  title: [List of Tables],
-  target: figure.where(kind: table),
-)
-
-#outline(
-  title: [List of Listings],
-  target: figure.where(kind: raw),
-)
 
 // ----------------------------------------------------------------------------
 // EOF
