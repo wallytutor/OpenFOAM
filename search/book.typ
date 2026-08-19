@@ -1,28 +1,15 @@
-#let bookstyle(
-  book-title: "",
-  book-subtitle: "",
-  book-comment: "",
-  authors: "",
-  margins: 1.75cm,
-  paper: "a5",
-  references: "",
-  contents,
-) = {
-  set document(title: book-title, author: authors)
-  set text(lang: "en")
-
+#let stylemain(margins: 1.75cm, paper: "a5", body) = {
   set page(
     paper: paper,
     margin: (
-      inside:  margins,
+      inside: margins,
       outside: margins,
-      top:     margins,
-      bottom:  margins
+      top: margins,
+      bottom: margins,
     ),
     numbering: none,
     number-align: center,
   )
-
   // Set default leading and justify text:
   set par(justify: true, leading: 0.7em)
 
@@ -36,8 +23,10 @@
     #it
     #v(1.5em)
   ]
+  body
+}
 
-  // Code styling
+#let stylecode(body) = {
   show raw.where(block: true): it => {
     // Smaller font size:
     set text(size: 8pt)
@@ -48,8 +37,8 @@
         width: 2em,
         align(
           right,
-          text(fill: luma(130), str(line.number))
-        )
+          text(fill: luma(130), str(line.number)),
+        ),
       )
       h(0.8em)
       line.body
@@ -67,51 +56,104 @@
 
   show figure.where(kind: raw): set align(left)
   show figure.where(kind: raw): set figure(supplement: [Listing])
+  body
+}
 
-  // Cover page
+#let coverpage(
+    book-title: "",
+    book-subtitle: "",
+    book-comment: "",
+    authors: "",
+  ) = {
   align(center + horizon)[
     #text(16pt, weight: "bold")[#book-title] \
     #v(1em)
-    #text(16pt)[#book-subtitle] \
-    #v(4em)
-    #text(14pt)[#authors]
-    #v(2em)
-    #text(12pt)[#book-comment]
+
+    #if book-subtitle != "" {
+      text(16pt)[#book-subtitle]
+      v(4em)
+    }
+
+    #if authors != "" {
+      text(14pt)[#authors]
+      v(2em)
+    }
+
+    #if book-comment != "" {
+      text(12pt)[#book-comment]
+    }
   ]
+}
 
-  // Table of contents
-  pagebreak()
-
-  set page(numbering: "1")
-  counter(page).update(1)
-
-  // Contents
-  outline(indent: 1.5em)
-  contents
-
-  // References
-  if references != "" {
-    bibliography(
-      references,
-      style: "ieee",
-      title: "References"
-    )
-  }
-
+#let lof() = {
   outline(
     title: [List of Figures],
     target: figure.where(kind: image),
   )
+}
 
+#let lot() = {
   outline(
     title: [List of Tables],
     target: figure.where(kind: table),
   )
+}
 
+#let lol() = {
   outline(
     title: [List of Listings],
     target: figure.where(kind: raw),
   )
+}
+
+#let enableoutlines() = {
+  lof()
+  lot()
+  lol()
+}
+
+#let bookstyle(
+    book-title: "",
+    book-subtitle: "",
+    book-comment: "",
+    authors: "",
+    margins: 1.75cm,
+    paper: "a5",
+    lang: "en",
+    references: "",
+    finallists: true,
+    contents,
+    ) = {
+  set text(lang: lang)
+  set document(title: book-title, author: authors)
+
+  show: stylemain.with(margins: margins, paper: paper)
+  show: stylecode
+
+  coverpage(
+    book-title: book-title,
+    book-subtitle: book-subtitle,
+    book-comment: book-comment,
+    authors: authors,
+  )
+
+  pagebreak()
+  counter(page).update(1)
+  outline(indent: 1.5em)
+
+  set page(numbering: "1")
+  contents
+
+  if references != "" {
+    bibliography(
+      references,
+      style: "ieee",
+      title: "References",
+    )
+  }
+  if finallists {
+    enableoutlines()
+  }
 }
 
 #let preamble(title) = {
