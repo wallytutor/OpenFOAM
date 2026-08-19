@@ -22,6 +22,6 @@ The `snappyHexMesh` execution process is text-driven and controlled through an i
 
 3. The third phase is boundary layer inflation, which introduces thin, highly resolved prismatic cell layers along specified solid boundaries to accurately resolve near-wall boundary layer physics and turbulent gradients.
 
-These three execution phases are governed by individual boolean switches at the beginning of the dictionary. Because the steps operate independently, users can selectively run and inspect the castellated mesh before initiating the snapping or layer addition routines, facilitating iterative troubleshooting and optimization. Throughout all meshing stages, the utility continuously evaluates and enforces explicit geometric quality criteria to maintain numerical validity and solver stability.
+These three execution phases are governed by individual boolean switches at the beginning of the dictionary. Because the steps operate independently, users can selectively run and inspect the castellated mesh before initiating the snapping or layer addition routines, facilitating iterative troubleshooting and optimization. In practice, most of the time the castellation and snapping will be activated together at once, while the boundary layer will be activated later as all refinement stages are completed. Throughout all meshing stages, the utility continuously evaluates and enforces explicit geometric quality criteria to maintain numerical validity and solver stability.
 
 // EOF
