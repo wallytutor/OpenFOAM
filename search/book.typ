@@ -159,3 +159,12 @@
 #let preamble(title) = {
   heading(title, level: 1, numbering: none, outlined: false)
 }
+
+#let appendix(body) = {
+  counter(heading).update(0)
+  set heading(
+    numbering: "A.1",
+    supplement: [Annex],
+  )
+  body
+}

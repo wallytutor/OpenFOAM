@@ -1,4 +1,4 @@
-#import "../book.typ": bookstyle, preamble
+#import "../book.typ": bookstyle, preamble, appendix
 
 #show: bookstyle.with(
   book-title: "Meshing for OpenFOAM",
@@ -36,6 +36,9 @@ We will discuss refinement controls, including the placement of _refinement regi
 #include "_chapter4.typ"
 #include "_chapter5.typ"
 #include "_chapter6.typ"
+
+#show: appendix
+#include "_appendix1.typ"
 
 // ----------------------------------------------------------------------------
 // EOF
