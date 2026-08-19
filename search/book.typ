@@ -160,6 +160,15 @@
   heading(title, level: 1, numbering: none, outlined: false)
 }
 
+#let chapters(body) = {
+  counter(heading).update(0)
+  set heading(
+    numbering: "1.1",
+    supplement: [Chapter],
+  )
+  body
+}
+
 #let appendix(body) = {
   counter(heading).update(0)
   set heading(
