@@ -14,16 +14,117 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// This file is just a placeholder; OpenFOAM does not currently support the
-// conversion of transport properties into Sutherland format. You should do
-// that manually elsewhere.
+// OpenFOAM does not currently support the conversion of transport properties
+// into Sutherland format. You should do that manually elsewhere. Something is
+// wrong in the docs, this file is not the Chemkin format, but the contents of
+// the tranport data in the convered `thermo` file.
 
-".*"
+/* --- RMSE 0.16487949278607483 ---*/
+"C3H8"
 {
     transport
     {
-        As 1.67212e-6;
-        Ts 170.672;
+        As  9.6837438313e-07;
+        Ts  3.3219574655e+02;
+    }
+}
+/* --- RMSE 0.7207277792559023 ---*/
+"O2"
+{
+    transport
+    {
+        As  1.8854237504e-06;
+        Ts  2.3365828198e+02;
+    }
+}
+/* --- RMSE 0.3382025375776261 ---*/
+"H2"
+{
+    transport
+    {
+        As  7.6641342626e-07;
+        Ts  2.1791561967e+02;
+    }
+}
+/* --- RMSE 0.336167333518648 ---*/
+"CO2"
+{
+    transport
+    {
+        As  1.7077649233e-06;
+        Ts  3.1451786904e+02;
+    }
+}
+/* --- RMSE 0.9092016907046682 ---*/
+"O"
+{
+    transport
+    {
+        As  2.1923309059e-06;
+        Ts  2.2509456834e+02;
+    }
+}
+/* --- RMSE 0.30336669789440995 ---*/
+"H"
+{
+    transport
+    {
+        As  9.1769552585e-07;
+        Ts  2.5042378843e+02;
+    }
+}
+/* --- RMSE 0.6311887906070647 ---*/
+"CO"
+{
+    transport
+    {
+        As  1.6021181508e-06;
+        Ts  2.3038313879e+02;
+    }
+}
+/* --- RMSE 0.22232832341542041 ---*/
+"H2O"
+{
+    transport
+    {
+        As  2.2932577114e-06;
+        Ts  9.9441423947e+02;
+    }
+}
+/* --- RMSE 0.7430853482275976 ---*/
+"H2O2"
+{
+    transport
+    {
+        As  1.9439111405e-06;
+        Ts  2.3365827520e+02;
+    }
+}
+/* --- RMSE 0.7319919284191175 ---*/
+"HO2"
+{
+    transport
+    {
+        As  1.9148907595e-06;
+        Ts  2.3365827860e+02;
+    }
+}
+/* --- RMSE 0.9374058755524889 ---*/
+"OH"
+{
+    transport
+    {
+        As  2.2603387412e-06;
+        Ts  2.2509450371e+02;
+    }
+}
+/* --- RMSE 0.6430224514236427 ---*/
+"N2"
+{
+    transport
+    {
+        As  1.6292511379e-06;
+        Ts  2.3019543517e+02;
     }
 }
 
