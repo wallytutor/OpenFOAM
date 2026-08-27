@@ -16,3 +16,4 @@ docs/*.pdf
 !setup/02-turbulent/
 !setup/03-propane/
 !setup/04-propane/
+!setup/05-global/
