@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+# Run from this directory:
+cd ${0%/*} || exit 1
+
+chemkinToFoam \
+    constant/chemkin/chem.inp \
+    constant/chemkin/therm.dat \
+    constant/chemkin/transportProperties \
+    constant/reactions \
+    constant/thermo

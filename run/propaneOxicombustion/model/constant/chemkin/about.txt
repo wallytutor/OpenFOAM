@@ -1,0 +1,4 @@
+Semi-global mechanisms for propane combustion as proposed by
+Westbrook (1981) [DOI: 10.1080/00102208108946970] and fitted
+to match Gri-Mech 3.0 oxy-combustion laminar flame speed.
+Species data are extracted from Gri-Mech 3.0.

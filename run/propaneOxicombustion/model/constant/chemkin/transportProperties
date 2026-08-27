@@ -9,30 +9,22 @@ FoamFile
 {
     format      ascii;
     class       dictionary;
-    location    "constant";
-    object      fvModels;
+    location    "chemkin";
+    object      transportProperties;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// buoyancyForce
-// {
-//     type        buoyancyForce;
-// }
+// This file is just a placeholder; OpenFOAM does not currently support the
+// conversion of transport properties into Sutherland format. You should do
+// that manually elsewhere.
 
-// clouds
-// {
-//     type    clouds;
-//     libs    ("liblagrangianParcel.so");
-
-//     clouds  (
-//         cloudLimestone
-//     );
-// }
-
-// radiation
-// {
-//     type    radiation;
-//     libs    ("libradiationModels.so");
-// }
+".*"
+{
+    transport
+    {
+        As 1.67212e-6;
+        Ts 170.672;
+    }
+}
 
 // ************************************************************************* //
