@@ -18,6 +18,9 @@ if [ "$CORES" != "1" ] && [ "$CORES" != "4" ] && [ "$CORES" != "20" ]; then
     exit 1
 fi
 
+# To open case with ParaView:
+touch case.foam
+
 echo "=========================================="
 echo "Starting mesh generation with $CORES core(s)"
 echo "=========================================="
@@ -49,9 +52,11 @@ else
     rm -rf processor*
 fi
 
+# Note: the required files were moved into library/ as this approach
+# led to geometric issues with the matching of a patch. To be avoided.
 # Split inlet patch into inletFuel and inletCoflow
-runApplication topoSet
-runApplication createPatch -overwrite
+# runApplication topoSet
+# runApplication createPatch -overwrite
 
 # Re-number the mesh to reduce bandwidth
 runApplication renumberMesh

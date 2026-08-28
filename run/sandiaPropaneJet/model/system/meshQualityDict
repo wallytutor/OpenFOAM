@@ -16,4 +16,15 @@ FoamFile
 
 #includeEtc "caseDicts/mesh/generation/meshQualityDict.cfg"
 
+relaxed
+{
+    maxNonOrtho         75;
+    minTetQuality       1.0e-30;
+    minDeterminant      1.0e-30;
+    minFaceWeight       1.0e-30;
+    minVolRatio         1.0e-30;
+    maxBoundarySkewness 100;
+    maxInternalSkewness 100;
+}
+
 // ************************************************************************* //

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# XXX keep this here so that this script can be used manually:
+# Source tutorial run functions
+. $WM_PROJECT_DIR/bin/tools/RunFunctions
+
 # Clean from a previous run:
 rm -rf log.decomposePar
 

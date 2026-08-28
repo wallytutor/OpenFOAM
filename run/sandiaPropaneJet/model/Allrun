@@ -3,9 +3,6 @@
 # Run from this directory:
 cd ${0%/*} || exit 1
 
-# To open with ParaView:
-touch case.foam
-
 # Sourcing OpenFOAM v13 environment
 if [ -f /opt/openfoam13/etc/bashrc ]; then
     . /opt/openfoam13/etc/bashrc
@@ -20,6 +17,9 @@ if [ "$CORES" != "1" ] && [ "$CORES" != "4" ] && [ "$CORES" != "20" ]; then
     echo "Error: Unsupported core count: $CORES. Supported values: 1, 4, 20"
     exit 1
 fi
+
+# To open case with ParaView:
+touch case.foam
 
 echo "=========================================="
 echo "Starting simulation with $CORES core(s)"
@@ -39,10 +39,10 @@ else
     # Run snappyHexMesh in parallel
     runParallel foamRun
 
-    # # Reconstruct parallel mesh
+    # Reconstruct parallel mesh
     # runApplication reconstructPar -constant
 
-    # # Clean up processor directories
+    # Clean up processor directories
     # rm -rf processor*
 fi
 
