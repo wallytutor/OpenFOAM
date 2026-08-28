@@ -15,10 +15,10 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 // Use none for the non-reacting base case:
-combustionModel  none;
+// combustionModel  none;
 
 // Use EDC for the reacting case:
-// combustionModel  EDC;
+combustionModel  EDC;
 
 EDCCoeffs
 {
