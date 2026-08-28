@@ -240,6 +240,11 @@ snapControls
     // When set to true, the mesh generator implicitly detects
     // geometric features by dynamically sampling the surface.
     implicitFeatureSnap false;
+
+    // Allow snapping to feature lines in multiple regions. Required for
+    // resolving angle between inlet and the pipe walls, as they are in
+    // separate patches.
+    multiRegionFeatureSnap true;
 }
 
 addLayersControls
