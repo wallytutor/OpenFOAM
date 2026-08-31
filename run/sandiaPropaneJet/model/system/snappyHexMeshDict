@@ -69,7 +69,7 @@ geometry
     refinementCylinderTip
     {
         type cylinder;
-        point1 (0.0  0.0 -0.15);
+        point1 (0.0  0.0 -0.02);
         point2 (0.0  0.0  0.05);
         radius 0.008;
     }
@@ -87,23 +87,41 @@ castellatedMeshControls
     // Point inside fluid volume, used to crop the background mesh.
     insidePoint (0 0 1);
 
+    // The maximum number of cells allowed per processor during
+    // the refinement stage.
+    maxLocalCells 500000;
+
+    // The overall cell limit across all processors during refinement,
+    // applied before the cell removal stage.
+    maxGlobalCells 4000000;
+
+    // The threshold for stopping surface refinement; if the number of
+    // cells targeted for refinement falls below this number, surface
+    // refinement stops.
+    minRefinementCells 50000;
+
     // This specifies the number of buffer layers of cells that must exist
     // between successive levels of mesh refinement (typically set to 3 to
     // ensure a smooth transition).
     nCellsBetweenLevels  3;
 
-    // Resolve feature angle
+    // Resolve feature angle; if this value is too high (e.g., set to 100),
+    // the mesher will ignore sharp angle intersections, leading to a
+    // highly distorted castellated grid at the corners. Keep default.
     resolveFeatureAngle 30;
+
 
     features
     (
         {
+            // Use a high refinement level to capture 90° corners when
+            // castellating with a coarse background mesh.
             file "ductWalls.eMesh";
-            level 1;
+            level 3;
         }
         {
             file "inletCoflow.eMesh";
-            level 2;
+            level 3;
         }
         {
             file "inletFuel.eMesh";
@@ -115,15 +133,15 @@ castellatedMeshControls
         }
         {
             file "pipeEndWall.eMesh";
-            level 2;
+            level 3;
         }
         {
             file "pipeInnerWall.eMesh";
-            level 4;
+            level 3;
         }
         {
             file "pipeOuterWall.eMesh";
-            level 2;
+            level 3;
         }
     );
 
@@ -131,7 +149,7 @@ castellatedMeshControls
     {
         ductWalls
         {
-            level (1 1);
+            level (2 2);
             patchInfo
             {
                 type wall;
@@ -139,7 +157,7 @@ castellatedMeshControls
         }
         inletCoflow
         {
-            level (2 3);
+            level (2 2);
             patchInfo
             {
                 type patch;
@@ -147,7 +165,7 @@ castellatedMeshControls
         }
         inletFuel
         {
-            level (3 4);
+            level (2 2);
             patchInfo
             {
                 type patch;
@@ -163,7 +181,7 @@ castellatedMeshControls
         }
         pipeEndWall
         {
-            level (3 4);
+            level (2 2);
             patchInfo
             {
                 type wall;
@@ -171,7 +189,7 @@ castellatedMeshControls
         }
         pipeInnerWall
         {
-            level (3 4);
+            level (2 2);
             patchInfo
             {
                 type wall;
@@ -179,7 +197,7 @@ castellatedMeshControls
         }
         pipeOuterWall
         {
-            level (2 3);
+            level (2 2);
             patchInfo
             {
                 type wall;
@@ -192,12 +210,18 @@ castellatedMeshControls
         refinementCylinderTip
         {
             mode distance;
-            levels ((0.008 3) (0.016 2));
+            levels (
+                (0.008 3)
+                (0.016 2)
+            );
         }
         refinementCylinderMain
         {
             mode distance;
-            levels ((0.025 2) (0.05 1));
+            levels (
+                (0.025 2)
+                (0.050 1)
+            );
         }
     }
 }
@@ -239,7 +263,7 @@ snapControls
 
     // When set to true, the mesh generator implicitly detects
     // geometric features by dynamically sampling the surface.
-    implicitFeatureSnap false;
+    implicitFeatureSnap true;
 
     // Allow snapping to feature lines in multiple regions. Required for
     // resolving angle between inlet and the pipe walls, as they are in
@@ -253,7 +277,7 @@ addLayersControls
     {
         ductWalls
         {
-            nSurfaceLayers 2;
+            nSurfaceLayers 3;
         }
         pipeEndWall
         {
