@@ -18,15 +18,15 @@ if [ "$CORES" != "1" ] && [ "$CORES" != "4" ] && [ "$CORES" != "20" ]; then
     exit 1
 fi
 
-# To open case with ParaView:
-touch case.foam
-
 echo "=========================================="
 echo "Starting mesh generation with $CORES core(s)"
 echo "=========================================="
 
 # Clean previous runs
 ./Allclean
+
+# To open case with ParaView:
+touch case.foam
 
 # Extract feature edges from STL surfaces
 runApplication surfaceFeatures
