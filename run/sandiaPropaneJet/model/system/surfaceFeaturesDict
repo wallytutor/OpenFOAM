@@ -25,6 +25,8 @@ surfaces
     "pipeOuterWall.stl"
 );
 
+// Angles below this value are resolved; we need to make sure we
+// extract the corners of ductWalls properly (90°).
 includedAngle   150;
 
 writeObj        yes;
