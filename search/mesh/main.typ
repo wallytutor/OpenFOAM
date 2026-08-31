@@ -1,3 +1,4 @@
+// typst watch --root .. main.typ
 #import "../book.typ": *
 
 #show: bookstyle.with(
