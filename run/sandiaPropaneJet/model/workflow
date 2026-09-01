@@ -125,24 +125,23 @@ def _parallel(n: int):
     if log_decompose.exists():
         log_decompose.unlink(missing_ok=True)
 
+    dict_orig = Path("system/decomposeParDict.orig")
     dict_file = Path("system/decomposeParDict")
+
+    if not dict_file.exists():
+        shutil.copy(dict_orig, dict_file)
 
     match n:
         case 4:
-            subdomains = "4"
             n_coeffs = "(1 2 2)"
         case 20:
-            subdomains = "20"
             n_coeffs = "(2 2 5)"
         case 32:
-            subdomains = "32"
             n_coeffs = "(2 4 4)"
         case 40:
-            subdomains = "40"
             n_coeffs = "(2 4 5)"
         case _:
             raise ValueError(f"Unsupported core count: {n}")
-
 
     _run_cmd(
         [
@@ -151,7 +150,7 @@ def _parallel(n: int):
             "-entry",
             "numberOfSubdomains",
             "-set",
-            subdomains,
+            f"{n}",
         ]
     )
     _run_cmd(
@@ -241,10 +240,19 @@ def _run_parallel_application(
     else:
         log_file = Path(log_name)
 
-    cmd = ["mpirun", "-np", str(cores), app_name, "-parallel"] + args[1:]
-
     with log_file.open("w") as f:
-        run(cmd, stdout=f, stderr=subprocess.STDOUT, check=True)
+        run(
+            [
+                "mpirun",
+                "-np",
+                str(cores),
+                app_name,
+                "-parallel"
+            ] + args[1:],
+            stdout = f,
+            stderr = subprocess.STDOUT,
+            check  = True
+        )
 
 
 if __name__ == "__main__":

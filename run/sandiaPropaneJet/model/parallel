@@ -16,6 +16,12 @@ if [ "$CORES" = "4" ]; then
 elif [ "$CORES" = "20" ]; then
     foamDictionary "$file" -entry numberOfSubdomains -set 20
     foamDictionary "$file" -entry simpleCoeffs/n -set "(2 2 5)"
+elif [ "$CORES" = "32" ]; then
+    foamDictionary "$file" -entry numberOfSubdomains -set 32
+    foamDictionary "$file" -entry simpleCoeffs/n -set "(2 4 4)"
+else
+    echo "Unsupported core count: $CORES"
+    exit 1
 fi
 
 # Decompose domain

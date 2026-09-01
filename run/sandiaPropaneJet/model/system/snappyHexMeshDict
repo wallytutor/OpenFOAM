@@ -26,11 +26,6 @@ geometry
     // Actual geometry
     // ---------------------------------------------------------------
 
-    ductWalls
-    {
-        type triSurfaceMesh;
-        file "ductWalls.stl";
-    }
     inletCoflow
     {
         type triSurfaceMesh;
@@ -40,11 +35,6 @@ geometry
     {
         type triSurfaceMesh;
         file "inletFuel.stl";
-    }
-    outlet
-    {
-        type triSurfaceMesh;
-        file "outlet.stl";
     }
     pipeEndWall
     {
@@ -89,16 +79,16 @@ castellatedMeshControls
 
     // The maximum number of cells allowed per processor during
     // the refinement stage.
-    maxLocalCells 500000;
+    maxLocalCells 100000;
 
     // The overall cell limit across all processors during refinement,
     // applied before the cell removal stage.
-    maxGlobalCells 4000000;
+    maxGlobalCells 4500000;
 
     // The threshold for stopping surface refinement; if the number of
     // cells targeted for refinement falls below this number, surface
     // refinement stops.
-    minRefinementCells 50000;
+    minRefinementCells 20000;
 
     // This specifies the number of buffer layers of cells that must exist
     // between successive levels of mesh refinement (typically set to 3 to
@@ -110,15 +100,8 @@ castellatedMeshControls
     // highly distorted castellated grid at the corners. Keep default.
     resolveFeatureAngle 30;
 
-
     features
     (
-        {
-            // Use a high refinement level to capture 90° corners when
-            // castellating with a coarse background mesh.
-            file "ductWalls.eMesh";
-            level 3;
-        }
         {
             file "inletCoflow.eMesh";
             level 3;
@@ -126,10 +109,6 @@ castellatedMeshControls
         {
             file "inletFuel.eMesh";
             level 3;
-        }
-        {
-            file "outlet.eMesh";
-            level 1;
         }
         {
             file "pipeEndWall.eMesh";
@@ -157,7 +136,7 @@ castellatedMeshControls
         }
         inletCoflow
         {
-            level (2 2);
+            level (2 3);
             patchInfo
             {
                 type patch;
@@ -165,7 +144,7 @@ castellatedMeshControls
         }
         inletFuel
         {
-            level (2 2);
+            level (3 3);
             patchInfo
             {
                 type patch;
@@ -173,7 +152,7 @@ castellatedMeshControls
         }
         outlet
         {
-            level (1 1);
+            level (1 2);
             patchInfo
             {
                 type patch;
