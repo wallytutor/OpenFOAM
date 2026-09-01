@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+import os
+import re
+import shutil
+import subprocess
+
+from argparse import ArgumentParser
+from pathlib import Path
+from subprocess import run
+
+
+HERE = Path(__file__).resolve().parent
+
+
+def main():
+    os.chdir(HERE)
+
+    parser = _parse_arguments()
+    args = parser.parse_args()
+
+    if not (args.mesh or args.run or args.clean):
+        parser.print_help()
+        return
+
+    if args.clean and not (args.mesh or args.run):
+        _clean()
+        return
+
+    if args.mesh:
+        if args.clean:
+            _clean()
+        else:
+            ans = input(
+                "Do you want to clean the case before meshing? (y/N): "
+            )
+
+            if ans.strip().lower() in ("y", "yes"):
+                _clean()
+
+        _meshing(args.cores)
+        return
+
+    if args.run:
+        _running(args.cores)
+        return
+
+
+def _parse_arguments() -> ArgumentParser:
+    parser = ArgumentParser(
+        description="Workflow script for Sandia Propane Jet case."
+    )
+
+    parser.add_argument(
+        "--cores",
+        type    = int,
+        default = 1,
+        help    = "Number of cores to use (1, 4, 20)"
+    )
+    parser.add_argument(
+        "--clean",
+        action = "store_true",
+        help   = "Clean case files and logs"
+    )
+
+    action_group = parser.add_mutually_exclusive_group()
+    action_group.add_argument(
+        "--mesh",
+        action = "store_true",
+        help   = "Run meshing workflow"
+    )
+    action_group.add_argument(
+        "--run",
+        action = "store_true",
+        help   = "Run solver workflow"
+    )
+
+    return parser
+
+
+def _clean():
+    cwd = Path(HERE)
+
+    # Remove numeric time directories in cwd (e.g. "0.1", "100", etc.)
+    for item in cwd.iterdir():
+        if item.is_dir() and re.match(r"^[0-9]+(\.[0-9]+)?$", item.name):
+            shutil.rmtree(item, ignore_errors=True)
+
+    dirs_to_remove = [
+        cwd / "0",
+        cwd / "constant" / "extendedFeatureEdgeMesh",
+        cwd / "constant" / "polyMesh",
+        cwd / "postProcessing",
+    ]
+
+    for p in dirs_to_remove:
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
+
+    geom_dir = cwd / "constant" / "geometry"
+
+    if geom_dir.is_dir():
+        for f in geom_dir.glob("*.eMesh"):
+            if f.is_file():
+                f.unlink(missing_ok=True)
+
+    for p in cwd.glob("processor*"):
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
+
+    case_foam = cwd / "case.foam"
+
+    if case_foam.exists():
+        case_foam.unlink(missing_ok=True)
+
+    for log_file in cwd.glob("log.*"):
+        if log_file.is_file():
+            log_file.unlink(missing_ok=True)
+
+
+def _parallel(n: int):
+    log_decompose = Path("log.decomposePar")
+
+    if log_decompose.exists():
+        log_decompose.unlink(missing_ok=True)
+
+    dict_file = Path("system/decomposeParDict")
+
+    match n:
+        case 4:
+            subdomains = "4"
+            n_coeffs = "(1 2 2)"
+        case 20:
+            subdomains = "20"
+            n_coeffs = "(2 2 5)"
+        case 32:
+            subdomains = "32"
+            n_coeffs = "(2 4 4)"
+        case 40:
+            subdomains = "40"
+            n_coeffs = "(2 4 5)"
+        case _:
+            raise ValueError(f"Unsupported core count: {n}")
+
+
+    _run_cmd(
+        [
+            "foamDictionary",
+            str(dict_file),
+            "-entry",
+            "numberOfSubdomains",
+            "-set",
+            subdomains,
+        ]
+    )
+    _run_cmd(
+        [
+            "foamDictionary",
+            str(dict_file),
+            "-entry",
+            "simpleCoeffs/n",
+            "-set",
+            n_coeffs,
+        ]
+    )
+
+    _run_application(["decomposePar"])
+
+
+def _meshing(cores: int):
+    _banner(f"Starting mesh generation with {cores} core(s)")
+
+    # To open case with ParaView:
+    Path("case.foam").touch()
+
+    # Extract feature edges from STL surfaces
+    _run_application(["surfaceFeatures"])
+
+    # Create background mesh
+    _run_application(["blockMesh"])
+
+    # Run snappyHexMesh
+    match cores:
+        case 1:
+            _run_application(["snappyHexMesh"])
+        case _:
+            _parallel(cores)
+            _run_parallel_application(cores, ["snappyHexMesh"])
+            _run_application(["reconstructPar", "-constant"])
+
+            for proc in Path(".").glob("processor*"):
+                if proc.is_dir():
+                    shutil.rmtree(proc, ignore_errors=True)
+
+    # Re-number the mesh to reduce bandwidth
+    _run_application(["renumberMesh"])
+
+    # Check mesh quality
+    _run_application(["checkMesh"])
+
+    _banner("Mesh generation complete!")
+
+
+def _banner(message: str):
+    print(f"{78 * '='}\n{message}\n{78 * '='}\n")
+
+
+def _running(cores: int):
+    pass
+
+
+def _run_cmd(cmd: list[str]) -> None:
+    run(cmd, check=True)
+
+
+def _run_application(
+        args: list[str],
+        log_name: str | None = None
+    ) -> None:
+    app_name = args[0]
+
+    if log_name is None:
+        log_file = Path(f"log.{app_name}")
+    else:
+        log_file = Path(log_name)
+
+    with log_file.open("w") as f:
+        run(args, stdout=f, stderr=subprocess.STDOUT, check=True)
+
+
+def _run_parallel_application(
+        cores: int,
+        args: list[str],
+        log_name: str | None = None
+    ) -> None:
+    app_name = args[0]
+
+    if log_name is None:
+        log_file = Path(f"log.{app_name}")
+    else:
+        log_file = Path(log_name)
+
+    cmd = ["mpirun", "-np", str(cores), app_name, "-parallel"] + args[1:]
+
+    with log_file.open("w") as f:
+        run(cmd, stdout=f, stderr=subprocess.STDOUT, check=True)
+
+
+if __name__ == "__main__":
+    main()
