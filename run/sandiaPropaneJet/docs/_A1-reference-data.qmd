@@ -133,7 +133,7 @@ h50 = 50 * d_inj
 ```
 
 ```{python}
-origin = np.array([0.0, 0.0, h15])
+origin = np.array([0.0, 0.0, h04])
 xy_slice = internal.slice(normal="z", origin=origin)
 
 
@@ -154,8 +154,8 @@ plotter.show()
 ```{python}
 grid_points = xy_slice.cell_data_to_point_data()
 
-radii = np.linspace(0.0, 0.05, 50)
-num_points = 60
+radii = np.linspace(0.0, 0.06, 50)
+num_points = 360
 
 theta = np.linspace(0.0, 2.0 * np.pi, num_points, endpoint=False)
 cos_t = np.cos(theta)
@@ -261,11 +261,4 @@ for idx, r in enumerate(radii):
 ```{python}
 p = plot_xy()
 p.add_curve(radii, mean_u_axial, "b--")
-
-sampled
-```
-
-
-```{python}
-grid_points
 ```
