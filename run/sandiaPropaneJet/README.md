@@ -133,3 +133,11 @@ After running, one must consider checking the following logs and at least check 
       Max skewness = 2.69949 OK.
       Mesh OK.
   ```
+
+## 🛸 Changes and lessons
+
+- The original `blockMeshDict` included the limits of the domain, so that `topoSet` was used to recreate the inlet patches; that was fragile and sometimes, depending on the degree of refinement, led to new unexpected patches in that region.
+
+- Modifying the case to use a background mesh with extents larger than the STL files required extra refinement to properly snap external walls. That led to meshes that were significantly larger and slower to mesh.
+
+- A good compromise was found in using the external walls and outlet of the background mesh directly and removing the corresponding STL. This was done by making the external walls (x and y coordinates) and outlet (z coordinate) extents match the physical values. Nonetheless, `zMin` was set is above the minimum z-coordinate of the geometry so that it intersect features. A `dummyInlet` patch is a fake patch that is cropped from the domain once the snapping process is done, as it is not touched by the refine region and lies outside of the cropped volume.

@@ -14,20 +14,18 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-// Note: see comments in library/blockMeshDict.orig for details.
-
 backgroundMesh
 {
-    xMin     -0.20;
-    xMax      0.20;
-    yMin     -0.20;
-    yMax      0.20;
-    zMin     -0.10;
-    zMax      2.05;
+    xMin     -0.15;
+    xMax      0.15;
+    yMin     -0.15;
+    yMax      0.15;
+    zMin     -0.02;
+    zMax      2.00;
 
-    xCells   40;
-    yCells   40;
-    zCells   420;
+    xCells    30;
+    yCells    30;
+    zCells    200;
 }
 
 convertToMeters 1;
@@ -38,27 +36,16 @@ defaultPatch
     type internal;
 }
 
-// delete "-disabled" to enable boundary settings
-boundary-disabled
-(
-    xMin { type patch; faces ( (0 3 7 4) ); }
-    xMax { type patch; faces ( (1 5 6 2) ); }
-    yMin { type patch; faces ( (0 4 5 1) ); }
-    yMax { type patch; faces ( (3 2 6 7) ); }
-    zMin { type patch; faces ( (0 1 2 3) ); }
-    zMax { type patch; faces ( (4 7 6 5) ); }
-);
-
 vertices
 (
-    ($!backgroundMesh/xMin $!backgroundMesh/yMin $!backgroundMesh/zMin)
-    ($!backgroundMesh/xMax $!backgroundMesh/yMin $!backgroundMesh/zMin)
-    ($!backgroundMesh/xMax $!backgroundMesh/yMax $!backgroundMesh/zMin)
-    ($!backgroundMesh/xMin $!backgroundMesh/yMax $!backgroundMesh/zMin)
-    ($!backgroundMesh/xMin $!backgroundMesh/yMin $!backgroundMesh/zMax)
-    ($!backgroundMesh/xMax $!backgroundMesh/yMin $!backgroundMesh/zMax)
-    ($!backgroundMesh/xMax $!backgroundMesh/yMax $!backgroundMesh/zMax)
-    ($!backgroundMesh/xMin $!backgroundMesh/yMax $!backgroundMesh/zMax)
+    ($!backgroundMesh/xMin $!backgroundMesh/yMin $!backgroundMesh/zMin) // 0
+    ($!backgroundMesh/xMax $!backgroundMesh/yMin $!backgroundMesh/zMin) // 1
+    ($!backgroundMesh/xMax $!backgroundMesh/yMax $!backgroundMesh/zMin) // 2
+    ($!backgroundMesh/xMin $!backgroundMesh/yMax $!backgroundMesh/zMin) // 3
+    ($!backgroundMesh/xMin $!backgroundMesh/yMin $!backgroundMesh/zMax) // 4
+    ($!backgroundMesh/xMax $!backgroundMesh/yMin $!backgroundMesh/zMax) // 5
+    ($!backgroundMesh/xMax $!backgroundMesh/yMax $!backgroundMesh/zMax) // 6
+    ($!backgroundMesh/xMin $!backgroundMesh/yMax $!backgroundMesh/zMax) // 7
 );
 
 blocks
@@ -73,6 +60,36 @@ blocks
 );
 
 boundary
-();
+(
+    dummyInlet
+    {
+        type patch;
+        faces
+        (
+            (0 3 2 1)
+        );
+    }
+
+    outlet
+    {
+        type patch;
+        faces
+        (
+            (4 5 6 7)
+        );
+    }
+
+    ductWalls
+    {
+        type wall;
+        faces
+        (
+            (0 4 7 3)
+            (1 2 6 5)
+            (0 1 5 4)
+            (2 3 7 6)
+        );
+    }
+);
 
 // ************************************************************************* //
