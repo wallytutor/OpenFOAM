@@ -7,7 +7,7 @@ import pyvista as pv
 from pathlib import Path
 from typing import Callable
 
-from majordome import plot_xy
+from majordome import MajordomePlot, plot_xy
 from numpy.typing import NDArray
 ```
 
@@ -46,46 +46,92 @@ def plot_velocity_dataset(
         root_dir: Path,
         regex: str,
         func: Callable[[pd.DataFrame], NDArray[np.float64]],
-    ) -> None:
+    ) -> MajordomePlot:
     names = ["x/D", "y/D", "U mean", "V mean", "Urms", "Vrms", "UV"]
     p = plot_xy()
 
-    for f in root_dir.glob(regex):
+    colors = ["k", "r", "g", "b"]
+    lines = ["-", "--"]
+
+    i_color = 0
+
+    for i, f in enumerate(sorted(root_dir.glob(regex))):
         if f.stem.startswith("paxv"):
             continue
 
         df = read_profile(f, names=names)
 
+        c = colors[i_color]
+        l = lines[int(i % 2 != 0)]
+
         x = df["y/D"]
         y = func(df)
 
-        p.add_curve(x, y, label=f"{f.stem}")
+        p.add_curve(x, y, color=c, ls=l, label=f"{f.stem}")
+
+        if i % 2 != 0:
+            i_color += 1
+            i_color = min(i_color, len(colors) - 1)
 
     p.xlabel("y/D")
     p.ylabel("Velocity (m/s)")
     p.legend(loc=1, fontsize=8)
+    return p
 ```
 
 ```{python}
-plot_velocity_dataset(
+p = plot_velocity_dataset(
     root_dir = data_prof,
-    regex    = r"p*v.jet.txt",
-    func     = radial_velocity
-)
-```
-
-```{python}
-plot_velocity_dataset(
-    root_dir = data_prof,
-    regex    = r"p*v.jet.txt",
+    regex    = r"p*v.*.txt",
     func     = axial_velocity
 )
+p.xlim(-6, 6)
 ```
 
 ```{python}
-plot_velocity_dataset(
+p = plot_velocity_dataset(
     root_dir = data_prof,
-    regex    = r"p*v.jet.txt",
-    func     = velocity_magnitude
+    regex    = r"p*v.*.txt",
+    func     = radial_velocity
 )
+p.xlim(-6, 6)
+```
+
+
+```{python}
+reader = pv.POpenFOAMReader(root_path / "model/case.foam")
+reader.case_type = "decomposed"
+
+reader.enable_all_cell_arrays()
+reader.enable_all_point_arrays()
+
+case_time = reader.time_values[-1]
+reader.set_active_time_value(case_time)
+```
+
+
+```{python}
+# case_time
+mesh = reader.read()
+internal = mesh["internalMesh"]
+
+```
+
+```{python}
+yz_slice = internal.slice(normal="x", origin=(0, 0, 0.0))
+
+# Plot the slice colored by a specific field (e.g., Temperature or Velocity magnitude)
+plotter = pv.Plotter()
+plotter.add_mesh(yz_slice, scalars="T", cmap="viridis", show_edges=False)
+plotter.show_bounds()
+plotter.camera_position = "yz"
+plotter.show()
+```
+
+```{python}
+# T = internal["T"]
+
+# p = pv.Plotter()
+# p.add_mesh(internal, scalars=T)
+# p.show()
 ```
