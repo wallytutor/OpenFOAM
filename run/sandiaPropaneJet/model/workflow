@@ -16,6 +16,7 @@ HERE = Path(__file__).resolve().parent
 
 def main():
     os.chdir(HERE)
+    _source_openfoam_env()
 
     parser = _parse_arguments()
     args = parser.parse_args()
@@ -253,6 +254,28 @@ def _run_parallel_application(
             stderr = subprocess.STDOUT,
             check  = True
         )
+
+
+def _source_openfoam_env() -> None:
+    of_bashrc = Path("/opt/openfoam13/etc/bashrc")
+
+    if not of_bashrc.exists():
+        raise FileNotFoundError(
+            f"OpenFOAM v13 bashrc not found: {of_bashrc}"
+        )
+
+    proc = run(
+        ["bash", "-c", f"source {of_bashrc} && env"],
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    )
+
+    for line in proc.stdout.splitlines():
+        key, _, val = line.partition("=")
+
+        if key and val:
+            os.environ[key] = val
 
 
 if __name__ == "__main__":

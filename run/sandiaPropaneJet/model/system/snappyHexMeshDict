@@ -59,7 +59,7 @@ geometry
     refinementCylinderTip
     {
         type cylinder;
-        point1 (0.0  0.0 -0.02);
+        point1 (0.0  0.0 -0.04);
         point2 (0.0  0.0  0.05);
         radius 0.008;
     }
@@ -190,16 +190,16 @@ castellatedMeshControls
         {
             mode distance;
             levels (
-                (0.008 3)
-                (0.016 2)
+                (0.008 4)
+                (0.016 3)
             );
         }
         refinementCylinderMain
         {
             mode distance;
             levels (
-                (0.025 2)
-                (0.050 1)
+                (0.025 3)
+                (0.050 2)
             );
         }
     }
