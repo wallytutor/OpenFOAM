@@ -9,6 +9,7 @@ from typing import Callable
 
 from majordome import MajordomePlot, plot_xy
 from numpy.typing import NDArray
+from scipy.interpolate import griddata
 ```
 
 
@@ -64,7 +65,7 @@ def plot_velocity_dataset(
         c = colors[i_color]
         l = lines[int(i % 2 != 0)]
 
-        x = df["y/D"]
+        x = df["y/D"].abs()
         y = func(df)
 
         p.add_curve(x, y, color=c, ls=l, label=f"{f.stem}")
@@ -85,7 +86,7 @@ p = plot_velocity_dataset(
     regex    = r"p*v.*.txt",
     func     = axial_velocity
 )
-p.xlim(-6, 6)
+p.xlim(0, 6)
 ```
 
 ```{python}
@@ -94,7 +95,7 @@ p = plot_velocity_dataset(
     regex    = r"p*v.*.txt",
     func     = radial_velocity
 )
-p.xlim(-6, 6)
+p.xlim(0, 6)
 ```
 
 
@@ -173,7 +174,14 @@ for idx, r in enumerate(radii):
 
     poly = pv.lines_from_points(circle_pts, close=True)
     # sampled = poly.sample(grid_points, tolerance=1.0e-05)
-    sampled = poly.interpolate(grid_points, radius=2.0e-03)
+    sampled = poly.interpolate(grid_points, radius=1.0e-03)
+
+    # u_interpolated = griddata(
+    #     xy_slice.points[:, :2],
+    #     xy_slice.cell_data["U"],
+    #     circle_pts[:, :2],
+    #     method="linear"
+    # )
 
     u_sampled = sampled["U"]
     valid = ~np.isnan(u_sampled).any(axis=1)
@@ -196,6 +204,59 @@ for idx, r in enumerate(radii):
         mean_u_swirl[idx] = np.nan
 ```
 
+```{python}
+import numpy as np
+import pyvista as pv
+from scipy.interpolate import LinearNDInterpolator, NearestNDInterpolator
+
+# Extract cell centers and cell-centered velocity data from the slice
+cell_centers_2d = xy_slice.cell_centers().points[:, :2]
+u_cell = xy_slice.cell_data["U"]
+
+# Construct 2D interpolator across cell centers
+# LinearNDInterpolator uses Qhull Delaunay triangulation
+interpolator = LinearNDInterpolator(cell_centers_2d, u_cell)
+
+radii = np.linspace(0.0, 0.05, 50)
+num_points = 60
+
+theta = np.linspace(0.0, 2.0 * np.pi, num_points, endpoint=False)
+cos_t = np.cos(theta)
+sin_t = np.sin(theta)
+
+mean_u_axial = np.zeros(len(radii))
+mean_u_radial = np.zeros(len(radii))
+mean_u_swirl = np.zeros(len(radii))
+
+for idx, r in enumerate(radii):
+    # Query points in the 2D plane
+    x_pts = origin[0] + r * cos_t
+    y_pts = origin[1] + r * sin_t
+    query_pts_2d = np.column_stack((x_pts, y_pts))
+
+    # Evaluate interpolated velocity vectors (num_points, 3)
+    u_sampled = interpolator(query_pts_2d)
+
+    # Valid mask removes NaN values for query points outside the convex hull
+    valid = ~np.isnan(u_sampled).any(axis=1)
+
+    if np.any(valid):
+        ux = u_sampled[valid, 0]
+        uy = u_sampled[valid, 1]
+        uz = u_sampled[valid, 2]
+
+        u_ax = uz
+        u_rad = ux * cos_t[valid] + uy * sin_t[valid]
+        u_tan = -ux * sin_t[valid] + uy * cos_t[valid]
+
+        mean_u_axial[idx] = np.mean(u_ax)
+        mean_u_radial[idx] = np.mean(u_rad)
+        mean_u_swirl[idx] = np.mean(u_tan)
+    else:
+        mean_u_axial[idx] = np.nan
+        mean_u_radial[idx] = np.nan
+        mean_u_swirl[idx] = np.nan
+```
 
 ```{python}
 p = plot_xy()
