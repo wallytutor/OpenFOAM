@@ -236,20 +236,26 @@ def _running(
     # To open case with ParaView:
     Path("case.foam").touch()
 
-    # Copy initial conditions:
-    zero_dir = Path("0")
+    restart = _is_restart(cores)
 
-    if zero_dir.exists():
-        shutil.rmtree(zero_dir, ignore_errors=True)
+    if not restart:
+        # Copy initial conditions:
+        zero_dir = Path("0")
 
-    shutil.copytree("0.orig", zero_dir)
+        if zero_dir.exists():
+            shutil.rmtree(zero_dir, ignore_errors=True)
+
+        if Path("0.orig").exists():
+            shutil.copytree("0.orig", zero_dir)
 
     # Run simulation:
     match cores:
         case 1:
             _run_application(["foamRun"])
         case _:
-            _parallel(cores)
+            if not restart:
+                _parallel(cores)
+
             _run_parallel_application(cores, ["foamRun"])
 
             if reconstruct:
@@ -276,6 +282,38 @@ def _reconstruct(latest: bool = False):
 
 def _banner(message: str):
     print(f"{78 * '='}\n{message}\n{78 * '='}\n")
+
+
+def _get_latest_time(path: Path) -> float | None:
+    times = []
+
+    if not path.is_dir():
+        return None
+
+    for item in path.iterdir():
+        if item.is_dir() and re.match(r"^[0-9]+(\.[0-9]+)?$", item.name):
+            try:
+                times.append(float(item.name))
+            except ValueError:
+                pass
+
+    return max(times) if times else None
+
+
+def _is_restart(cores: int) -> bool:
+    procs = [p for p in HERE.glob("processor*") if p.is_dir()]
+
+    if len(procs) != cores:
+        return False
+
+    top_latest = _get_latest_time(HERE)
+
+    if top_latest is None:
+        return False
+
+    proc_times = [_get_latest_time(p) for p in procs]
+
+    return all(t is not None and t == top_latest for t in proc_times)
 
 
 def _run_cmd(cmd: list[str]) -> None:
