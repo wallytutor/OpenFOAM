@@ -269,8 +269,9 @@ def _reconstruct(latest: bool = False):
     else:
         _run_application(["reconstructPar", "-constant"])
 
-    for proc in procs:
-        shutil.rmtree(proc, ignore_errors=True)
+    # XXX it was a bad idea for stopping/restarting cases.
+    # for proc in procs:
+    #     shutil.rmtree(proc, ignore_errors=True)
 
 
 def _banner(message: str):

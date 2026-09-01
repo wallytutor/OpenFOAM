@@ -56,6 +56,9 @@ An automation script **[workflow](model/workflow)** is provided for managing the
 
 # Runs the simulation using 40 cores:
 ./workflow --cores 40 --run
+
+# Reconstruct the latest time:
+./workflow --reconstruct --latest
 ```
 
 ### Meshing
