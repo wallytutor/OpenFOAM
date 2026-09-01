@@ -27,22 +27,6 @@ thermoType
 
 defaultSpecie N2;
 
-species
-(
-    H
-    H2
-    O
-    OH
-    H2O
-    CO
-    N2
-    O2
-    HO2
-    H2O2
-    CO2
-    C3H8
-);
-
-#include "thermo"
+#include "chemistry/thermo"
 
 // ************************************************************************* //
