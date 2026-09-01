@@ -21,12 +21,16 @@ def main():
     parser = _parse_arguments()
     args = parser.parse_args()
 
-    if not (args.mesh or args.run or args.clean):
+    if not (args.mesh or args.run or args.clean or args.reconstruct):
         parser.print_help()
         return
 
     if args.clean and not (args.mesh or args.run):
         _clean()
+        return
+
+    if args.reconstruct and not (args.mesh or args.run):
+        _reconstruct(latest=args.latest)
         return
 
     if args.mesh:
@@ -44,7 +48,11 @@ def main():
         return
 
     if args.run:
-        _running(args.cores)
+        _running(
+            args.cores,
+            reconstruct = args.reconstruct,
+            latest      = args.latest
+        )
         return
 
 
@@ -63,6 +71,16 @@ def _parse_arguments() -> ArgumentParser:
         "--clean",
         action = "store_true",
         help   = "Clean case files and logs"
+    )
+    parser.add_argument(
+        "--reconstruct",
+        action = "store_true",
+        help   = "Reconstruct parallel mesh/data and clean processor dirs"
+    )
+    parser.add_argument(
+        "--latest",
+        action = "store_true",
+        help   = "Reconstruct only the latest time step"
     )
 
     action_group = parser.add_mutually_exclusive_group()
@@ -193,6 +211,12 @@ def _meshing(cores: int):
                 if proc.is_dir():
                     shutil.rmtree(proc, ignore_errors=True)
 
+    # Note: the required files were moved into library/ as this approach
+    # led to geometric issues with the matching of a patch. To be avoided.
+    # Split inlet patch into inletFuel and inletCoflow
+    # runApplication topoSet
+    # runApplication createPatch -overwrite
+
     # Re-number the mesh to reduce bandwidth
     _run_application(["renumberMesh"])
 
@@ -202,12 +226,55 @@ def _meshing(cores: int):
     _banner("Mesh generation complete!")
 
 
+def _running(
+        cores: int,
+        reconstruct: bool = False,
+        latest: bool = False
+    ):
+    _banner(f"Starting simulation with {cores} core(s)")
+
+    # To open case with ParaView:
+    Path("case.foam").touch()
+
+    # Copy initial conditions:
+    zero_dir = Path("0")
+
+    if zero_dir.exists():
+        shutil.rmtree(zero_dir, ignore_errors=True)
+
+    shutil.copytree("0.orig", zero_dir)
+
+    # Run simulation:
+    match cores:
+        case 1:
+            _run_application(["foamRun"])
+        case _:
+            _parallel(cores)
+            _run_parallel_application(cores, ["foamRun"])
+
+            if reconstruct:
+                _reconstruct(latest=latest)
+
+    _banner("Simulation complete!")
+
+
+def _reconstruct(latest: bool = False):
+    procs = [p for p in Path(HERE).glob("processor*") if p.is_dir()]
+
+    if not procs:
+        return
+
+    if latest:
+        _run_application(["reconstructPar", "-latestTime"])
+    else:
+        _run_application(["reconstructPar", "-constant"])
+
+    for proc in procs:
+        shutil.rmtree(proc, ignore_errors=True)
+
+
 def _banner(message: str):
     print(f"{78 * '='}\n{message}\n{78 * '='}\n")
-
-
-def _running(cores: int):
-    pass
 
 
 def _run_cmd(cmd: list[str]) -> None:
