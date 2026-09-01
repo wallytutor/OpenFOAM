@@ -1,11 +1,14 @@
 
 ```{python}
+import numpy as np
 import pandas as pd
 import pyvista as pv
 
 from pathlib import Path
+from typing import Callable
 
 from majordome import plot_xy
+from numpy.typing import NDArray
 ```
 
 
@@ -29,36 +32,60 @@ def read_profile(
         names     = names
     )
     return df
+
+def axial_velocity(df: pd.DataFrame) -> NDArray[np.float64]:
+    return df["U mean"].to_numpy()
+
+def radial_velocity(df: pd.DataFrame) -> NDArray[np.float64]:
+    return df["V mean"].to_numpy()
+
+def velocity_magnitude(df: pd.DataFrame) -> NDArray[np.float64]:
+    return np.sqrt(df["U mean"]**2 + df["V mean"]**2).to_numpy()
+
+def plot_velocity_dataset(
+        root_dir: Path,
+        regex: str,
+        func: Callable[[pd.DataFrame], NDArray[np.float64]],
+    ) -> None:
+    names = ["x/D", "y/D", "U mean", "V mean", "Urms", "Vrms", "UV"]
+    p = plot_xy()
+
+    for f in root_dir.glob(regex):
+        if f.stem.startswith("paxv"):
+            continue
+
+        df = read_profile(f, names=names)
+
+        x = df["y/D"]
+        y = func(df)
+
+        p.add_curve(x, y, label=f"{f.stem}")
+
+    p.xlabel("y/D")
+    p.ylabel("Velocity (m/s)")
+    p.legend(loc=1, fontsize=8)
 ```
 
-
 ```{python}
-names = ["x/D", "y/D", "U mean", "Urms"]
-df = read_profile(data_prof / "p00v.txt", names=names)
-df
+plot_velocity_dataset(
+    root_dir = data_prof,
+    regex    = r"p*v.jet.txt",
+    func     = radial_velocity
+)
 ```
 
 ```{python}
-names = ["x/D", "y/D", "U mean", "V mean", "Urms", "Vrms", "UV"]
-p = plot_xy()
-
-for f in data_prof.glob(r"p*v.jet.txt"):
-    df = read_profile(f, names=names)
-    x = df["y/D"]
-    # y = df["U mean"]
-    # y = df["V mean"]
-    y = (df["U mean"]**2 + df["V mean"]**2)**0.5
-
-    p.add_curve(x, y, label=f"{f.stem}")
-
-p.legend(loc=1, fontsize=8)
+plot_velocity_dataset(
+    root_dir = data_prof,
+    regex    = r"p*v.jet.txt",
+    func     = axial_velocity
+)
 ```
 
-
 ```{python}
-x = df["y/D"]
-y = df["U mean"]
-
-p = plot_xy()
-p.add_curve(x, y)
+plot_velocity_dataset(
+    root_dir = data_prof,
+    regex    = r"p*v.jet.txt",
+    func     = velocity_magnitude
+)
 ```
