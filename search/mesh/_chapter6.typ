@@ -1,6 +1,6 @@
 = Preprocessing geometry <chapter-6>
 
-== Extracging surface features
+== Extracting surface features
 
 === surfaceFeatures
 
