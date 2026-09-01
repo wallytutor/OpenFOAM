@@ -61,10 +61,10 @@ PIMPLE
     transonic                no;
     consistent               yes;
 
-    // maxCo                    0.5;
-    // maxDeltaT                1.0e-02;
-    maxCo                    10.0;
-    maxDeltaT                1.0;
+    maxCo                    0.5;
+    maxDeltaT                1.0e-02;
+    // maxCo                    10.0;
+    // maxDeltaT                1.0;
 
     rDeltaTSmoothingCoeff    1;
     rDeltaTDampingCoeff      1;
