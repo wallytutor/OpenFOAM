@@ -59,7 +59,7 @@ geometry
     refinementCylinderTip
     {
         type cylinder;
-        point1 (0.0  0.0 -0.04);
+        point1 (0.0  0.0 -0.06);
         point2 (0.0  0.0  0.05);
         radius 0.008;
     }
@@ -126,31 +126,7 @@ castellatedMeshControls
 
     refinementSurfaces
     {
-        ductWalls
-        {
-            level (2 2);
-            patchInfo
-            {
-                type wall;
-            }
-        }
         inletCoflow
-        {
-            level (2 3);
-            patchInfo
-            {
-                type patch;
-            }
-        }
-        inletFuel
-        {
-            level (3 3);
-            patchInfo
-            {
-                type patch;
-            }
-        }
-        outlet
         {
             level (1 2);
             patchInfo
@@ -158,9 +134,17 @@ castellatedMeshControls
                 type patch;
             }
         }
+        inletFuel
+        {
+            level (4 4);
+            patchInfo
+            {
+                type patch;
+            }
+        }
         pipeEndWall
         {
-            level (2 2);
+            level (4 4);
             patchInfo
             {
                 type wall;
@@ -168,7 +152,7 @@ castellatedMeshControls
         }
         pipeInnerWall
         {
-            level (2 2);
+            level (4 4);
             patchInfo
             {
                 type wall;
@@ -176,7 +160,7 @@ castellatedMeshControls
         }
         pipeOuterWall
         {
-            level (2 2);
+            level (4 4);
             patchInfo
             {
                 type wall;
@@ -191,15 +175,15 @@ castellatedMeshControls
             mode distance;
             levels (
                 (0.008 4)
-                (0.016 3)
+                (0.020 3)
             );
         }
         refinementCylinderMain
         {
             mode distance;
             levels (
-                (0.025 3)
-                (0.050 2)
+                (0.025 2)
+                (0.050 1)
             );
         }
     }
