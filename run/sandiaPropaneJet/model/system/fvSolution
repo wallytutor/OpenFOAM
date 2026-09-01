@@ -62,7 +62,7 @@ PIMPLE
     consistent               yes;
 
     maxCo                    0.5;
-    maxDeltaT                1.0e-03;
+    maxDeltaT                1.0e-02;
 
     rDeltaTSmoothingCoeff    1;
     rDeltaTDampingCoeff      1;

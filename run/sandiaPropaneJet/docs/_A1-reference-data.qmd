@@ -1,8 +1,11 @@
 
 ```{python}
+import pandas as pd
+import pyvista as pv
+
 from pathlib import Path
 
-import pandas as pd
+from majordome import plot_xy
 ```
 
 
@@ -10,4 +13,52 @@ import pandas as pd
 root_path = Path(__file__).resolve().parents[1]
 data_path = root_path / "reference/SandiaPropaneJet/SANDC3H8.JET"
 data_prof = data_path / "vel/velstat"
+```
+
+```{python}
+def read_profile(
+        prof: Path,
+        names: list[str] | None = None
+    ) -> pd.DataFrame:
+    """ Read a velocity profile from a text file. """
+    df = pd.read_csv(
+        prof,
+        delimiter = r"\s+",
+        header    = None,
+        comment   = "C",
+        names     = names
+    )
+    return df
+```
+
+
+```{python}
+names = ["x/D", "y/D", "U mean", "Urms"]
+df = read_profile(data_prof / "p00v.txt", names=names)
+df
+```
+
+```{python}
+names = ["x/D", "y/D", "U mean", "V mean", "Urms", "Vrms", "UV"]
+p = plot_xy()
+
+for f in data_prof.glob(r"p*v.jet.txt"):
+    df = read_profile(f, names=names)
+    x = df["y/D"]
+    # y = df["U mean"]
+    # y = df["V mean"]
+    y = (df["U mean"]**2 + df["V mean"]**2)**0.5
+
+    p.add_curve(x, y, label=f"{f.stem}")
+
+p.legend(loc=1, fontsize=8)
+```
+
+
+```{python}
+x = df["y/D"]
+y = df["U mean"]
+
+p = plot_xy()
+p.add_curve(x, y)
 ```
