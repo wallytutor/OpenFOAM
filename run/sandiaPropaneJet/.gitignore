@@ -6,3 +6,6 @@
 *.stl
 *.eMesh
 *.extendedFeatureEdgeMesh
+
+# Replaced from templates
+decomposeParDict
