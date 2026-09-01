@@ -106,32 +106,105 @@ reader.enable_all_cell_arrays()
 reader.enable_all_point_arrays()
 
 case_time = reader.time_values[-1]
+print(f"Loading results for iter. {case_time}")
 reader.set_active_time_value(case_time)
-```
 
-
-```{python}
-# case_time
 mesh = reader.read()
 internal = mesh["internalMesh"]
-
 ```
 
 ```{python}
 yz_slice = internal.slice(normal="x", origin=(0, 0, 0.0))
 
-# Plot the slice colored by a specific field (e.g., Temperature or Velocity magnitude)
 plotter = pv.Plotter()
-plotter.add_mesh(yz_slice, scalars="T", cmap="viridis", show_edges=False)
+plotter.add_mesh(yz_slice, scalars="T", cmap="plasma", show_edges=False)
 plotter.show_bounds()
 plotter.camera_position = "yz"
 plotter.show()
 ```
 
 ```{python}
-# T = internal["T"]
+d_inj = 0.0052
+h04 =  4 * d_inj
+h15 = 15 * d_inj
+h30 = 30 * d_inj
+h50 = 50 * d_inj
+```
 
-# p = pv.Plotter()
-# p.add_mesh(internal, scalars=T)
-# p.show()
+```{python}
+origin = np.array([0.0, 0.0, h15])
+xy_slice = internal.slice(normal="z", origin=origin)
+
+
+plotter = pv.Plotter()
+plotter.add_mesh(
+    xy_slice,
+    scalars    = "U",
+    component  = 2,
+    cmap       = "jet",
+    show_edges = False
+)
+plotter.show_bounds()
+plotter.camera_position = "xy"
+plotter.show()
+```
+
+
+```{python}
+grid_points = xy_slice.cell_data_to_point_data()
+
+radii = np.linspace(0.0, 0.05, 50)
+num_points = 60
+
+theta = np.linspace(0.0, 2.0 * np.pi, num_points, endpoint=False)
+cos_t = np.cos(theta)
+sin_t = np.sin(theta)
+
+mean_u_axial  = np.zeros(len(radii))
+mean_u_radial = np.zeros(len(radii))
+mean_u_swirl  = np.zeros(len(radii))
+
+for idx, r in enumerate(radii):
+    # Parametric circle in the XY plane at z = origin[2]
+    circle_pts = np.zeros((num_points, 3))
+    circle_pts[:, 0] = origin[0] + r * cos_t
+    circle_pts[:, 1] = origin[1] + r * sin_t
+    circle_pts[:, 2] = origin[2]
+
+    poly = pv.lines_from_points(circle_pts, close=True)
+    # sampled = poly.sample(grid_points, tolerance=1.0e-05)
+    sampled = poly.interpolate(grid_points, radius=2.0e-03)
+
+    u_sampled = sampled["U"]
+    valid = ~np.isnan(u_sampled).any(axis=1)
+
+    if np.any(valid):
+        ux = u_sampled[valid, 0]
+        uy = u_sampled[valid, 1]
+        uz = u_sampled[valid, 2]
+
+        u_ax = uz
+        u_rad = ux * cos_t[valid] + uy * sin_t[valid]
+        u_tan = -ux * sin_t[valid] + uy * cos_t[valid]
+
+        mean_u_axial[idx] = np.mean(u_ax)
+        mean_u_radial[idx] = np.mean(u_rad)
+        mean_u_swirl[idx] = np.mean(u_tan)
+    else:
+        mean_u_axial[idx] = np.nan
+        mean_u_radial[idx] = np.nan
+        mean_u_swirl[idx] = np.nan
+```
+
+
+```{python}
+p = plot_xy()
+p.add_curve(radii, mean_u_axial, "b--")
+
+sampled
+```
+
+
+```{python}
+grid_points
 ```
