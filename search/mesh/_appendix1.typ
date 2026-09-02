@@ -1,4 +1,4 @@
-= Generating STL files in Gmsh
+= Generating STL files in Gmsh <appendix-1>
 
 == Options
 

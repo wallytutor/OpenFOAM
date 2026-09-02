@@ -30,15 +30,19 @@ We will discuss refinement controls, including the placement of _refinement regi
 // ----------------------------------------------------------------------------
 
 #show: chapters
+#part("Fundamentals of Meshing")
 #include "_chapter1.typ"
 #include "_chapter2.typ"
 #include "_chapter3.typ"
 #include "_chapter4.typ"
 #include "_chapter5.typ"
+
+#part("Guided Examples")
 #include "_chapter6.typ"
 
 #show: appendix
 #include "_appendix1.typ"
+#include "_appendix2.typ"
 
 // ----------------------------------------------------------------------------
 // EOF
