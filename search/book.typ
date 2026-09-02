@@ -16,13 +16,29 @@
   // Override the default "Section" used at all levels:
   show heading.where(level: 1): set heading(supplement: [Chapter])
 
+  // Ensure part headings have no numbering (so they don't increment chapter counter)
+  show heading.where(label: <part-heading>): set heading(numbering: none)
+
+  // Hide the raw heading markup on the page so only the centered layout renders
+  show heading: it => {
+    if it.at("label", default: none) == <part-heading> {
+      none
+    } else {
+      it
+    }
+  }
+
   // Ensure page break and vertical spacing before each chapter:
-  show heading.where(level: 1): it => [
-    #pagebreak(weak: true)
-    #v(3em)
-    #it
-    #v(1.5em)
-  ]
+  show heading.where(level: 1): it => {
+    if it.at("label", default: none) == <part-heading> {
+      none
+    } else [
+      #pagebreak(weak: true)
+      #v(3em)
+      #it
+      #v(1.5em)
+    ]
+  }
   body
 }
 
@@ -85,6 +101,10 @@
   ]
 }
 
+// ----------------------------------------------------------------------------
+// outline functions
+// ----------------------------------------------------------------------------
+
 #let lof() = {
   outline(
     title: [List of Figures],
@@ -111,6 +131,74 @@
   lot()
   lol()
 }
+
+// ----------------------------------------------------------------------------
+// sectioning functions
+// ----------------------------------------------------------------------------
+
+#let preamble(title) = {
+  heading(title, level: 1, numbering: none, outlined: false)
+}
+
+#let chapters(body) = {
+  counter(heading).update(0)
+  set heading(
+    numbering: "1.1",
+    supplement: [Chapter],
+  )
+  body
+}
+
+#let appendix(body) = {
+  counter(heading).update(0)
+  set heading(
+    numbering: "A.1",
+    supplement: [Annex],
+  )
+  body
+}
+
+// ----------------------------------------------------------------------------
+// part and related
+//
+// As part will modify the outline, it has to be introduced before the main
+// bookstyle, as typst does not evaluate elements that come after a definition.
+// ----------------------------------------------------------------------------
+
+#let part-counter = counter("part")
+
+#let part(title) = {
+  pagebreak(to: "odd")
+  part-counter.step()
+
+  // Create an outlined heading targeting parts
+  [= #title <part-heading>]
+
+  // Render the dedicated divider page
+  context {
+    let num = part-counter.display("I")
+    align(center + horizon)[
+      #text(size: 18pt, tracking: 2pt)[PART #num]
+      #v(1.2em)
+      #text(size: 26pt)[#title]
+    ]
+  }
+  pagebreak()
+}
+
+#show heading: it => {
+  if it.at("label", default: none) == <part-heading> {
+    // Hide heading markup on the page so only the centered layout renders
+    none
+  } else {
+    // Keep unmodified for other heading levels
+    it
+  }
+}
+
+// ----------------------------------------------------------------------------
+// bookstyle
+// ----------------------------------------------------------------------------
 
 #let bookstyle(
     book-title: "",
@@ -139,6 +227,20 @@
 
   pagebreak()
   counter(page).update(1)
+
+  show outline.entry: it => {
+    if it.element.at("label", default: none) == <part-heading> {
+      v(1.2em)
+      let num = part-counter.at(it.element.location()).first()
+      let roman = numbering("I", num)
+      link(it.element.location())[
+        #text(weight: "bold", size: 1.1em)[Part #roman: #it.element.body]
+      ]
+    } else {
+      it
+    }
+  }
+
   outline(indent: 1.5em)
 
   set page(numbering: "1")
@@ -156,24 +258,6 @@
   }
 }
 
-#let preamble(title) = {
-  heading(title, level: 1, numbering: none, outlined: false)
-}
-
-#let chapters(body) = {
-  counter(heading).update(0)
-  set heading(
-    numbering: "1.1",
-    supplement: [Chapter],
-  )
-  body
-}
-
-#let appendix(body) = {
-  counter(heading).update(0)
-  set heading(
-    numbering: "A.1",
-    supplement: [Annex],
-  )
-  body
-}
+// ----------------------------------------------------------------------------
+// EOF
+// ----------------------------------------------------------------------------
