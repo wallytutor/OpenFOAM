@@ -32,7 +32,7 @@ def main():
         return
 
     if args.reconstruct and not (args.mesh or args.run):
-        # _reconstruct(latest=args.latest)
+        Runner.reconstruct(latest=args.latest)
         return
 
     if args.mesh:
