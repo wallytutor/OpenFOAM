@@ -20,6 +20,8 @@ internalField   uniform 10;
 
 boundaryField
 {
+    #includeEtc "caseDicts/setConstraintTypes"
+
     inletFuel
     {
         type            turbulentIntensityKineticEnergyInlet;
