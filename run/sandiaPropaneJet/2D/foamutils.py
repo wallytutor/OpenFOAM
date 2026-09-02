@@ -74,8 +74,39 @@ class Runner:
             cmd = ["mpirun", "-np", str(cores), args[0], "-parallel"]
             args = cmd + args[1:]
 
-        cls.serial(args, log_name, force)
+        cls.serial(args, log_name=log_name, force=force)
 
+    @classmethod
+    def decompose(
+            cls,
+            log_name: str | None = None,
+            force: bool = False,
+        ) -> None:
+        """ Manages the domain decomposition. """
+        cls.serial(["decomposePar"], log_name=log_name, force=force)
+
+    @classmethod
+    def dict_set_entry(
+            cls,
+            file: str | Path,
+            entry: str,
+            value: str,
+            log_name: str | None = None,
+            force: bool = False
+        ) -> None:
+        # If not log name is provided, assume the user is ok with
+        # overwritting (as setting entries is generally a batch).
+        if not log_name:
+            force = True
+
+        Runner.serial(
+            [
+                "foamDictionary", file,
+                "-entry", entry,
+                "-set", value
+            ],
+            force=force
+        )
 
 class Meshing:
     @classmethod

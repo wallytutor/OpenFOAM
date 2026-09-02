@@ -209,10 +209,8 @@ def _meshing(cores: int):
             ("entry0/ductWalls/type",     "wall"),
         ]
 
-        # Use force=True to overwrite logs.
         for entry, value in changes:
-            args = ["foamDictionary", file, "-entry", entry, "-set", value]
-            Runner.serial(args, force=True)
+            Runner.dict_set_entry(file, entry, value)
 
     Meshing.gmsh_to_foam_single_region(
         mesh_file = "constant/geometry/domain.msh",
