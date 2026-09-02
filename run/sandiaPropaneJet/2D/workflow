@@ -3,21 +3,24 @@
 
 import shutil
 from pathlib import Path
+from typing import Any
+
 from foamutils import Runner, Meshing, CommonProjectManager
 
 
-def main(*args) -> None:
+def main(*args: Any) -> None:
     """ Execute main CLI workflow for the 2D OpenFOAM case. """
     obj = CommonProjectManager(
         root_dir    = Path(__file__).resolve().parent,
         how_to_mesh = how_to_mesh,
         how_to_run  = how_to_run,
     )
+
     obj(*args)
 
 
-def how_to_mesh(args):
-    """ Manages the meshing workflow for the project. """
+def how_to_mesh(args: Any) -> None:
+    """ Manage the meshing workflow for the project. """
     def patching() -> None:
         """ Configure boundary patch types in boundary. """
         file = "constant/polyMesh/boundary"
@@ -42,9 +45,8 @@ def how_to_mesh(args):
     )
 
 
-def how_to_run(args):
-    """ Manages the running workflow for the project. """
-
+def how_to_run(args: Any) -> None:
+    """ Manage the running workflow for the project. """
     def preprocess() -> None:
         """ Copy initial conditions from 0.orig to 0 directory. """
         zero_dir = Path("0")
@@ -55,8 +57,8 @@ def how_to_run(args):
         if Path("0.orig").exists():
             shutil.copytree("0.orig", zero_dir)
 
-    def decomposing():
-        """ Manages domain splitting edition for decomposition. """
+    def decomposing() -> None:
+        """ Manage domain splitting edition for decomposition. """
         cores = args.cores
 
         dict_orig = Path("system/decomposeParDict.orig")

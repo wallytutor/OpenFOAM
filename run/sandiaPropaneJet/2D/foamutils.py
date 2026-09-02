@@ -8,7 +8,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import run, STDOUT, PIPE
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 
 if sys.platform != "linux":
@@ -624,19 +624,34 @@ class Meshing:
 
 
 class CommonProjectManager:
+    """ Manage OpenFOAM case project execution workflows.
+
+    Parameters
+    ----------
+    root_dir : Path
+        Base directory of the OpenFOAM project.
+    how_to_mesh : Callable
+        Workflow callback handling meshing tasks.
+    how_to_run : Callable
+        Workflow callback handling solver execution tasks.
+    how_to_clean : Callable = clean_case
+        Workflow callback handling case cleanup tasks.
+    """
+
     __slots__ = (
         "_root_dir",
         "_mesher",
         "_runner",
         "_cleaner",
     )
+
     def __init__(
-            self,
-            root_dir: Path,
-            how_to_mesh: Callable,
-            how_to_run: Callable,
-            how_to_clean: Callable = clean_case
-        ) -> None:
+        self,
+        root_dir: Path,
+        how_to_mesh: Callable,
+        how_to_run: Callable,
+        how_to_clean: Callable = clean_case
+    ) -> None:
         if not root_dir.exists():
             raise FileNotFoundError(root_dir)
 
@@ -645,21 +660,41 @@ class CommonProjectManager:
         self._runner   = how_to_run
         self._cleaner  = how_to_clean
 
-    def __call__(self, *args, **kwargs) -> None:
+    def valid_options(self, args):
+        """ At least one of these is needed to validate the workflow. """
+        return args.mesh or args.run or args.clean or args.reconstruct
+
+    def __call__(self, *args: Any, **kwargs: Any) -> None:
+        """ Execute CLI workflow based on parsed command line arguments.
+
+        Parameters
+        ----------
+        *args : Any
+            Positional CLI arguments passed from entrypoint.
+        **kwargs : Any
+            Keyword CLI arguments passed from entrypoint.
+
+        Returns
+        -------
+        None
+            Executes target workflow phase directly.
+        """
         os.chdir(self._root_dir)
 
         parser = common_arguments()
         args = parser.parse_args()
 
-        if not (args.mesh or args.run or args.clean or args.reconstruct):
+        process = args.mesh or args.run
+
+        if not self.valid_options(args):
             parser.print_help()
             return
 
-        if args.clean and not (args.mesh or args.run):
+        if args.clean and not process:
             self._cleaner(self._root_dir)
             return
 
-        if args.reconstruct and not (args.mesh or args.run):
+        if args.reconstruct and not process:
             Runner.reconstruct(latest=args.latest)
             return
 
