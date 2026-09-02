@@ -37,9 +37,13 @@ We will discuss refinement controls, including the placement of _refinement regi
 #include "_chapter4.typ"
 #include "_chapter5.typ"
 
-#part("Guided Examples")
+#part("Internal Flow Meshing")
+#part("External Flow Meshing")
+#part("Advanced Meshing")
+
 #include "_chapter6.typ"
 
+#part("Appendices")
 #show: appendix
 #include "_appendix1.typ"
 #include "_appendix2.typ"
