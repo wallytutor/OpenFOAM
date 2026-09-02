@@ -11,20 +11,16 @@ from pathlib import Path
 from subprocess import run
 
 from foamutils import Runner, Meshing
-from foamutils import source_openfoam_env
+from foamutils import source_openfoam_env, common_arguments
 from foamutils import banner as _banner
-
-_run_application = Runner.serial
-_run_parallel_application = Runner.parallel
 
 HERE = Path(__file__).resolve().parent
 
 
 def main():
     os.chdir(HERE)
-    source_openfoam_env()
 
-    parser = _parse_arguments()
+    parser = common_arguments()
     args = parser.parse_args()
 
     if not (args.mesh or args.run or args.clean or args.reconstruct):
@@ -36,10 +32,8 @@ def main():
         return
 
     if args.reconstruct and not (args.mesh or args.run):
-        _reconstruct(latest=args.latest)
+        # _reconstruct(latest=args.latest)
         return
-
-    Path("case.foam").touch()
 
     if args.mesh:
         if args.clean:
@@ -52,58 +46,25 @@ def main():
             if ans.strip().lower() in ("y", "yes"):
                 _clean()
 
-        _meshing(args.cores)
-        return
+        Path("case.foam").touch()
 
-    if args.run:
-        _running(
-            args.cores,
-            reconstruct = args.reconstruct,
-            latest      = args.latest
+        Meshing.gmsh_to_foam_single_region(
+            mesh_file = "constant/geometry/domain.msh",
+            patching  = fn_patching
         )
         return
 
+    if args.run:
+        Path("case.foam").touch()
 
-def _parse_arguments() -> ArgumentParser:
-    parser = ArgumentParser(
-        description="Workflow script for Sandia Propane Jet case."
-    )
-
-    parser.add_argument(
-        "--cores",
-        type    = int,
-        default = 1,
-        help    = "Number of cores to use (1, 4, 20)"
-    )
-    parser.add_argument(
-        "--clean",
-        action = "store_true",
-        help   = "Clean case files and logs"
-    )
-    parser.add_argument(
-        "--reconstruct",
-        action = "store_true",
-        help   = "Reconstruct parallel mesh/data and clean processor dirs"
-    )
-    parser.add_argument(
-        "--latest",
-        action = "store_true",
-        help   = "Reconstruct only the latest time step"
-    )
-
-    action_group = parser.add_mutually_exclusive_group()
-    action_group.add_argument(
-        "--mesh",
-        action = "store_true",
-        help   = "Run meshing workflow"
-    )
-    action_group.add_argument(
-        "--run",
-        action = "store_true",
-        help   = "Run solver workflow"
-    )
-
-    return parser
+        Runner.foam_run(
+            cores       = args,cores,
+            reconstruct = args.reconstruct,
+            preprocess  = fn_preprocessing,
+            decomposing = get_fn_parallel(args.cores),
+            latest      = args.latests
+        )
+        return
 
 
 def _clean():
@@ -146,162 +107,75 @@ def _clean():
             log_file.unlink(missing_ok=True)
 
 
-def _parallel(n: int):
-    log_decompose = Path("log.decomposePar")
+def fn_preprocessing():
+    """ Copy initial conditions. """
+    zero_dir = Path("0")
 
-    if log_decompose.exists():
-        log_decompose.unlink(missing_ok=True)
+    if zero_dir.exists():
+        shutil.rmtree(zero_dir, ignore_errors=True)
 
-    dict_orig = Path("system/decomposeParDict.orig")
-    dict_file = Path("system/decomposeParDict")
-
-    if not dict_file.exists():
-        shutil.copy(dict_orig, dict_file)
-
-    match n:
-        case 4:
-            n_coeffs = "(1 2 2)"
-        case 20:
-            n_coeffs = "(2 2 5)"
-        case 32:
-            n_coeffs = "(2 4 4)"
-        case 40:
-            n_coeffs = "(2 4 5)"
-        case _:
-            raise ValueError(f"Unsupported core count: {n}")
-
-    run(
-        [
-            "foamDictionary",
-            str(dict_file),
-            "-entry",
-            "numberOfSubdomains",
-            "-set",
-            f"{n}",
-        ],
-        check=True
-    )
-    run(
-        [
-            "foamDictionary",
-            str(dict_file),
-            "-entry",
-            "simpleCoeffs/n",
-            "-set",
-            n_coeffs,
-        ],
-        check=True
-    )
-
-    _run_application(["decomposePar"])
+    if Path("0.orig").exists():
+        shutil.copytree("0.orig", zero_dir)
 
 
-def _meshing(cores: int):
+def fn_patching():
+    file = "constant/polyMesh/boundary"
+
+    changes = [
+        ("entry0/front/type",         "wedge"),
+        ("entry0/back/type",          "wedge"),
+        ("entry0/pipeInnerWall/type", "wall"),
+        ("entry0/pipeOuterWall/type", "wall"),
+        ("entry0/pipeEndWall/type",   "wall"),
+        ("entry0/ductWalls/type",     "wall"),
+    ]
+
+    for entry, value in changes:
+        Runner.dict_set_entry(file, entry, value)
+
+
+def get_fn_parallel(cores: int):
     def patching():
-        file = "constant/polyMesh/boundary"
+        dict_orig = Path("system/decomposeParDict.orig")
+        dict_file = Path("system/decomposeParDict")
 
-        changes = [
-            ("entry0/front/type",         "wedge"),
-            ("entry0/back/type",          "wedge"),
-            ("entry0/pipeInnerWall/type", "wall"),
-            ("entry0/pipeOuterWall/type", "wall"),
-            ("entry0/pipeEndWall/type",   "wall"),
-            ("entry0/ductWalls/type",     "wall"),
-        ]
+        if not dict_file.exists():
+            shutil.copy(dict_orig, dict_file)
 
-        for entry, value in changes:
-            Runner.dict_set_entry(file, entry, value)
+        match cores:
+            case 4:
+                n_coeffs = "(1 2 2)"
+            case 20:
+                n_coeffs = "(2 2 5)"
+            case 32:
+                n_coeffs = "(2 4 4)"
+            case 40:
+                n_coeffs = "(2 4 5)"
+            case _:
+                raise ValueError(f"Unsupported core count: {cores}")
 
-    Meshing.gmsh_to_foam_single_region(
-        mesh_file = "constant/geometry/domain.msh",
-        patching  = patching
-    )
+        file = str(dict_file)
+        Runner.dict_set_entry(file, "numberOfSubdomains", f"{cores}")
+        Runner.dict_set_entry(file, "simpleCoeffs/n", n_coeffs)
 
-
-def _running(
-        cores: int,
-        reconstruct: bool = False,
-        latest: bool = False
-    ):
-    _banner(f"Starting simulation with {cores} core(s)")
-
-    # To open case with ParaView:
-    Path("case.foam").touch()
-
-    restart = _is_restart(cores)
-
-    if not restart:
-        # Copy initial conditions:
-        zero_dir = Path("0")
-
-        if zero_dir.exists():
-            shutil.rmtree(zero_dir, ignore_errors=True)
-
-        if Path("0.orig").exists():
-            shutil.copytree("0.orig", zero_dir)
-
-    # Run simulation:
-    match cores:
-        case 1:
-            _run_application(["foamRun"])
-        case _:
-            if not restart:
-                _parallel(cores)
-
-            _run_parallel_application(cores, ["foamRun"])
-
-            if reconstruct:
-                _reconstruct(latest=latest)
-
-    _banner("Simulation complete!")
+    return patching
 
 
-def _reconstruct(latest: bool = False):
-    procs = [p for p in Path(HERE).glob("processor*") if p.is_dir()]
+# def _reconstruct(latest: bool = False):
+#     procs = [p for p in Path(HERE).glob("processor*") if p.is_dir()]
 
-    if not procs:
-        return
+#     if not procs:
+#         return
 
-    if latest:
-        _run_application(["reconstructPar", "-latestTime"])
-    else:
-        _run_application(["reconstructPar", "-constant"])
+#     if latest:
+#         _run_application(["reconstructPar", "-latestTime"])
+#     else:
+#         _run_application(["reconstructPar", "-constant"])
 
-    # XXX it was a bad idea for stopping/restarting cases.
-    # for proc in procs:
-    #     shutil.rmtree(proc, ignore_errors=True)
+#     # XXX it was a bad idea for stopping/restarting cases.
+#     # for proc in procs:
+#     #     shutil.rmtree(proc, ignore_errors=True)
 
-
-def _get_latest_time(path: Path) -> float | None:
-    times = []
-
-    if not path.is_dir():
-        return None
-
-    for item in path.iterdir():
-        if item.is_dir() and re.match(r"^[0-9]+(\.[0-9]+)?$", item.name):
-            try:
-                times.append(float(item.name))
-            except ValueError:
-                pass
-
-    return max(times) if times else None
-
-
-def _is_restart(cores: int) -> bool:
-    procs = [p for p in HERE.glob("processor*") if p.is_dir()]
-
-    if len(procs) != cores:
-        return False
-
-    top_latest = _get_latest_time(HERE)
-
-    if top_latest is None:
-        return False
-
-    proc_times = [_get_latest_time(p) for p in procs]
-
-    return all(t is not None and t == top_latest for t in proc_times)
 
 
 if __name__ == "__main__":
