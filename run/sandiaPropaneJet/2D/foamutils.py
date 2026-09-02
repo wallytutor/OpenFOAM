@@ -8,20 +8,28 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import run, STDOUT, PIPE
-from typing import Callable
+from typing import Callable, Sequence
 
 
 if sys.platform != "linux":
     raise OSError("Only Linux is supported!")
 
 
-def common_arguments(source_env: bool = True) -> ArgumentParser:
-    """ Reusable argument parsing for common OpenFOAM cases.
+TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?$"
 
-    By default it will source environment variables (controlled by
-    `source_env` argument). If the defaults of `source_openfoam_env`
-    do not suit the local installation, set that value to false and
-    configure manually.
+
+def common_arguments(source_env: bool = True) -> ArgumentParser:
+    """ Construct reusable argument parser for OpenFOAM cases.
+
+    Parameters
+    ----------
+    source_env : bool = True
+        Whether to source OpenFOAM environment setup variables.
+
+    Returns
+    -------
+    ArgumentParser
+        Configured argument parser instance for OpenFOAM CLI workflows.
     """
     parser = ArgumentParser(description="OpenFOAM case workflow")
 
@@ -37,7 +45,7 @@ def common_arguments(source_env: bool = True) -> ArgumentParser:
         help   = "Clean case files and logs"
     )
 
-    #  TODO make --latest be accepted only if --reconstruct
+    # TODO make --latest be accepted only if --reconstruct
     parser.add_argument(
         "--reconstruct",
         action = "store_true",
@@ -68,7 +76,18 @@ def common_arguments(source_env: bool = True) -> ArgumentParser:
 
 
 def banner(message: str) -> None:
-    """ Minimal banner for printing messages in workflow. """
+    """ Print a formatted banner message to standard output.
+
+    Parameters
+    ----------
+    message : str
+        Message text to display inside standard workflow banner.
+
+    Returns
+    -------
+    None
+        Output is written directly to standard stdout stream.
+    """
     print(f"{78 * '='}\n{message}\n{78 * '='}\n")
 
 
@@ -76,7 +95,20 @@ def source_openfoam_env(
         foam_root: str | Path = "/opt/openfoam13",
         shell: str = "bash"
     ) -> None:
-    """ Sources OpenFOAM environment variables. """
+    """ Source OpenFOAM environment variables into current environment.
+
+    Parameters
+    ----------
+    foam_root : str | Path = "/opt/openfoam13"
+        Root installation path of OpenFOAM distribution.
+    shell : str = "bash"
+        Shell executable used to run environment configuration script.
+
+    Returns
+    -------
+    None
+        Updates active environment variables in os.environ directly.
+    """
     banner(f"Sourcing OpenFOAM environment for {shell}")
     rc = Path(foam_root) / f"etc/{shell}rc"
 
@@ -98,9 +130,22 @@ def source_openfoam_env(
 
 def get_latest_time(
         path: Path,
-        regex: str = r"^[0-9]+(\.[0-9]+)?$"
+        regex: str = TIME_DIR_REGEX
     ) -> float | None:
-    """ Find the latest execution time directory of a simulation. """
+    """ Find numerical value of latest simulation time directory.
+
+    Parameters
+    ----------
+    path : Path
+        Target directory containing execution time step folders.
+    regex : str = TIME_DIR_REGEX
+        Regular expression matching valid time directory names.
+
+    Returns
+    -------
+    float | None
+        Highest numerical time step found, or None if empty.
+    """
     times = []
 
     if not path.is_dir():
@@ -116,11 +161,19 @@ def get_latest_time(
     return max(times) if times else None
 
 
-def get_processor_dirs(root_dir) -> list[Path]:
-    return [p for p in root_dir.glob("processor*") if p.is_dir()]
-
-
 def is_openfoam_case(root_dir: Path | None = None) -> bool:
+    """ Check if target path contains a valid OpenFOAM case.
+
+    Parameters
+    ----------
+    root_dir : Path | None = None
+        Case directory path to verify. Defaults to current working dir.
+
+    Returns
+    -------
+    bool
+        True if system/controlDict file is present.
+    """
     if root_dir and not root_dir.exists():
         return False
 
@@ -130,15 +183,28 @@ def is_openfoam_case(root_dir: Path | None = None) -> bool:
 
 def is_restart(
         cores: int,
-        root_dir: Path | None = None,
+        root_dir: Path | None = None
     ) -> bool:
-    """ Check if there is past data compatible with a restart. """
+    """ Verify if directory contains valid past data for simulation restart.
+
+    Parameters
+    ----------
+    cores : int
+        Number of processor subdomains configured for parallel run.
+    root_dir : Path | None = None
+        Case directory path to check. Defaults to current working dir.
+
+    Returns
+    -------
+    bool
+        True if consistent time step outputs exist across all domains.
+    """
     here = root_dir if root_dir else Path.cwd()
 
     if not is_openfoam_case(here):
         raise FileNotFoundError(f"Not an OpenFOAM case: {here}")
 
-    procs = get_processor_dirs(here)
+    procs = [p for p in here.glob("processor*") if p.is_dir()]
 
     if len(procs) != cores:
         return False
@@ -151,23 +217,140 @@ def is_restart(
     return all(t is not None and t == top_latest for t in proc_times)
 
 
+def clean_case(
+        root_dir: str | Path | None = None,
+        *,
+        remove_zero: bool = True,
+        extra_dirs: Sequence[str | Path] | None = None,
+        extra_files: Sequence[str | Path] | None = None,
+        extra_patterns: Sequence[str] | None = None
+    ) -> None:
+    """ Clean execution outputs, mesh directories, and log files in case.
+
+    Parameters
+    ----------
+    root_dir : str | Path | None = None
+        Target case root directory. Defaults to current working dir.
+    remove_zero : bool = True
+        Whether to remove the 0 initial conditions directory.
+    extra_dirs : Sequence[str | Path] | None = None
+        Additional directory paths to remove.
+    extra_files : Sequence[str | Path] | None = None
+        Additional file paths to remove.
+    extra_patterns : Sequence[str] | None = None
+        Glob patterns for matching files/directories to delete.
+
+    Returns
+    -------
+    None
+        Case workspace is cleaned in place.
+    """
+    cwd = Path(root_dir) if root_dir else Path.cwd()
+
+    for item in cwd.iterdir():
+        if item.is_dir() and re.match(TIME_DIR_REGEX, item.name):
+            shutil.rmtree(item, ignore_errors=True)
+
+    dirs_to_remove = [
+        cwd / "constant" / "extendedFeatureEdgeMesh",
+        cwd / "constant" / "polyMesh",
+        cwd / "postProcessing",
+    ]
+
+    if remove_zero:
+        dirs_to_remove.append(cwd / "0")
+
+    if extra_dirs:
+        for ed in extra_dirs:
+            dirs_to_remove.append(Path(ed) if not isinstance(ed, Path) else ed)
+
+    for p in dirs_to_remove:
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
+
+    geom_dir = cwd / "constant" / "geometry"
+
+    if geom_dir.is_dir():
+        for f in geom_dir.glob("*.eMesh"):
+            if f.is_file():
+                f.unlink(missing_ok=True)
+
+    for p in cwd.glob("processor*"):
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
+
+    case_foam = cwd / "case.foam"
+
+    if case_foam.exists():
+        case_foam.unlink(missing_ok=True)
+
+    for log_file in cwd.glob("log.*"):
+        if log_file.is_file():
+            log_file.unlink(missing_ok=True)
+
+    if extra_files:
+        for ef in extra_files:
+            p = Path(ef) if not isinstance(ef, Path) else ef
+
+            if p.is_file():
+                p.unlink(missing_ok=True)
+
+    if extra_patterns:
+        for pattern in extra_patterns:
+            for match in cwd.glob(pattern):
+                if match.is_file():
+                    match.unlink(missing_ok=True)
+                elif match.is_dir():
+                    shutil.rmtree(match, ignore_errors=True)
+
+
 class Runner:
+    """ Manage serial and parallel execution of OpenFOAM applications. """
+
+    __slots__ = ()
+
     @staticmethod
-    def log_file(
-            log_name: str | None,
-            app_name: str
-        ) -> Path:
-        """ Standardized name of a log for a given application. """
+    def log_file(log_name: str | None, app_name: str) -> Path:
+        """ Return standardized log file Path for an application.
+
+        Parameters
+        ----------
+        log_name : str | None
+            Explicit log filename override, or None for standard format.
+        app_name : str
+            Executable application name used to generate default filename.
+
+        Returns
+        -------
+        Path
+            Target log file path location.
+        """
         return Path(log_name if log_name else f"log.{app_name}")
 
     @classmethod
     def serial(
-            cls,
-            args: list[str],
-            log_name: str | None = None,
-            force: bool = False,
-        ) -> None:
-        """ Wraps running an application with simultaneous logging. """
+        cls,
+        args: list[str],
+        *,
+        log_name: str | None = None,
+        force: bool = False
+    ) -> None:
+        """ Execute application in serial mode while logging stdout/stderr.
+
+        Parameters
+        ----------
+        args : list[str]
+            Command arguments array starting with application binary name.
+        log_name : str | None = None
+            Custom log filename override.
+        force : bool = False
+            Whether to overwrite an existing log file of the same name.
+
+        Returns
+        -------
+        None
+            Subprocess executes and directs output into log file.
+        """
         log_file = cls.log_file(log_name, args[0])
 
         if log_file.exists() and not force:
@@ -178,13 +361,31 @@ class Runner:
 
     @classmethod
     def parallel(
-            cls,
-            args: list[str],
-            log_name: str | None = None,
-            cores: int = 1,
-            force: bool = False,
-        ) -> None:
-        """ Wraps running an application with simultaneous logging. """
+        cls,
+        args: list[str],
+        *,
+        log_name: str | None = None,
+        cores: int = 1,
+        force: bool = False
+    ) -> None:
+        """ Execute application in parallel mode using mpirun launcher.
+
+        Parameters
+        ----------
+        args : list[str]
+            Command arguments array for OpenFOAM solver/tool.
+        log_name : str | None = None
+            Custom log filename override.
+        cores : int = 1
+            Number of MPI process slots to allocate.
+        force : bool = False
+            Whether to overwrite existing log file.
+
+        Returns
+        -------
+        None
+            Constructs MPI execution command and delegates to serial log.
+        """
         if cores > 1:
             cmd = ["mpirun", "-np", str(cores), args[0], "-parallel"]
             args = cmd + args[1:]
@@ -193,58 +394,109 @@ class Runner:
 
     @classmethod
     def decompose(
-            cls,
-            *,
-            log_name: str | None = None,
-            force: bool = False,
-            patching: Callable[[], None] | None = None
-        ) -> None:
-        """ Manages the domain decomposition. """
+        cls,
+        *,
+        log_name: str | None = None,
+        force: bool = False,
+        patching: Callable[[], None] | None = None
+    ) -> None:
+        """ Run domain decomposition using decomposePar utility.
+
+        Parameters
+        ----------
+        log_name : str | None = None
+            Custom log filename for decomposePar command.
+        force : bool = False
+            Whether to overwrite existing decomposePar log.
+        patching : Callable[[], None] | None = None
+            Optional setup function executed before domain decomposition.
+
+        Returns
+        -------
+        None
+            Invokes decomposePar tool after optional patching step.
+        """
         dict_file = Path("system/decomposeParDict")
 
         if callable(patching):
             patching()
 
-        if not dict_file:
+        if not dict_file.exists():
             raise FileNotFoundError(dict_file)
 
         cls.serial(["decomposePar"], log_name=log_name, force=force)
 
     @classmethod
     def reconstruct(
-            cls,
-            *,
-            latest: bool = False,
-            force_clean: bool = False,
-            root_dir: str | Path | None = None,
-        ) -> None:
-        here = root_dir if root_dir else Path.cwd()
-        procs = get_processor_dirs(here)
+        cls,
+        *,
+        log_name: str | None = None,
+        force: bool = False,
+        latest: bool = False
+    ) -> None:
+        """ Reconstruct parallel simulation data using reconstructPar.
+
+        Parameters
+        ----------
+        log_name : str | None = None
+            Custom log filename for reconstructPar output.
+        force : bool = False
+            Whether to overwrite existing reconstructPar log file.
+        latest : bool = False
+            Whether to reconstruct only the latest time step.
+
+        Returns
+        -------
+        None
+            Runs reconstructPar in serial mode if processor dirs exist.
+        """
+        procs = [p for p in Path.cwd().glob("processor*") if p.is_dir()]
 
         if not procs:
             return
 
-        if latest:
-            cls.serial(["reconstructPar", "-latestTime"])
-        else:
-            cls.serial(["reconstructPar", "-constant"])
-
-        if force_clean:
-            for proc in procs:
-                shutil.rmtree(proc, ignore_errors=True)
+        cmd = ["reconstructPar", "-latestTime"] if latest else ["reconstructPar"]
+        cls.serial(cmd, log_name=log_name, force=force)
 
     @classmethod
     def foam_run(
-            cls,
-            *,
-            log_name: str | None = None,
-            cores: int = 1,
-            force: bool = False,
-            reconstruct: bool = False,
-            preprocess: Callable[[], None] | None = None,
-            decomposing: Callable[[], None] | None = None,
-            **kwargs
-        ) -> None:
+        cls,
+        app_args: list[str] | None = None,
+        *,
+        log_name: str | None = None,
+        cores: int = 1,
+        force: bool = False,
+        reconstruct: bool = False,
+        preprocess: Callable[[], None] | None = None,
+        decomposing: Callable[[], None] | None = None,
+        latest: bool = False
+    ) -> None:
+        """ Manage end-to-end OpenFOAM solver workflow execution.
+
+        Parameters
+        ----------
+        app_args : list[str] | None = None
+            Application command list. Defaults to ['foamRun'].
+        log_name : str | None = None
+            Log filename for solver execution.
+        cores : int = 1
+            Number of processor slots to use for computation.
+        force : bool = False
+            Whether to force overwriting existing log outputs.
+        reconstruct : bool = False
+            Whether to run reconstruction after solver finishes.
+        preprocess : Callable[[], None] | None = None
+            Callback executed before running initial setup.
+        decomposing : Callable[[], None] | None = None
+            Callback executed during domain decomposition phase.
+        latest : bool = False
+            Whether to reconstruct only the latest time step.
+
+        Returns
+        -------
+        None
+            Executes preprocessing, decomposition, solver, and optional rec.
+        """
         restart = is_restart(cores)
 
         if not restart and callable(preprocess):
@@ -253,54 +505,91 @@ class Runner:
         if not restart and cores > 1:
             cls.decompose(patching=decomposing)
 
+        cmd_args = app_args if app_args is not None else ["foamRun"]
+
         cls.parallel(
-            args     = ["foamRun"],
+            args     = cmd_args,
             log_name = log_name,
             cores    = cores,
             force    = force
         )
 
         if reconstruct:
-            pass
-            # _reconstruct(latest=latest)
+            cls.reconstruct(latest=latest)
 
     @classmethod
     def dict_set_entry(
-            cls,
-            file: str | Path,
-            entry: str,
-            value: str,
-            *,
-            log_name: str | None = None,
-            force: bool = False
-        ) -> None:
-        # If not log name is provided, assume the user is ok with
-        # overwritting (as setting entries is generally a batch).
+        cls,
+        file: str | Path,
+        entry: str,
+        value: str,
+        *,
+        log_name: str | None = None,
+        force: bool = False
+    ) -> None:
+        """ Set a dictionary entry value via foamDictionary tool.
+
+        Parameters
+        ----------
+        file : str | Path
+            Target OpenFOAM dictionary file path.
+        entry : str
+            Target key/entry path within dictionary.
+        value : str
+            New string value to write to entry.
+        log_name : str | None = None
+            Custom log filename for foamDictionary call.
+        force : bool = False
+            Whether to force log file replacement.
+
+        Returns
+        -------
+        None
+            Executes foamDictionary -entry -set command in serial mode.
+        """
         if not log_name:
             force = True
 
-        Runner.serial(
+        cls.serial(
             args = [
-                "foamDictionary", file,
+                "foamDictionary", str(file),
                 "-entry", entry,
                 "-set", value
             ],
-            force = force
+            log_name = log_name,
+            force    = force
         )
 
 
 class Meshing:
+    """ Utility routines for mesh generation and conversion operations. """
+
+    __slots__ = ()
+
     @classmethod
     def gmsh_to_foam_single_region(
-            cls,
-            mesh_file: str | Path,
-            patching: Callable[[], None] | None = None
-        ) -> None:
-        """ Convert a Gmsh .msh into an OpenFOAM mesh. """
+        cls,
+        mesh_file: str | Path,
+        *,
+        patching: Callable[[], None] | None = None
+    ) -> None:
+        """ Convert Gmsh mesh into single-region OpenFOAM polyMesh format.
+
+        Parameters
+        ----------
+        mesh_file : str | Path
+            Path to input Gmsh .msh mesh file.
+        patching : Callable[[], None] | None = None
+            Optional callback executed after conversion to update boundaries.
+
+        Returns
+        -------
+        None
+            Runs gmshToFoam, renumberMesh, and checkMesh sequentially.
+        """
         banner("Workflow gmshToFoam for a single region")
 
-        if not isinstance(mesh_file, Path):
-            geometry = Path(mesh_file)
+        geometry = Path(mesh_file)
 
         if not geometry.exists():
             raise FileNotFoundError(geometry)
@@ -317,4 +606,77 @@ class Meshing:
 
     @classmethod
     def snappyhexmesh(cls, *args, **kwargs) -> None:
-        raise NotImplemented
+        """ Placeholder for snappyHexMesh workflow.
+
+        Parameters
+        ----------
+        *args : Any
+            Positional arguments.
+        **kwargs : Any
+            Keyword arguments.
+
+        Returns
+        -------
+        None
+            Raises NotImplementedError when called.
+        """
+        raise NotImplementedError
+
+
+class CommonProjectManager:
+    __slots__ = (
+        "_root_dir",
+        "_mesher",
+        "_runner",
+        "_cleaner",
+    )
+    def __init__(
+            self,
+            root_dir: Path,
+            how_to_mesh: Callable,
+            how_to_run: Callable,
+            how_to_clean: Callable = clean_case
+        ) -> None:
+        if not root_dir.exists():
+            raise FileNotFoundError(root_dir)
+
+        self._root_dir = root_dir
+        self._mesher   = how_to_mesh
+        self._runner   = how_to_run
+        self._cleaner  = how_to_clean
+
+    def __call__(self, *args, **kwargs) -> None:
+        os.chdir(self._root_dir)
+
+        parser = common_arguments()
+        args = parser.parse_args()
+
+        if not (args.mesh or args.run or args.clean or args.reconstruct):
+            parser.print_help()
+            return
+
+        if args.clean and not (args.mesh or args.run):
+            self._cleaner(self._root_dir)
+            return
+
+        if args.reconstruct and not (args.mesh or args.run):
+            Runner.reconstruct(latest=args.latest)
+            return
+
+        if args.mesh:
+            if args.clean:
+                self._cleaner(self._root_dir)
+            else:
+                ans = input(
+                    "Do you want to clean the case before meshing? (y/N): "
+                )
+
+                if ans.strip().lower() in ("y", "yes"):
+                    self._cleaner(self._root_dir)
+
+            self._mesher(args)
+            return
+
+        if args.run:
+            self._runner(args)
+            return

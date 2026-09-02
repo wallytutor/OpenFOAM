@@ -1,141 +1,64 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-import os
-import re
 import shutil
-import subprocess
-
-from argparse import ArgumentParser
 from pathlib import Path
-from subprocess import run
-
-from foamutils import Runner, Meshing
-from foamutils import source_openfoam_env, common_arguments
-from foamutils import banner as _banner
-
-HERE = Path(__file__).resolve().parent
+from foamutils import Runner, Meshing, CommonProjectManager
 
 
-def main():
-    os.chdir(HERE)
-
-    parser = common_arguments()
-    args = parser.parse_args()
-
-    if not (args.mesh or args.run or args.clean or args.reconstruct):
-        parser.print_help()
-        return
-
-    if args.clean and not (args.mesh or args.run):
-        _clean()
-        return
-
-    if args.reconstruct and not (args.mesh or args.run):
-        Runner.reconstruct(latest=args.latest)
-        return
-
-    if args.mesh:
-        if args.clean:
-            _clean()
-        else:
-            ans = input(
-                "Do you want to clean the case before meshing? (y/N): "
-            )
-
-            if ans.strip().lower() in ("y", "yes"):
-                _clean()
-
-        Path("case.foam").touch()
-
-        Meshing.gmsh_to_foam_single_region(
-            mesh_file = "constant/geometry/domain.msh",
-            patching  = fn_patching
-        )
-        return
-
-    if args.run:
-        Path("case.foam").touch()
-
-        Runner.foam_run(
-            cores       = args.cores,
-            reconstruct = args.reconstruct,
-            preprocess  = fn_preprocessing,
-            decomposing = get_fn_parallel(args.cores),
-            latest      = args.latest
-        )
-        return
+def main(*args) -> None:
+    """ Execute main CLI workflow for the 2D OpenFOAM case. """
+    obj = CommonProjectManager(
+        root_dir    = Path(__file__).resolve().parent,
+        how_to_mesh = how_to_mesh,
+        how_to_run  = how_to_run,
+    )
+    obj(*args)
 
 
-def _clean():
-    cwd = Path(HERE)
+def how_to_mesh(args):
+    """ Manages the meshing workflow for the project. """
+    def patching() -> None:
+        """ Configure boundary patch types in boundary. """
+        file = "constant/polyMesh/boundary"
 
-    # Remove numeric time directories in cwd (e.g. "0.1", "100", etc.)
-    for item in cwd.iterdir():
-        if item.is_dir() and re.match(r"^[0-9]+(\.[0-9]+)?$", item.name):
-            shutil.rmtree(item, ignore_errors=True)
+        changes = [
+            ("entry0/front/type",         "wedge"),
+            ("entry0/back/type",          "wedge"),
+            ("entry0/pipeInnerWall/type", "wall"),
+            ("entry0/pipeOuterWall/type", "wall"),
+            ("entry0/pipeEndWall/type",   "wall"),
+            ("entry0/ductWalls/type",     "wall"),
+        ]
 
-    dirs_to_remove = [
-        cwd / "0",
-        cwd / "constant" / "extendedFeatureEdgeMesh",
-        cwd / "constant" / "polyMesh",
-        cwd / "postProcessing",
-    ]
+        for entry, value in changes:
+            Runner.dict_set_entry(file, entry, value)
 
-    for p in dirs_to_remove:
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
+    Path("case.foam").touch()
 
-    geom_dir = cwd / "constant" / "geometry"
-
-    if geom_dir.is_dir():
-        for f in geom_dir.glob("*.eMesh"):
-            if f.is_file():
-                f.unlink(missing_ok=True)
-
-    for p in cwd.glob("processor*"):
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
-
-    case_foam = cwd / "case.foam"
-
-    if case_foam.exists():
-        case_foam.unlink(missing_ok=True)
-
-    for log_file in cwd.glob("log.*"):
-        if log_file.is_file():
-            log_file.unlink(missing_ok=True)
+    Meshing.gmsh_to_foam_single_region(
+        mesh_file = "constant/geometry/domain.msh",
+        patching  = patching
+    )
 
 
-def fn_preprocessing():
-    """ Copy initial conditions to the *zero* directory. """
-    zero_dir = Path("0")
+def how_to_run(args):
+    """ Manages the running workflow for the project. """
 
-    if zero_dir.exists():
-        shutil.rmtree(zero_dir, ignore_errors=True)
+    def preprocess() -> None:
+        """ Copy initial conditions from 0.orig to 0 directory. """
+        zero_dir = Path("0")
 
-    if Path("0.orig").exists():
-        shutil.copytree("0.orig", zero_dir)
+        if zero_dir.exists():
+            shutil.rmtree(zero_dir, ignore_errors=True)
 
+        if Path("0.orig").exists():
+            shutil.copytree("0.orig", zero_dir)
 
-def fn_patching():
-    file = "constant/polyMesh/boundary"
+    def decomposing():
+        """ Manages domain splitting edition for decomposition. """
+        cores = args.cores
 
-    changes = [
-        ("entry0/front/type",         "wedge"),
-        ("entry0/back/type",          "wedge"),
-        ("entry0/pipeInnerWall/type", "wall"),
-        ("entry0/pipeOuterWall/type", "wall"),
-        ("entry0/pipeEndWall/type",   "wall"),
-        ("entry0/ductWalls/type",     "wall"),
-    ]
-
-    for entry, value in changes:
-        Runner.dict_set_entry(file, entry, value)
-
-
-def get_fn_parallel(cores: int):
-    def patching():
         dict_orig = Path("system/decomposeParDict.orig")
         dict_file = Path("system/decomposeParDict")
 
@@ -158,7 +81,15 @@ def get_fn_parallel(cores: int):
         Runner.dict_set_entry(file, "numberOfSubdomains", f"{cores}")
         Runner.dict_set_entry(file, "simpleCoeffs/n", n_coeffs)
 
-    return patching
+    Path("case.foam").touch()
+
+    Runner.foam_run(
+        cores       = args.cores,
+        reconstruct = args.reconstruct,
+        preprocess  = preprocess,
+        decomposing = decomposing,
+        latest      = args.latest
+    )
 
 
 if __name__ == "__main__":
