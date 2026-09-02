@@ -10,13 +10,19 @@ from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import run
 
+from foamutils import Runner, Meshing
+from foamutils import source_openfoam_env
+from foamutils import banner as _banner
+
+_run_application = Runner.serial
+_run_parallel_application = Runner.parallel
 
 HERE = Path(__file__).resolve().parent
 
 
 def main():
     os.chdir(HERE)
-    _source_openfoam_env()
+    source_openfoam_env()
 
     parser = _parse_arguments()
     args = parser.parse_args()
@@ -32,6 +38,8 @@ def main():
     if args.reconstruct and not (args.mesh or args.run):
         _reconstruct(latest=args.latest)
         return
+
+    Path("case.foam").touch()
 
     if args.mesh:
         if args.clean:
@@ -162,7 +170,7 @@ def _parallel(n: int):
         case _:
             raise ValueError(f"Unsupported core count: {n}")
 
-    _run_cmd(
+    run(
         [
             "foamDictionary",
             str(dict_file),
@@ -170,9 +178,10 @@ def _parallel(n: int):
             "numberOfSubdomains",
             "-set",
             f"{n}",
-        ]
+        ],
+        check=True
     )
-    _run_cmd(
+    run(
         [
             "foamDictionary",
             str(dict_file),
@@ -180,50 +189,35 @@ def _parallel(n: int):
             "simpleCoeffs/n",
             "-set",
             n_coeffs,
-        ]
+        ],
+        check=True
     )
 
     _run_application(["decomposePar"])
 
 
 def _meshing(cores: int):
-    _banner(f"Starting mesh generation with {cores} core(s)")
+    def patching():
+        file = "constant/polyMesh/boundary"
 
-    # To open case with ParaView:
-    Path("case.foam").touch()
+        changes = [
+            ("entry0/front/type",         "wedge"),
+            ("entry0/back/type",          "wedge"),
+            ("entry0/pipeInnerWall/type", "wall"),
+            ("entry0/pipeOuterWall/type", "wall"),
+            ("entry0/pipeEndWall/type",   "wall"),
+            ("entry0/ductWalls/type",     "wall"),
+        ]
 
-    # Extract feature edges from STL surfaces
-    _run_application(["surfaceFeatures"])
+        # Use force=True to overwrite logs.
+        for entry, value in changes:
+            args = ["foamDictionary", file, "-entry", entry, "-set", value]
+            Runner.serial(args, force=True)
 
-    # Create background mesh
-    _run_application(["blockMesh"])
-
-    # Run snappyHexMesh
-    match cores:
-        case 1:
-            _run_application(["snappyHexMesh"])
-        case _:
-            _parallel(cores)
-            _run_parallel_application(cores, ["snappyHexMesh"])
-            _run_application(["reconstructPar", "-constant"])
-
-            for proc in Path(".").glob("processor*"):
-                if proc.is_dir():
-                    shutil.rmtree(proc, ignore_errors=True)
-
-    # Note: the required files were moved into library/ as this approach
-    # led to geometric issues with the matching of a patch. To be avoided.
-    # Split inlet patch into inletFuel and inletCoflow
-    # runApplication topoSet
-    # runApplication createPatch -overwrite
-
-    # Re-number the mesh to reduce bandwidth
-    _run_application(["renumberMesh"])
-
-    # Check mesh quality
-    _run_application(["checkMesh"])
-
-    _banner("Mesh generation complete!")
+    Meshing.gmsh_to_foam_single_region(
+        mesh_file = "constant/geometry/domain.msh",
+        patching  = patching
+    )
 
 
 def _running(
@@ -280,10 +274,6 @@ def _reconstruct(latest: bool = False):
     #     shutil.rmtree(proc, ignore_errors=True)
 
 
-def _banner(message: str):
-    print(f"{78 * '='}\n{message}\n{78 * '='}\n")
-
-
 def _get_latest_time(path: Path) -> float | None:
     times = []
 
@@ -314,74 +304,6 @@ def _is_restart(cores: int) -> bool:
     proc_times = [_get_latest_time(p) for p in procs]
 
     return all(t is not None and t == top_latest for t in proc_times)
-
-
-def _run_cmd(cmd: list[str]) -> None:
-    run(cmd, check=True)
-
-
-def _run_application(
-        args: list[str],
-        log_name: str | None = None
-    ) -> None:
-    app_name = args[0]
-
-    if log_name is None:
-        log_file = Path(f"log.{app_name}")
-    else:
-        log_file = Path(log_name)
-
-    with log_file.open("w") as f:
-        run(args, stdout=f, stderr=subprocess.STDOUT, check=True)
-
-
-def _run_parallel_application(
-        cores: int,
-        args: list[str],
-        log_name: str | None = None
-    ) -> None:
-    app_name = args[0]
-
-    if log_name is None:
-        log_file = Path(f"log.{app_name}")
-    else:
-        log_file = Path(log_name)
-
-    with log_file.open("w") as f:
-        run(
-            [
-                "mpirun",
-                "-np",
-                str(cores),
-                app_name,
-                "-parallel"
-            ] + args[1:],
-            stdout = f,
-            stderr = subprocess.STDOUT,
-            check  = True
-        )
-
-
-def _source_openfoam_env() -> None:
-    of_bashrc = Path("/opt/openfoam13/etc/bashrc")
-
-    if not of_bashrc.exists():
-        raise FileNotFoundError(
-            f"OpenFOAM v13 bashrc not found: {of_bashrc}"
-        )
-
-    proc = run(
-        ["bash", "-c", f"source {of_bashrc} && env"],
-        stdout=subprocess.PIPE,
-        text=True,
-        check=True,
-    )
-
-    for line in proc.stdout.splitlines():
-        key, _, val = line.partition("=")
-
-        if key and val:
-            os.environ[key] = val
 
 
 if __name__ == "__main__":
