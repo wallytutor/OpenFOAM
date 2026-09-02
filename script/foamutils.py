@@ -88,7 +88,7 @@ def banner(message: str) -> None:
     None
         Output is written directly to standard stdout stream.
     """
-    print(f"{78 * '='}\n{message}\n{78 * '='}\n")
+    print(f"{78 * '='}\n> {message}\n")
 
 
 def source_openfoam_env(
@@ -699,15 +699,10 @@ class CommonProjectManager:
             return
 
         if args.mesh:
-            if args.clean:
+            if args.clean or validate_input(
+                "Do you want to clean the case before meshing?"
+            ):
                 self._cleaner(self._root_dir)
-            else:
-                ans = input(
-                    "Do you want to clean the case before meshing? (y/N): "
-                )
-
-                if ans.strip().lower() in ("y", "yes"):
-                    self._cleaner(self._root_dir)
 
             self._mesher(args)
             return
@@ -715,3 +710,16 @@ class CommonProjectManager:
         if args.run:
             self._runner(args)
             return
+
+
+
+def validate_input(msg: str) -> bool:
+    while True:
+        match (ans := input(f"{msg} (y/N): ").lower().strip()):
+            case "y":
+                return True
+            case "n":
+                return False
+            case _:
+                print(f"Invalid input {ans}; please, answer (y/N)")
+                continue

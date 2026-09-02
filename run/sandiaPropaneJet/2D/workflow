@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import shutil
+import sys
+
 from pathlib import Path
 from typing import Any
+
+HERE = Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE.parents[2] / "script"))
 
 from foamutils import Runner, Meshing, CommonProjectManager
 
@@ -11,7 +16,7 @@ from foamutils import Runner, Meshing, CommonProjectManager
 def main(*args: Any) -> None:
     """ Execute main CLI workflow for the 2D OpenFOAM case. """
     obj = CommonProjectManager(
-        root_dir    = Path(__file__).resolve().parent,
+        root_dir    = HERE,
         how_to_mesh = how_to_mesh,
         how_to_run  = how_to_run,
     )
