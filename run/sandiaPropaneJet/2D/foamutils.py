@@ -2,6 +2,7 @@
 
 import os
 import re
+import shutil
 import sys
 
 from argparse import ArgumentParser
@@ -12,7 +13,6 @@ from typing import Callable
 
 if sys.platform != "linux":
     raise OSError("Only Linux is supported!")
-
 
 
 def common_arguments(source_env: bool = True) -> ArgumentParser:
@@ -116,6 +116,10 @@ def get_latest_time(
     return max(times) if times else None
 
 
+def get_processor_dirs(root_dir) -> list[Path]:
+    return [p for p in root_dir.glob("processor*") if p.is_dir()]
+
+
 def is_openfoam_case(root_dir: Path | None = None) -> bool:
     if root_dir and not root_dir.exists():
         return False
@@ -134,7 +138,7 @@ def is_restart(
     if not is_openfoam_case(here):
         raise FileNotFoundError(f"Not an OpenFOAM case: {here}")
 
-    procs = [p for p in here.glob("processor*") if p.is_dir()]
+    procs = get_processor_dirs(here)
 
     if len(procs) != cores:
         return False
@@ -190,6 +194,7 @@ class Runner:
     @classmethod
     def decompose(
             cls,
+            *,
             log_name: str | None = None,
             force: bool = False,
             patching: Callable[[], None] | None = None
@@ -204,6 +209,29 @@ class Runner:
             raise FileNotFoundError(dict_file)
 
         cls.serial(["decomposePar"], log_name=log_name, force=force)
+
+    @classmethod
+    def reconstruct(
+            cls,
+            *,
+            latest: bool = False,
+            force_clean: bool = False,
+            root_dir: str | Path | None = None,
+        ) -> None:
+        here = root_dir if root_dir else Path.cwd()
+        procs = get_processor_dirs(here)
+
+        if not procs:
+            return
+
+        if latest:
+            cls.serial(["reconstructPar", "-latestTime"])
+        else:
+            cls.serial(["reconstructPar", "-constant"])
+
+        if force_clean:
+            for proc in procs:
+                shutil.rmtree(proc, ignore_errors=True)
 
     @classmethod
     def foam_run(
@@ -226,7 +254,7 @@ class Runner:
             cls.decompose(patching=decomposing)
 
         cls.parallel(
-            args     = ["foamRum"],
+            args     = ["foamRun"],
             log_name = log_name,
             cores    = cores,
             force    = force
@@ -242,6 +270,7 @@ class Runner:
             file: str | Path,
             entry: str,
             value: str,
+            *,
             log_name: str | None = None,
             force: bool = False
         ) -> None:
@@ -251,12 +280,12 @@ class Runner:
             force = True
 
         Runner.serial(
-            [
+            args = [
                 "foamDictionary", file,
                 "-entry", entry,
                 "-set", value
             ],
-            force=force
+            force = force
         )
 
 

@@ -58,11 +58,11 @@ def main():
         Path("case.foam").touch()
 
         Runner.foam_run(
-            cores       = args,cores,
+            cores       = args.cores,
             reconstruct = args.reconstruct,
             preprocess  = fn_preprocessing,
             decomposing = get_fn_parallel(args.cores),
-            latest      = args.latests
+            latest      = args.latest
         )
         return
 
@@ -108,7 +108,7 @@ def _clean():
 
 
 def fn_preprocessing():
-    """ Copy initial conditions. """
+    """ Copy initial conditions to the *zero* directory. """
     zero_dir = Path("0")
 
     if zero_dir.exists():
@@ -159,23 +159,6 @@ def get_fn_parallel(cores: int):
         Runner.dict_set_entry(file, "simpleCoeffs/n", n_coeffs)
 
     return patching
-
-
-# def _reconstruct(latest: bool = False):
-#     procs = [p for p in Path(HERE).glob("processor*") if p.is_dir()]
-
-#     if not procs:
-#         return
-
-#     if latest:
-#         _run_application(["reconstructPar", "-latestTime"])
-#     else:
-#         _run_application(["reconstructPar", "-constant"])
-
-#     # XXX it was a bad idea for stopping/restarting cases.
-#     # for proc in procs:
-#     #     shutil.rmtree(proc, ignore_errors=True)
-
 
 
 if __name__ == "__main__":
