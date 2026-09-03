@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import functools
 import os
 import re
 import shlex
@@ -219,6 +220,22 @@ def is_openfoam_case(root_dir: Path | None = None) -> bool:
     return (here / "system/controlDict").exists()
 
 
+def ensure_openfoam_case(func):
+    """ Ensure function is called from an OpenFOAM case. """
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        here = kwargs.get("root_dir", Path.cwd())
+
+        if not is_openfoam_case(here):
+            raise NotADirectoryError(f"Not an OpenFOAM case: {here}")
+
+        Path("case.foam").touch()
+
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
 def is_restart(
         cores: int,
         root_dir: Path | None = None
@@ -333,7 +350,8 @@ def clean_case(
         remove_zero: bool = True,
         extra_dirs: Sequence[str | Path] | None = None,
         extra_files: Sequence[str | Path] | None = None,
-        extra_patterns: Sequence[str] | None = None
+        extra_patterns: Sequence[str] | None = None,
+        **kwargs: Any,
     ) -> None:
     """ Clean execution outputs, mesh directories, and log files in case.
 
@@ -898,9 +916,9 @@ class CommonProjectManager:
             raise FileNotFoundError(root_dir)
 
         self._root_dir = root_dir
-        self._mesher   = how_to_mesh
-        self._runner   = how_to_run
-        self._cleaner  = how_to_clean
+        self._mesher   = ensure_openfoam_case(how_to_mesh)
+        self._runner   = ensure_openfoam_case(how_to_run)
+        self._cleaner  = ensure_openfoam_case(how_to_clean)
         self._get_args = get_args
 
     def valid_options(self, args):
@@ -924,8 +942,6 @@ class CommonProjectManager:
         """
         os.chdir(self._root_dir)
 
-        Path("case.foam").touch()
-
         parser = self._get_args()
         args = parser.parse_args()
 
@@ -947,11 +963,11 @@ class CommonProjectManager:
             if args.clean or validate_input(
                 "Do you want to clean the case before meshing?"
             ):
-                self._cleaner(self._root_dir)
+                self._cleaner(root_dir=self._root_dir)
 
-            self._mesher(args)
+            self._mesher(args, root_dir=self._root_dir)
             return
 
         if args.run:
-            self._runner(args)
+            self._runner(args, root_dir=self._root_dir)
             return
