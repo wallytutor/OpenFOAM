@@ -10,7 +10,7 @@ import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from subprocess import run, STDOUT, PIPE
-from time import time_ns
+from time import perf_counter, time_ns
 from typing import Any, Callable, Sequence
 
 
@@ -22,6 +22,10 @@ TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
 
 
 class ArgumentsPresets:
+    """ Reusable ArgumentParser preset builders for OpenFOAM workflows. """
+
+    __slots__ = ()
+
     @classmethod
     def common(cls, source_env: bool = True) -> ArgumentParser:
         """ Construct reusable argument parser for OpenFOAM cases.
@@ -308,6 +312,7 @@ def ensure_openfoam_case(func: Callable) -> Callable:
     """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
+        t0 = perf_counter()
         here = kwargs.get("root_dir", Path.cwd())
 
         if not is_openfoam_case(here):
@@ -315,7 +320,10 @@ def ensure_openfoam_case(func: Callable) -> Callable:
 
         Path("case.foam").touch()
 
-        return func(*args, **kwargs)
+        values = func(*args, **kwargs)
+
+        print(f"Workflow took {perf_counter() - t0} seconds")
+        return values
 
     return wrapper
 
@@ -596,11 +604,16 @@ class Runner:
         if isinstance(args, str):
             args = shlex.split(args)
 
+        app_bin = str(args[0])
+
         if cores > 1:
-            cmd = ["mpirun", "-np", str(cores), args[0], "-parallel"]
+            cmd = ["mpirun", "-np", str(cores), app_bin, "-parallel"]
             args = cmd + args[1:]
 
-        log_name = cls.log_file(log_name, f"{args[3]}_parallel").name
+        log_name = cls.log_file(
+            log_name,
+            f"{app_bin}_parallel" if cores > 1 else app_bin
+        ).name
 
         cls.serial(args, log_name=log_name, force=force)
 
@@ -859,6 +872,22 @@ class Meshing:
             check_mesh: bool = True,
             **kwargs: Any
         ) -> None:
+        """ Run post-meshing routines (renumberMesh, checkMesh).
+
+        Parameters
+        ----------
+        renumber_mesh : bool = True
+            Whether to renumber mesh to reduce bandwidth.
+        check_mesh : bool = True
+            Whether to run checkMesh for quality evaluation.
+        **kwargs : Any
+            Additional execution options (e.g., checkMesh_options).
+
+        Returns
+        -------
+        None
+            Executes post-meshing utilities.
+        """
         if renumber_mesh:
             Runner.serial("renumberMesh")
 
@@ -882,8 +911,14 @@ class Meshing:
         ----------
         mesh_file : str | Path
             Path to input Gmsh .msh mesh file.
+        renumber_mesh : bool = True
+            Whether to renumber mesh to reduce matrix bandwidth.
+        check_mesh : bool = True
+            Whether to run checkMesh for mesh quality evaluation.
         patching : Callable[[], None] | None = None
             Optional callback executed after conversion to update boundaries.
+        **kwargs : Any
+            Additional execution options (e.g., checkMesh_options).
 
         Returns
         -------
@@ -1024,7 +1059,7 @@ class CommonProjectManager:
         Workflow callback handling solver execution tasks.
     how_to_clean : Callable = clean_case
         Workflow callback handling case cleanup tasks.
-    get_args : Callable = ArgumentsPresets.common
+    get_args : str | Callable = ArgumentsPresets.common
         Callback for parsing command line arguments.
     """
 
