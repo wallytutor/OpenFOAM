@@ -1,0 +1,6 @@
+#figure(
+  ```
+
+  ```,
+  caption: [],
+) <lst->

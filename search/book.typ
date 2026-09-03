@@ -1,3 +1,7 @@
+// --------------------------------------------------------------------------
+// Styles
+// --------------------------------------------------------------------------
+
 #let stylemain(margins: 1.75cm, paper: "a5", body) = {
   set page(
     paper: paper,
@@ -44,16 +48,13 @@
 
 #let stylecode(body) = {
   show raw.where(block: true): it => {
-    // Smaller font size:
-    set text(size: 8pt)
-
-    // Add line numbrers:
+    // Add line numbers:
     show raw.line: line => {
       box(
-        width: 2em,
+        width: 1.2em,
         align(
           right,
-          text(fill: luma(130), str(line.number)),
+          text(fill: rgb("#7a9bb8"), str(line.number)),
         ),
       )
       h(0.8em)
@@ -63,10 +64,12 @@
     // Add background and rounded corners:
     block(
       fill: rgb("#f6f8fa"),
-      inset: 10pt,
-      radius: 4pt,
+      inset: 5pt,
+      radius: 0pt,
       width: 100%,
-      it,
+
+      // Size MUST be wrapped here
+      text(size: 6pt, it),
     )
   }
 
@@ -76,11 +79,11 @@
 }
 
 #let coverpage(
-    book-title: "",
-    book-subtitle: "",
-    book-comment: "",
-    authors: "",
-  ) = {
+  book-title: "",
+  book-subtitle: "",
+  book-comment: "",
+  authors: "",
+) = {
   align(center + horizon)[
     #text(16pt, weight: "bold")[#book-title] \
     #v(1em)
@@ -101,9 +104,9 @@
   ]
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // outline functions
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
 #let lof() = {
   outline(
@@ -132,9 +135,9 @@
   lol()
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // sectioning functions
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
 #let preamble(title) = {
   heading(title, level: 1, numbering: none, outlined: false)
@@ -158,12 +161,13 @@
   body
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // part and related
 //
-// As part will modify the outline, it has to be introduced before the main
-// bookstyle, as typst does not evaluate elements that come after a definition.
-// ----------------------------------------------------------------------------
+// As part will modify the outline, it has to be introduced before the
+// main bookstyle, as typst does not evaluate elements that come after a
+// definition.
+// --------------------------------------------------------------------------
 
 #let part-counter = counter("part")
 
@@ -196,22 +200,22 @@
   }
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // bookstyle
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 
 #let bookstyle(
-    book-title: "",
-    book-subtitle: "",
-    book-comment: "",
-    authors: "",
-    margins: 1.75cm,
-    paper: "a5",
-    lang: "en",
-    references: "",
-    finallists: true,
-    contents,
-    ) = {
+  book-title: "",
+  book-subtitle: "",
+  book-comment: "",
+  authors: "",
+  margins: 1.75cm,
+  paper: "a5",
+  lang: "en",
+  references: "",
+  finallists: true,
+  contents,
+) = {
   set text(lang: lang)
   set document(title: book-title, author: authors)
 
@@ -258,6 +262,6 @@
   }
 }
 
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
 // EOF
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
