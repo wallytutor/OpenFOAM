@@ -42,10 +42,25 @@ def common_arguments(source_env: bool = True) -> ArgumentParser:
         default = 1,
         help    = "Number of cores to use"
     )
+
+    ###
+    # Case cleaning
+    ###
+
     parser.add_argument(
         "--clean",
         action = "store_true",
         help   = "Clean case files and logs"
+    )
+    parser.add_argument(
+        "--clean-logs",
+        action = "store_true",
+        help   = "Clean log files only"
+    )
+    parser.add_argument(
+        "--clean-processors",
+        action = "store_true",
+        help   = "Clean processor directories only"
     )
 
     # TODO make --latest be accepted only if --reconstruct
@@ -59,6 +74,10 @@ def common_arguments(source_env: bool = True) -> ArgumentParser:
         action = "store_true",
         help   = "Reconstruct only the latest time step"
     )
+
+    ###
+    # Main workflows
+    ###
 
     action_group = parser.add_mutually_exclusive_group()
     action_group.add_argument(
@@ -304,7 +323,9 @@ def clean_times(
                 shutil.rmtree(item, ignore_errors=True)
 
 
-def clean_logs(root_dir: Path | None = None) -> None:
+def clean_logs(
+        root_dir: Path | None = None,
+    ) -> None:
     """ Clean execution log files matching log.* pattern.
 
     Parameters
@@ -630,6 +651,24 @@ class Runner:
         cls.serial(cmd, log_name=log_name, force=force)
 
     @classmethod
+    def surface_features(
+            cls,
+            log_name: str | None = None,
+            force: bool = False,
+        ) -> None:
+        """ Run surfaceFeatures utility. """
+        if force:
+            cls.serial("surfaceFeatures", log_name=log_name, force=force)
+            return
+
+        stl_files = Path("constant/geometry").glob("*.stl")
+
+        if any(not f.with_suffix(".eMesh").exists() for f in stl_files):
+            cls.serial("surfaceFeatures", log_name=log_name, force=force)
+        else:
+            print("Skipping surfaceFeatures - eMesh files already exist.")
+
+    @classmethod
     def foam_run(
             cls,
             app_args: list[str] | None = None,
@@ -804,7 +843,11 @@ class Meshing:
         clean_extended_features : bool = True
             Whether to clean constant/extendedFeatureEdgeMesh.
         create_background_mesh : bool = True
-            Whether to create background mesh via blockMesh.
+            Whether to create background mesh via blockMesh. To force it
+            running you must manually clean the case before running; if
+            constant/polyMesh already exists, blockMesh will be skipped.
+            This is intended to allow the different snappyHexMesh steps
+            to be run independently.
         reconstruct : bool = True
             Whether to reconstruct mesh after parallel execution.
         clean_parallel_dirs : bool = True
@@ -837,15 +880,18 @@ class Meshing:
             geometry(cores)
 
         if extract_surface_features:
-            Runner.serial("surfaceFeatures")
+            Runner.surface_features(force=False)
 
         if clean_extended_features:
             if (feat_dir := Path("constant/extendedFeatureEdgeMesh")).is_dir():
                 shutil.rmtree(feat_dir, ignore_errors=True)
 
         if create_background_mesh:
-            opts = kwargs.get("blockMesh_options", [])
-            Runner.serial(["blockMesh"] + opts)
+            if Path("constant/polyMesh").exists():
+                print("Skipping blockMesh — polyMesh already exists.")
+            else:
+                opts = kwargs.get("blockMesh_options", [])
+                Runner.serial(["blockMesh"] + opts)
 
         if callable(preprocess):
             preprocess()
@@ -951,13 +997,31 @@ class CommonProjectManager:
             parser.print_help()
             return
 
-        if args.clean and not process:
+        if not process and args.clean:
             self._cleaner(self._root_dir)
             return
+
+        ###
+        # Partial cleans to enable process steps
+        ###
+
+        if args.clean_logs:
+            clean_logs(self._root_dir)
+
+        if args.clean_processors:
+            clean_processors_dirs(self._root_dir)
+
+        ###
+        # Reconstruction / etc
+        ###
 
         if args.reconstruct and not process:
             Runner.reconstruct(latest=args.latest)
             return
+
+        ###
+        # Main workflows
+        ###
 
         if args.mesh:
             if args.clean or validate_input(
