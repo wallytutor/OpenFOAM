@@ -16,7 +16,6 @@ The inflation layer generation procedure is governed by the `addLayersControls` 
 
 - A comprehensive post-insertion quality check is executed; if any inserted or neighboring cells fail mesh quality constraints, the conflicting local layers are removed or collapsed back to maintain overall numerical validity.
 
-// Layer Sizing Strategies and Mathematical Formulation
 == Layer sizing strategies
 
 Within `addLayersControls`, the geometric distribution of the inflation stack is specified using the `layers` sub-dictionary and a set of layer thickness keywords. The `layers` sub-dictionary explicitly declares the target surface patches and their required integer layer counts using the `nSurfaceLayers` parameter. Because layer addition operates on the active mesh rather than the source CAD geometry, these entries reference the patch names generated during the snapping stage rather than raw triangulated surface regions.
@@ -25,11 +24,12 @@ To define the dimensional progression of the prismatic cells, `snappyHexMesh` pr
 
 == Topological controls and surface smoothing
 
+// TODO create an illustration of the featureAngle definition/process
 Near-wall mesh quality during extrusion is highly sensitive to surface curvature, sharp corners, and intersecting features. To prevent distorted, concave, or self-intersecting prismatic cells, `addLayersControls` includes several topological and geometric control parameters. The `featureAngle` setting specifies the maximum geometric angle across which layers are allowed to continuously extrude; along sharp edges exceeding this threshold, layer growth is terminated to prevent overlapping normal vectors. The `nGrow` parameter governs the number of connected cell faces adjacent to non-extruded points that are progressively stepped down, avoiding abrupt cliff-like terminations near complex topological features.
 
 To maintain uniform layer thickness across curved boundaries, surface normals and interior movement vectors are smoothed iteratively using `nSmoothSurfaceNormals` and `nSmoothNormals`, while `nSmoothThickness` averages overall layer thickness across adjacent surface faces. Geometric distortion is further regulated by `maxFaceThicknessRatio`, which halts layer extrusion across heavily warped faces, and `maxThicknessToMedialRatio`, which reduces layer thickness in tight internal corners or narrow passages where opposing boundary layers approach one another along the medial axis.
 
-// Troubleshooting and Iterative Workflow Strategies
+== Troubleshooting and iterative strategies
 
 Layer addition is notoriously recognized as the most challenging and sensitive phase of the `snappyHexMesh` pipeline. In complex geometries with sharp trailing edges or narrow gaps, default parameters frequently lead to partial layer collapse or localized deletion due to quality check failures.
 
