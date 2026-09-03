@@ -2,10 +2,12 @@
 
 import os
 import re
+import shlex
 import shutil
 import sys
 
 from argparse import ArgumentParser
+from datetime import datetime
 from pathlib import Path
 from subprocess import run, STDOUT, PIPE
 from typing import Any, Callable, Sequence
@@ -91,6 +93,18 @@ def banner(message: str) -> None:
     print(f"{78 * '='}\n> {message}\n")
 
 
+def validate_input(msg: str) -> bool:
+    while True:
+        match (ans := input(f"{msg} (y/N): ").lower().strip()):
+            case "y":
+                return True
+            case "n":
+                return False
+            case _:
+                print(f"Invalid input {ans}; please, answer (y/N)")
+                continue
+
+
 def source_openfoam_env(
         foam_root: str | Path = "/opt/openfoam13",
         shell: str = "bash"
@@ -109,6 +123,11 @@ def source_openfoam_env(
     None
         Updates active environment variables in os.environ directly.
     """
+    # Do not source if already sourced, it's slow...
+    wm_project_dir = os.environ.get("WM_PROJECT_DIR", None)
+    if wm_project_dir and wm_project_dir == str(Path(foam_root)):
+        return
+
     banner(f"Sourcing OpenFOAM environment for {shell}")
     rc = Path(foam_root) / f"etc/{shell}rc"
 
@@ -330,7 +349,7 @@ class Runner:
     @classmethod
     def serial(
         cls,
-        args: list[str],
+        args: str | list[str],
         *,
         log_name: str | None = None,
         force: bool = False
@@ -339,7 +358,7 @@ class Runner:
 
         Parameters
         ----------
-        args : list[str]
+        args : str | list[str]
             Command arguments array starting with application binary name.
         log_name : str | None = None
             Custom log filename override.
@@ -351,6 +370,9 @@ class Runner:
         None
             Subprocess executes and directs output into log file.
         """
+        if isinstance(args, str):
+            args = shlex.split(args)
+
         log_file = cls.log_file(log_name, args[0])
 
         if log_file.exists() and not force:
@@ -362,7 +384,7 @@ class Runner:
     @classmethod
     def parallel(
         cls,
-        args: list[str],
+        args: str | list[str],
         *,
         log_name: str | None = None,
         cores: int = 1,
@@ -372,7 +394,7 @@ class Runner:
 
         Parameters
         ----------
-        args : list[str]
+        args : str | list[str]
             Command arguments array for OpenFOAM solver/tool.
         log_name : str | None = None
             Custom log filename override.
@@ -386,11 +408,36 @@ class Runner:
         None
             Constructs MPI execution command and delegates to serial log.
         """
+        if isinstance(args, str):
+            args = shlex.split(args)
+
         if cores > 1:
             cmd = ["mpirun", "-np", str(cores), args[0], "-parallel"]
             args = cmd + args[1:]
 
         cls.serial(args, log_name=log_name, force=force)
+
+    @classmethod
+    def batch(
+        cls,
+        args: list[list[str]],
+    ) -> None:
+        """ Execute application in serial mode while logging stdout/stderr.
+
+        Parameters
+        ----------
+        args : list[list[str]]
+            List of command arguments arrays, each starting with application binary name. Commands are run in sequence and logs use the time
+            stamp as unique identifiers.
+
+        Returns
+        -------
+        None
+            Subprocess executes and directs output into log file.
+        """
+        for arg in args:
+            log_name = f"log.batch_{datetime.now():%Y%m%d_%H%M%S}"
+            cls.serial(arg, log_name=log_name, force=True)
 
     @classmethod
     def decompose(
@@ -432,7 +479,9 @@ class Runner:
         *,
         log_name: str | None = None,
         force: bool = False,
-        latest: bool = False
+        latest: bool = False,
+        constant: bool = False,
+        options: list[str] | None = None,
     ) -> None:
         """ Reconstruct parallel simulation data using reconstructPar.
 
@@ -455,7 +504,16 @@ class Runner:
         if not procs:
             return
 
-        cmd = ["reconstructPar", "-latestTime"] if latest else ["reconstructPar"]
+
+        options = options or []
+
+        if latest:
+            options.append("-latestTime")
+
+        if constant:
+            options.append("-constant")
+
+        cmd = ["reconstructPar"] + options
         cls.serial(cmd, log_name=log_name, force=force)
 
     @classmethod
@@ -605,7 +663,22 @@ class Meshing:
         banner("Finished!")
 
     @classmethod
-    def snappyhexmesh(cls, *args, **kwargs) -> None:
+    def snappyhexmesh(
+        cls,
+        *,
+        cores: int = 1,
+        force: bool = False,
+        extract_surface_features: bool = True,
+        clean_extended_featues: bool = True,
+        create_background_mesh: bool = True,
+        reconstruct: bool = True,
+        clean_parallel_dirs: bool = True,
+        renumber_mesh: bool = True,
+        check_mesh: bool = True,
+        preprocess: Callable[[], None] | None = None,
+        postprocess: Callable[[], None] | None = None,
+        **kwargs: Any,
+    ) -> None:
         """ Placeholder for snappyHexMesh workflow.
 
         Parameters
@@ -620,7 +693,55 @@ class Meshing:
         None
             Raises NotImplementedError when called.
         """
-        raise NotImplementedError
+        banner("Workflow snappyHexMesh")
+
+        # Extract feature edges from STL surfaces
+        if extract_surface_features:
+            Runner.serial("surfaceFeatures")
+
+        # Clean up intermediate files
+        if clean_extended_featues:
+            Runner.serial("rm -rf constant/extendedFeatureEdgeMesh/")
+
+        # Create background mesh
+        if create_background_mesh:
+            opts = kwargs.get("blockMesh_options", [])
+            Runner.serial(["blockMesh"] + opts)
+
+        # Preprocessing callback
+        if callable(preprocess):
+            preprocess()
+
+        # Run snappyHexMesh in parallel mode
+        opts = kwargs.get("snappyHexMesh_options", [])
+        Runner.parallel(
+            args = ["snappyHexMesh"] + opts,
+            cores = cores,
+            force = force
+        )
+
+        # Reconstruct parallel mesh
+        if reconstruct:
+            Runner.reconstruct(constant=True)
+
+        # Clean up processor directories
+        if clean_parallel_dirs:
+            Runner.serial("rm -rf processor*")
+
+        # Postprocessing callback
+        if callable(postprocess):
+            postprocess()
+
+        # Re-number the mesh to reduce bandwidth
+        if renumber_mesh:
+            Runner.serial("renumberMesh")
+
+        # Check mesh quality
+        if check_mesh:
+            opts = kwargs.get("checkMesh_options", [])
+            Runner.serial(["checkMesh"] + opts)
+
+        banner("Mesh generation complete!")
 
 
 class CommonProjectManager:
@@ -710,16 +831,3 @@ class CommonProjectManager:
         if args.run:
             self._runner(args)
             return
-
-
-
-def validate_input(msg: str) -> bool:
-    while True:
-        match (ans := input(f"{msg} (y/N): ").lower().strip()):
-            case "y":
-                return True
-            case "n":
-                return False
-            case _:
-                print(f"Invalid input {ans}; please, answer (y/N)")
-                continue
