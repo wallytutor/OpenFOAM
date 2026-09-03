@@ -239,8 +239,19 @@ def is_openfoam_case(root_dir: Path | None = None) -> bool:
     return (here / "system/controlDict").exists()
 
 
-def ensure_openfoam_case(func):
-    """ Ensure function is called from an OpenFOAM case. """
+def ensure_openfoam_case(func: Callable) -> Callable:
+    """ Decorate workflow function to ensure OpenFOAM case context.
+
+    Parameters
+    ----------
+    func : Callable
+        Workflow entrypoint function to wrap.
+
+    Returns
+    -------
+    Callable
+        Wrapped workflow execution function.
+    """
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         here = kwargs.get("root_dir", Path.cwd())
@@ -388,6 +399,8 @@ def clean_case(
         Additional file paths to remove.
     extra_patterns : Sequence[str] | None = None
         Glob patterns for matching files/directories to delete.
+    **kwargs : Any
+        Additional case cleaning options and arguments.
 
     Returns
     -------
@@ -656,17 +669,30 @@ class Runner:
             log_name: str | None = None,
             force: bool = False,
         ) -> None:
-        """ Run surfaceFeatures utility. """
-        if force:
+        """ Run surfaceFeatures utility on STL surfaces.
+
+        Parameters
+        ----------
+        log_name : str | None = None
+            Custom log filename for surfaceFeatures command.
+        force : bool = False
+            Whether to force execution even if eMesh files exist.
+
+        Returns
+        -------
+        None
+            Executes surfaceFeatures tool when needed.
+        """
+        stl_files = Path("constant/geometry").glob("*.stl")
+
+        if (
+            force or
+            any(not f.with_suffix(".eMesh").exists() for f in stl_files)
+        ):
             cls.serial("surfaceFeatures", log_name=log_name, force=force)
             return
 
-        stl_files = Path("constant/geometry").glob("*.stl")
-
-        if any(not f.with_suffix(".eMesh").exists() for f in stl_files):
-            cls.serial("surfaceFeatures", log_name=log_name, force=force)
-        else:
-            print("Skipping surfaceFeatures - eMesh files already exist.")
+        print("Skipping surfaceFeatures - eMesh files already exist.")
 
     @classmethod
     def foam_run(
@@ -967,8 +993,19 @@ class CommonProjectManager:
         self._cleaner  = ensure_openfoam_case(how_to_clean)
         self._get_args = get_args
 
-    def valid_options(self, args):
-        """ At least one of these is needed to validate the workflow. """
+    def valid_options(self, args: Any) -> bool:
+        """ Check if parsed arguments contain valid execution options.
+
+        Parameters
+        ----------
+        args : Any
+            Parsed command line arguments object.
+
+        Returns
+        -------
+        bool
+            True if at least one workflow execution option is set.
+        """
         return args.mesh or args.run or args.clean or args.reconstruct
 
     def __call__(self, *args: Any, **kwargs: Any) -> None:
