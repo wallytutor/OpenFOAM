@@ -7,9 +7,9 @@ import shutil
 import sys
 
 from argparse import ArgumentParser
-from datetime import datetime
 from pathlib import Path
 from subprocess import run, STDOUT, PIPE
+from time import time_ns
 from typing import Any, Callable, Sequence
 
 
@@ -17,7 +17,7 @@ if sys.platform != "linux":
     raise OSError("Only Linux is supported!")
 
 
-TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?$"
+TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
 
 
 def common_arguments(source_env: bool = True) -> ArgumentParser:
@@ -125,7 +125,7 @@ def source_openfoam_env(
     """
     # Do not source if already sourced, it's slow...
     wm_project_dir = os.environ.get("WM_PROJECT_DIR", None)
-    if wm_project_dir and wm_project_dir == str(Path(foam_root)):
+    if wm_project_dir and Path(wm_project_dir).resolve() == Path(foam_root).resolve():
         return
 
     banner(f"Sourcing OpenFOAM environment for {shell}")
@@ -180,6 +180,25 @@ def get_latest_time(
     return max(times) if times else None
 
 
+def get_processor_dirs(
+        root_dir: Path | None = None
+    ) -> list[Path]:
+    """ Return processor directories.
+
+    Parameters
+    ----------
+    root_dir : Path | None = None
+        Case directory path to check. Defaults to current working dir.
+
+    Returns
+    -------
+    list[Path]
+        List of processor directory paths.
+    """
+    here = root_dir if root_dir else Path.cwd()
+    return [p for p in here.glob("processor*") if p.is_dir()]
+
+
 def is_openfoam_case(root_dir: Path | None = None) -> bool:
     """ Check if target path contains a valid OpenFOAM case.
 
@@ -223,7 +242,7 @@ def is_restart(
     if not is_openfoam_case(here):
         raise FileNotFoundError(f"Not an OpenFOAM case: {here}")
 
-    procs = [p for p in here.glob("processor*") if p.is_dir()]
+    procs = get_processor_dirs(here)
 
     if len(procs) != cores:
         return False
@@ -234,6 +253,78 @@ def is_restart(
     proc_times = [get_latest_time(p) for p in procs]
 
     return all(t is not None and t == top_latest for t in proc_times)
+
+
+def clean_times(
+        root_dir: Path | None = None,
+        *,
+        remove_zero: bool = True
+    ) -> None:
+    """ Clean simulation time step output directories.
+
+    Parameters
+    ----------
+    root_dir : Path | None = None
+        Case directory path to clean. Defaults to current working dir.
+    remove_zero : bool = True
+        Whether to remove the initial conditions zero directory.
+
+    Returns
+    -------
+    None
+        Time step directories are removed in-place.
+    """
+    cwd = Path(root_dir) if root_dir else Path.cwd()
+
+    for item in cwd.iterdir():
+        if item.is_dir() and re.match(TIME_DIR_REGEX, item.name):
+            try:
+                t = float(item.name)
+            except ValueError:
+                continue
+
+            if t > 0.0 or (t == 0.0 and remove_zero):
+                shutil.rmtree(item, ignore_errors=True)
+
+
+def clean_logs(root_dir: Path | None = None) -> None:
+    """ Clean execution log files matching log.* pattern.
+
+    Parameters
+    ----------
+    root_dir : Path | None = None
+        Case directory path to clean. Defaults to current working dir.
+
+    Returns
+    -------
+    None
+        Log files matching log.* are removed in-place.
+    """
+    cwd = Path(root_dir) if root_dir else Path.cwd()
+
+    for log_file in cwd.glob("log.*"):
+        if log_file.is_file():
+            log_file.unlink(missing_ok=True)
+
+
+def clean_processors_dirs(
+        root_dir: Path | None = None,
+    ) -> None:
+    """ Remove all processor directories from a case.
+
+    Parameters
+    ----------
+    root_dir : Path | None = None
+        Case directory path to clean. Defaults to current working dir.
+
+    Returns
+    -------
+    None
+        Processor directories are removed in-place.
+    """
+    for p in get_processor_dirs(root_dir):
+        if p.is_dir():
+            shutil.rmtree(p, ignore_errors=True)
 
 
 def clean_case(
@@ -266,46 +357,34 @@ def clean_case(
     """
     cwd = Path(root_dir) if root_dir else Path.cwd()
 
-    for item in cwd.iterdir():
-        if item.is_dir() and re.match(TIME_DIR_REGEX, item.name):
-            shutil.rmtree(item, ignore_errors=True)
+    if not is_openfoam_case(cwd):
+        raise FileNotFoundError(f"Not an OpenFOAM case: {cwd}")
 
-    dirs_to_remove = [
+    clean_times(cwd, remove_zero=remove_zero)
+    clean_processors_dirs(cwd)
+    clean_logs(cwd)
+
+    to_remove = [
         cwd / "constant" / "extendedFeatureEdgeMesh",
         cwd / "constant" / "polyMesh",
         cwd / "postProcessing",
     ]
 
-    if remove_zero:
-        dirs_to_remove.append(cwd / "0")
-
     if extra_dirs:
         for ed in extra_dirs:
-            dirs_to_remove.append(Path(ed) if not isinstance(ed, Path) else ed)
+            to_remove.append(Path(ed) if not isinstance(ed, Path) else ed)
 
-    for p in dirs_to_remove:
+    for p in to_remove:
         if p.is_dir():
             shutil.rmtree(p, ignore_errors=True)
 
-    geom_dir = cwd / "constant" / "geometry"
-
-    if geom_dir.is_dir():
+    if (geom_dir := cwd / "constant" / "geometry").is_dir():
         for f in geom_dir.glob("*.eMesh"):
             if f.is_file():
                 f.unlink(missing_ok=True)
 
-    for p in cwd.glob("processor*"):
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
-
-    case_foam = cwd / "case.foam"
-
-    if case_foam.exists():
+    if (case_foam := cwd / "case.foam").exists():
         case_foam.unlink(missing_ok=True)
-
-    for log_file in cwd.glob("log.*"):
-        if log_file.is_file():
-            log_file.unlink(missing_ok=True)
 
     if extra_files:
         for ef in extra_files:
@@ -348,12 +427,12 @@ class Runner:
 
     @classmethod
     def serial(
-        cls,
-        args: str | list[str],
-        *,
-        log_name: str | None = None,
-        force: bool = False
-    ) -> None:
+            cls,
+            args: str | list[str],
+            *,
+            log_name: str | None = None,
+            force: bool = False
+        ) -> None:
         """ Execute application in serial mode while logging stdout/stderr.
 
         Parameters
@@ -383,13 +462,13 @@ class Runner:
 
     @classmethod
     def parallel(
-        cls,
-        args: str | list[str],
-        *,
-        log_name: str | None = None,
-        cores: int = 1,
-        force: bool = False
-    ) -> None:
+            cls,
+            args: str | list[str],
+            *,
+            log_name: str | None = None,
+            cores: int = 1,
+            force: bool = False
+        ) -> None:
         """ Execute application in parallel mode using mpirun launcher.
 
         Parameters
@@ -419,9 +498,9 @@ class Runner:
 
     @classmethod
     def batch(
-        cls,
-        args: list[list[str]],
-    ) -> None:
+            cls,
+            args: list[list[str]],
+        ) -> None:
         """ Execute application in serial mode while logging stdout/stderr.
 
         Parameters
@@ -436,23 +515,26 @@ class Runner:
             Subprocess executes and directs output into log file.
         """
         for arg in args:
-            log_name = f"log.batch_{datetime.now():%Y%m%d_%H%M%S}"
+            log_name = f"log.batch_{time_ns()}"
             cls.serial(arg, log_name=log_name, force=True)
 
     @classmethod
     def decompose(
-        cls,
-        *,
-        log_name: str | None = None,
-        force: bool = False,
-        patching: Callable[[], None] | None = None
-    ) -> None:
+            cls,
+            *,
+            log_name: str | None = None,
+            cores: int = 1,
+            force: bool = False,
+            patching: Callable[[], None] | None = None
+        ) -> None:
         """ Run domain decomposition using decomposePar utility.
 
         Parameters
         ----------
         log_name : str | None = None
             Custom log filename for decomposePar command.
+        cores : int = 1
+            Number of processor slots to allocate.
         force : bool = False
             Whether to overwrite existing decomposePar log.
         patching : Callable[[], None] | None = None
@@ -463,6 +545,12 @@ class Runner:
         None
             Invokes decomposePar tool after optional patching step.
         """
+        if cores < 2:
+            return
+
+        if is_restart(cores) and not force:
+            return
+
         dict_file = Path("system/decomposeParDict")
 
         if callable(patching):
@@ -475,14 +563,14 @@ class Runner:
 
     @classmethod
     def reconstruct(
-        cls,
-        *,
-        log_name: str | None = None,
-        force: bool = False,
-        latest: bool = False,
-        constant: bool = False,
-        options: list[str] | None = None,
-    ) -> None:
+            cls,
+            *,
+            log_name: str | None = None,
+            force: bool = False,
+            latest: bool = False,
+            constant: bool = False,
+            options: list[str] | None = None,
+        ) -> None:
         """ Reconstruct parallel simulation data using reconstructPar.
 
         Parameters
@@ -493,6 +581,10 @@ class Runner:
             Whether to overwrite existing reconstructPar log file.
         latest : bool = False
             Whether to reconstruct only the latest time step.
+        constant : bool = False
+            Whether to reconstruct constant directory data.
+        options : list[str] | None = None
+            Additional reconstructPar command line options.
 
         Returns
         -------
@@ -513,22 +605,22 @@ class Runner:
         if constant:
             options.append("-constant")
 
-        cmd = ["reconstructPar"] + options
+        cmd = ["reconstructPar"] + list(set(options))
         cls.serial(cmd, log_name=log_name, force=force)
 
     @classmethod
     def foam_run(
-        cls,
-        app_args: list[str] | None = None,
-        *,
-        log_name: str | None = None,
-        cores: int = 1,
-        force: bool = False,
-        reconstruct: bool = False,
-        preprocess: Callable[[], None] | None = None,
-        decomposing: Callable[[], None] | None = None,
-        latest: bool = False
-    ) -> None:
+            cls,
+            app_args: list[str] | None = None,
+            *,
+            log_name: str | None = None,
+            cores: int = 1,
+            force: bool = False,
+            reconstruct: bool = False,
+            preprocess: Callable[[], None] | None = None,
+            decomposing: Callable[[], None] | None = None,
+            latest: bool = False
+        ) -> None:
         """ Manage end-to-end OpenFOAM solver workflow execution.
 
         Parameters
@@ -555,13 +647,10 @@ class Runner:
         None
             Executes preprocessing, decomposition, solver, and optional rec.
         """
-        restart = is_restart(cores)
-
-        if not restart and callable(preprocess):
+        if not is_restart(cores) and callable(preprocess):
             preprocess()
 
-        if not restart and cores > 1:
-            cls.decompose(patching=decomposing)
+        cls.decompose(cores=cores, patching=decomposing)
 
         cmd_args = app_args if app_args is not None else ["foamRun"]
 
@@ -577,14 +666,14 @@ class Runner:
 
     @classmethod
     def dict_set_entry(
-        cls,
-        file: str | Path,
-        entry: str,
-        value: str,
-        *,
-        log_name: str | None = None,
-        force: bool = False
-    ) -> None:
+            cls,
+            file: str | Path,
+            entry: str,
+            value: str,
+            *,
+            log_name: str | None = None,
+            force: bool = False
+        ) -> None:
         """ Set a dictionary entry value via foamDictionary tool.
 
         Parameters
@@ -626,11 +715,11 @@ class Meshing:
 
     @classmethod
     def gmsh_to_foam_single_region(
-        cls,
-        mesh_file: str | Path,
-        *,
-        patching: Callable[[], None] | None = None
-    ) -> None:
+            cls,
+            mesh_file: str | Path,
+            *,
+            patching: Callable[[], None] | None = None
+        ) -> None:
         """ Convert Gmsh mesh into single-region OpenFOAM polyMesh format.
 
         Parameters
@@ -664,79 +753,96 @@ class Meshing:
 
     @classmethod
     def snappyhexmesh(
-        cls,
-        *,
-        cores: int = 1,
-        force: bool = False,
-        extract_surface_features: bool = True,
-        clean_extended_featues: bool = True,
-        create_background_mesh: bool = True,
-        reconstruct: bool = True,
-        clean_parallel_dirs: bool = True,
-        renumber_mesh: bool = True,
-        check_mesh: bool = True,
-        preprocess: Callable[[], None] | None = None,
-        postprocess: Callable[[], None] | None = None,
-        **kwargs: Any,
-    ) -> None:
-        """ Placeholder for snappyHexMesh workflow.
+            cls,
+            *,
+            cores: int = 1,
+            force: bool = False,
+            extract_surface_features: bool = True,
+            clean_extended_features: bool = True,
+            create_background_mesh: bool = True,
+            reconstruct: bool = True,
+            clean_parallel_dirs: bool = True,
+            renumber_mesh: bool = True,
+            check_mesh: bool = True,
+            preprocess: Callable[[], None] | None = None,
+            decomposing: Callable[[], None] | None = None,
+            postprocess: Callable[[], None] | None = None,
+            **kwargs: Any,
+        ) -> None:
+        """ Generate mesh using snappyHexMesh utility workflow.
 
         Parameters
         ----------
-        *args : Any
-            Positional arguments.
+        cores : int = 1
+            Number of processor slots to use for computation.
+        force : bool = False
+            Whether to force overwriting existing log outputs.
+        extract_surface_features : bool = True
+            Whether to run surfaceFeatures prior to meshing.
+        clean_extended_features : bool = True
+            Whether to clean constant/extendedFeatureEdgeMesh.
+        create_background_mesh : bool = True
+            Whether to create background mesh via blockMesh.
+        reconstruct : bool = True
+            Whether to reconstruct mesh after parallel execution.
+        clean_parallel_dirs : bool = True
+            Whether to remove processor dirs post-reconstruct.
+        renumber_mesh : bool = True
+            Whether to renumber mesh to reduce bandwidth.
+        check_mesh : bool = True
+            Whether to run checkMesh for quality evaluation.
+        preprocess : Callable[[], None] | None = None
+            Callback executed before initial mesh generation.
+        decomposing : Callable[[], None] | None = None
+            Callback executed during domain decomposition phase.
+        postprocess : Callable[[], None] | None = None
+            Callback executed after mesh reconstruction.
         **kwargs : Any
-            Keyword arguments.
+            Additional execution options and arguments.
 
         Returns
         -------
         None
-            Raises NotImplementedError when called.
+            Executes complete snappyHexMesh workflow.
         """
         banner("Workflow snappyHexMesh")
 
-        # Extract feature edges from STL surfaces
         if extract_surface_features:
             Runner.serial("surfaceFeatures")
 
-        # Clean up intermediate files
-        if clean_extended_featues:
-            Runner.serial("rm -rf constant/extendedFeatureEdgeMesh/")
+        if clean_extended_features:
+            if (feat_dir := Path("constant/extendedFeatureEdgeMesh")).is_dir():
+                shutil.rmtree(feat_dir, ignore_errors=True)
 
-        # Create background mesh
         if create_background_mesh:
             opts = kwargs.get("blockMesh_options", [])
             Runner.serial(["blockMesh"] + opts)
 
-        # Preprocessing callback
         if callable(preprocess):
             preprocess()
 
-        # Run snappyHexMesh in parallel mode
-        opts = kwargs.get("snappyHexMesh_options", [])
+        Runner.decompose(cores=cores, patching=decomposing)
+
+        cmd = ["snappyHexMesh"] + kwargs.get("snappyHexMesh_options", [])
+
         Runner.parallel(
-            args = ["snappyHexMesh"] + opts,
-            cores = cores,
-            force = force
+            args     = cmd,
+            cores    = cores,
+            force    = force
         )
 
-        # Reconstruct parallel mesh
         if reconstruct:
             Runner.reconstruct(constant=True)
 
-        # Clean up processor directories
         if clean_parallel_dirs:
-            Runner.serial("rm -rf processor*")
+            clean_processors_dirs()
 
-        # Postprocessing callback
         if callable(postprocess):
             postprocess()
 
-        # Re-number the mesh to reduce bandwidth
         if renumber_mesh:
             Runner.serial("renumberMesh")
 
-        # Check mesh quality
         if check_mesh:
             opts = kwargs.get("checkMesh_options", [])
             Runner.serial(["checkMesh"] + opts)
@@ -767,12 +873,12 @@ class CommonProjectManager:
     )
 
     def __init__(
-        self,
-        root_dir: Path,
-        how_to_mesh: Callable,
-        how_to_run: Callable,
-        how_to_clean: Callable = clean_case
-    ) -> None:
+            self,
+            root_dir: Path,
+            how_to_mesh: Callable,
+            how_to_run: Callable,
+            how_to_clean: Callable = clean_case
+        ) -> None:
         if not root_dir.exists():
             raise FileNotFoundError(root_dir)
 
