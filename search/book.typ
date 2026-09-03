@@ -2,32 +2,20 @@
 // Styles
 // --------------------------------------------------------------------------
 
-#let stylemain(margins: 1.75cm, paper: "a5", body) = {
-  set page(
-    paper: paper,
-    margin: (
-      inside: margins,
-      outside: margins,
-      top: margins,
-      bottom: margins,
-    ),
-    numbering: none,
-    number-align: center,
-  )
-  // Set default leading and justify text:
-  set par(justify: true, leading: 0.7em)
-
+#let styleheading(body) = {
   // Override the default "Section" used at all levels:
   show heading.where(level: 1): set heading(supplement: [Chapter])
 
-  // Ensure part headings have no numbering (so they don't increment chapter counter)
+  // Part headings have no numbering (so they don't increment chapter counter)
   show heading.where(label: <part-heading>): set heading(numbering: none)
 
-  // Hide the raw heading markup on the page so only the centered layout renders
+  // Handle headings with support to Part pages
   show heading: it => {
     if it.at("label", default: none) == <part-heading> {
+      // Hide heading markup on the page so only the centered layout renders
       none
     } else {
+      // Keep unmodified for other heading levels
       it
     }
   }
@@ -43,10 +31,30 @@
       #v(1.5em)
     ]
   }
+
   body
 }
 
-#let stylecode(body) = {
+#let stylefigure(body) = {
+  // Apply a smaller font size for all captions; notice that we enforce
+  // size unconditionally using an explicit content transformer:
+  // show figure.caption: set text(size: 8.5pt) --> weak enforcement
+  show figure.caption: it => text(size: 8.5pt)[
+    #text(weight: "semibold", style: "normal")[
+      #it.supplement
+      #context it.counter.display(it.numbering):
+    ]
+    #it.body
+  ]
+
+  // Code listings specific adjustments:
+  show figure.where(kind: raw): set align(left)
+  show figure.where(kind: raw): set figure(supplement: [Listing])
+
+  body
+}
+
+#let styleraw(body) = {
   show raw.where(block: true): it => {
     // Add line numbers:
     show raw.line: line => {
@@ -73,10 +81,12 @@
     )
   }
 
-  show figure.where(kind: raw): set align(left)
-  show figure.where(kind: raw): set figure(supplement: [Listing])
   body
 }
+
+// --------------------------------------------------------------------------
+// Cover page
+// --------------------------------------------------------------------------
 
 #let coverpage(
   book-title: "",
@@ -139,8 +149,29 @@
 // sectioning functions
 // --------------------------------------------------------------------------
 
+#let part-counter = counter("part")
+
 #let preamble(title) = {
   heading(title, level: 1, numbering: none, outlined: false)
+}
+
+#let part(title) = {
+  pagebreak(to: "odd")
+  part-counter.step()
+
+  // Create an outlined heading targeting parts
+  [= #title <part-heading>]
+
+  // Render the dedicated divider page
+  context {
+    let num = part-counter.display("I")
+    align(center + horizon)[
+      #text(size: 18pt, tracking: 2pt)[PART #num]
+      #v(1.2em)
+      #text(size: 26pt)[#title]
+    ]
+  }
+  pagebreak()
 }
 
 #let chapters(body) = {
@@ -162,45 +193,6 @@
 }
 
 // --------------------------------------------------------------------------
-// part and related
-//
-// As part will modify the outline, it has to be introduced before the
-// main bookstyle, as typst does not evaluate elements that come after a
-// definition.
-// --------------------------------------------------------------------------
-
-#let part-counter = counter("part")
-
-#let part(title) = {
-  pagebreak(to: "odd")
-  part-counter.step()
-
-  // Create an outlined heading targeting parts
-  [= #title <part-heading>]
-
-  // Render the dedicated divider page
-  context {
-    let num = part-counter.display("I")
-    align(center + horizon)[
-      #text(size: 18pt, tracking: 2pt)[PART #num]
-      #v(1.2em)
-      #text(size: 26pt)[#title]
-    ]
-  }
-  pagebreak()
-}
-
-#show heading: it => {
-  if it.at("label", default: none) == <part-heading> {
-    // Hide heading markup on the page so only the centered layout renders
-    none
-  } else {
-    // Keep unmodified for other heading levels
-    it
-  }
-}
-
-// --------------------------------------------------------------------------
 // bookstyle
 // --------------------------------------------------------------------------
 
@@ -219,8 +211,24 @@
   set text(lang: lang)
   set document(title: book-title, author: authors)
 
-  show: stylemain.with(margins: margins, paper: paper)
-  show: stylecode
+  set page(
+    paper: paper,
+    margin: (
+      inside: margins,
+      outside: margins,
+      top: margins,
+      bottom: margins,
+    ),
+    numbering: none,
+    number-align: center,
+  )
+
+  // Set default leading and justify text:
+  set par(justify: true, leading: 0.7em)
+
+  show: styleheading
+  show: stylefigure
+  show: styleraw
 
   coverpage(
     book-title: book-title,
