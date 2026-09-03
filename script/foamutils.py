@@ -494,6 +494,8 @@ class Runner:
             cmd = ["mpirun", "-np", str(cores), args[0], "-parallel"]
             args = cmd + args[1:]
 
+        log_name = cls.log_file(log_name, f"{args[3]}_parallel").name
+
         cls.serial(args, log_name=log_name, force=force)
 
     @classmethod
@@ -525,7 +527,7 @@ class Runner:
             log_name: str | None = None,
             cores: int = 1,
             force: bool = False,
-            patching: Callable[[], None] | None = None
+            patching: Callable[[int], None] | None = None
         ) -> None:
         """ Run domain decomposition using decomposePar utility.
 
@@ -537,8 +539,9 @@ class Runner:
             Number of processor slots to allocate.
         force : bool = False
             Whether to overwrite existing decomposePar log.
-        patching : Callable[[], None] | None = None
+        patching : Callable[[int], None] | None = None
             Optional setup function executed before domain decomposition.
+            Takes the number of cores as an argument.
 
         Returns
         -------
@@ -554,7 +557,7 @@ class Runner:
         dict_file = Path("system/decomposeParDict")
 
         if callable(patching):
-            patching()
+            patching(cores)
 
         if not dict_file.exists():
             raise FileNotFoundError(dict_file)
@@ -764,8 +767,9 @@ class Meshing:
             clean_parallel_dirs: bool = True,
             renumber_mesh: bool = True,
             check_mesh: bool = True,
+            geometry: Callable[[int], None] | None = None,
             preprocess: Callable[[], None] | None = None,
-            decomposing: Callable[[], None] | None = None,
+            decomposing: Callable[[int], None] | None = None,
             postprocess: Callable[[], None] | None = None,
             **kwargs: Any,
         ) -> None:
@@ -791,10 +795,14 @@ class Meshing:
             Whether to renumber mesh to reduce bandwidth.
         check_mesh : bool = True
             Whether to run checkMesh for quality evaluation.
+        geometry : Callable[[int], None] | None = None
+            Callback for retrieving or generating geometry files.
+            Takes the number of cores as an argument.
         preprocess : Callable[[], None] | None = None
             Callback executed before initial mesh generation.
-        decomposing : Callable[[], None] | None = None
+        decomposing : Callable[[int], None] | None = None
             Callback executed during domain decomposition phase.
+            Takes the number of cores as an argument.
         postprocess : Callable[[], None] | None = None
             Callback executed after mesh reconstruction.
         **kwargs : Any
@@ -806,6 +814,9 @@ class Meshing:
             Executes complete snappyHexMesh workflow.
         """
         banner("Workflow snappyHexMesh")
+
+        if callable(geometry):
+            geometry(cores)
 
         if extract_surface_features:
             Runner.serial("surfaceFeatures")
@@ -863,6 +874,8 @@ class CommonProjectManager:
         Workflow callback handling solver execution tasks.
     how_to_clean : Callable = clean_case
         Workflow callback handling case cleanup tasks.
+    get_args : Callable = common_arguments
+        Callback for parsing command line arguments.
     """
 
     __slots__ = (
@@ -870,6 +883,7 @@ class CommonProjectManager:
         "_mesher",
         "_runner",
         "_cleaner",
+        "_get_args",
     )
 
     def __init__(
@@ -877,7 +891,8 @@ class CommonProjectManager:
             root_dir: Path,
             how_to_mesh: Callable,
             how_to_run: Callable,
-            how_to_clean: Callable = clean_case
+            how_to_clean: Callable = clean_case,
+            get_args: Callable = common_arguments,
         ) -> None:
         if not root_dir.exists():
             raise FileNotFoundError(root_dir)
@@ -886,6 +901,7 @@ class CommonProjectManager:
         self._mesher   = how_to_mesh
         self._runner   = how_to_run
         self._cleaner  = how_to_clean
+        self._get_args = get_args
 
     def valid_options(self, args):
         """ At least one of these is needed to validate the workflow. """
@@ -908,7 +924,9 @@ class CommonProjectManager:
         """
         os.chdir(self._root_dir)
 
-        parser = common_arguments()
+        Path("case.foam").touch()
+
+        parser = self._get_args()
         args = parser.parse_args()
 
         process = args.mesh or args.run
