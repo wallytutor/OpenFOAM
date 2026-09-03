@@ -21,80 +21,134 @@ if sys.platform != "linux":
 TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
 
 
-def common_arguments(source_env: bool = True) -> ArgumentParser:
-    """ Construct reusable argument parser for OpenFOAM cases.
+class ArgumentsPresets:
+    @classmethod
+    def common(cls, source_env: bool = True) -> ArgumentParser:
+        """ Construct reusable argument parser for OpenFOAM cases.
 
-    Parameters
-    ----------
-    source_env : bool = True
-        Whether to source OpenFOAM environment setup variables.
+        Parameters
+        ----------
+        source_env : bool = True
+            Whether to source OpenFOAM environment setup variables.
 
-    Returns
-    -------
-    ArgumentParser
-        Configured argument parser instance for OpenFOAM CLI workflows.
-    """
-    parser = ArgumentParser(description="OpenFOAM case workflow")
+        Returns
+        -------
+        ArgumentParser
+            Configured argument parser instance for OpenFOAM CLI workflows.
+        """
+        parser = ArgumentParser(description="OpenFOAM case workflow")
 
-    parser.add_argument(
-        "--cores",
-        type    = int,
-        default = 1,
-        help    = "Number of cores to use"
-    )
+        parser.add_argument(
+            "--cores",
+            type    = int,
+            default = 1,
+            help    = "Number of cores to use"
+        )
 
-    ###
-    # Case cleaning
-    ###
+        ###
+        # Case cleaning
+        ###
 
-    parser.add_argument(
-        "--clean",
-        action = "store_true",
-        help   = "Clean case files and logs"
-    )
-    parser.add_argument(
-        "--clean-logs",
-        action = "store_true",
-        help   = "Clean log files only"
-    )
-    parser.add_argument(
-        "--clean-processors",
-        action = "store_true",
-        help   = "Clean processor directories only"
-    )
+        parser.add_argument(
+            "--clean",
+            action = "store_true",
+            help   = "Clean case files and logs"
+        )
+        parser.add_argument(
+            "--clean-logs",
+            action = "store_true",
+            help   = "Clean log files only"
+        )
+        parser.add_argument(
+            "--clean-processors",
+            action = "store_true",
+            help   = "Clean processor directories only"
+        )
 
-    # TODO make --latest be accepted only if --reconstruct
-    parser.add_argument(
-        "--reconstruct",
-        action = "store_true",
-        help   = "Reconstruct parallel mesh/data"
-    )
-    parser.add_argument(
-        "--latest",
-        action = "store_true",
-        help   = "Reconstruct only the latest time step"
-    )
+        # TODO make --latest be accepted only if --reconstruct
+        parser.add_argument(
+            "--reconstruct",
+            action = "store_true",
+            help   = "Reconstruct parallel mesh/data"
+        )
+        parser.add_argument(
+            "--latest",
+            action = "store_true",
+            help   = "Reconstruct only the latest time step"
+        )
 
-    ###
-    # Main workflows
-    ###
+        ###
+        # Main workflows
+        ###
 
-    action_group = parser.add_mutually_exclusive_group()
-    action_group.add_argument(
-        "--mesh",
-        action = "store_true",
-        help   = "Run meshing workflow"
-    )
-    action_group.add_argument(
-        "--run",
-        action = "store_true",
-        help   = "Run solver workflow"
-    )
+        action_group = parser.add_mutually_exclusive_group()
+        action_group.add_argument(
+            "--mesh",
+            action = "store_true",
+            help   = "Run meshing workflow"
+        )
+        action_group.add_argument(
+            "--run",
+            action = "store_true",
+            help   = "Run solver workflow"
+        )
 
-    if source_env:
-        source_openfoam_env()
+        if source_env:
+            source_openfoam_env()
 
-    return parser
+        return parser
+
+    @classmethod
+    def meshing(cls, source_env: bool = True) -> ArgumentParser:
+        """ Construct reusable argument parser for OpenFOAM cases.
+
+        Parameters
+        ----------
+        source_env : bool = True
+            Whether to source OpenFOAM environment setup variables.
+
+        Returns
+        -------
+        ArgumentParser
+            Configured argument parser instance for OpenFOAM CLI workflows.
+        """
+        parser = cls.common(source_env=source_env)
+
+        parser.add_argument(
+            "--renumber-mesh",
+            action = "store_true",
+            help   = "Renumber mesh"
+        )
+        parser.add_argument(
+            "--check-mesh",
+            action = "store_true",
+            help   = "Check mesh quality"
+        )
+        # parser.add_argument(
+        #     "--check-mesh-options",
+        #     nargs = "*",
+        #     default = [],
+        #     help   = "Options for checkMesh tool"
+        # )
+
+        return parser
+
+    @classmethod
+    def snappyhexmesh(cls, source_env: bool = True) -> ArgumentParser:
+        """ Construct reusable argument parser for OpenFOAM cases.
+
+        Parameters
+        ----------
+        source_env : bool = True
+            Whether to source OpenFOAM environment setup variables.
+
+        Returns
+        -------
+        ArgumentParser
+            Configured argument parser instance for OpenFOAM CLI workflows.
+        """
+        parser = cls.meshing(source_env=source_env)
+        return parser
 
 
 def banner(message: str) -> None:
@@ -799,12 +853,28 @@ class Meshing:
 
     __slots__ = ()
 
+    @staticmethod
+    def post_meshing(
+            renumber_mesh: bool = True,
+            check_mesh: bool = True,
+            **kwargs: Any
+        ) -> None:
+        if renumber_mesh:
+            Runner.serial("renumberMesh")
+
+        if check_mesh:
+            opts = kwargs.get("checkMesh_options", [])
+            Runner.serial(["checkMesh"] + opts)
+
     @classmethod
     def gmsh_to_foam_single_region(
             cls,
             mesh_file: str | Path,
             *,
-            patching: Callable[[], None] | None = None
+            renumber_mesh: bool = True,
+            check_mesh: bool = True,
+            patching: Callable[[], None] | None = None,
+            **kwargs: Any
         ) -> None:
         """ Convert Gmsh mesh into single-region OpenFOAM polyMesh format.
 
@@ -832,10 +902,7 @@ class Meshing:
         if callable(patching):
             patching()
 
-        Runner.serial(["renumberMesh"])
-        Runner.serial(["checkMesh"])
-
-        banner("Finished!")
+        cls.post_meshing(renumber_mesh, check_mesh, **kwargs)
 
     @classmethod
     def snappyhexmesh(
@@ -941,14 +1008,7 @@ class Meshing:
         if callable(postprocess):
             postprocess()
 
-        if renumber_mesh:
-            Runner.serial("renumberMesh")
-
-        if check_mesh:
-            opts = kwargs.get("checkMesh_options", [])
-            Runner.serial(["checkMesh"] + opts)
-
-        banner("Mesh generation complete!")
+        cls.post_meshing(renumber_mesh, check_mesh, **kwargs)
 
 
 class CommonProjectManager:
@@ -964,7 +1024,7 @@ class CommonProjectManager:
         Workflow callback handling solver execution tasks.
     how_to_clean : Callable = clean_case
         Workflow callback handling case cleanup tasks.
-    get_args : Callable = common_arguments
+    get_args : Callable = ArgumentsPresets.common
         Callback for parsing command line arguments.
     """
 
@@ -982,10 +1042,13 @@ class CommonProjectManager:
             how_to_mesh: Callable,
             how_to_run: Callable,
             how_to_clean: Callable = clean_case,
-            get_args: Callable = common_arguments,
+            get_args: str | Callable = ArgumentsPresets.common,
         ) -> None:
         if not root_dir.exists():
             raise FileNotFoundError(root_dir)
+
+        if isinstance(get_args, str):
+            get_args = getattr(ArgumentsPresets, get_args)
 
         self._root_dir = root_dir
         self._mesher   = ensure_openfoam_case(how_to_mesh)
