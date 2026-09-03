@@ -17,40 +17,54 @@ Capturing sharp geometric features and distinct topological edges is essential f
 Within the master configuration dictionary `snappyHexMeshDict`, all surface geometries and spatial entities must be declared within the top-level `geometry` sub-dictionary. External CAD files are incorporated by declaring a user-defined name for the entity and assigning it the `triSurfaceMesh` type, followed by the specific file name of the imported STL or OBJ file. If the imported surface file contains distinct topological regions or grouped faces created during the CAD export phase, these can be explicitly mapped using a nested `regions` sub-dictionary. Mapping named regions allows the user to reassign individual geometric face groups to dedicated patch names, facilitating localized surface refinement and simplifying the subsequent application of specific numerical boundary conditions in the simulation setup. A minimal example is provided in @lst-geometry-cylinder.
 
 #figure(
-```cpp
-geometry
-{
-    cylinder
-    {
-      type triSurfaceMesh;
-      file "cylinder.stl";
-    }
-}
-```,
-caption: [Add file `constant/geometry/cylinder.stl` referring to patch name `cylinder` (used in meshing and boundary conditions).],
+  ```cpp
+  geometry
+  {
+      cylinder
+      {
+        type triSurfaceMesh;
+        file "cylinder.stl";
+      }
+  }
+  ```,
+  caption: [Add file `constant/geometry/cylinder.stl` referring to patch name `cylinder` (used in meshing and boundary conditions).],
 ) <lst-geometry-cylinder>
 
 == Analytical and searchable geometric entities
 
-In addition to importing external triangulated CAD surfaces, the `geometry` sub-dictionary permits the definition of native analytical geometric shapes. These internal entities are defined directly using mathematical primitives, eliminating the requirement to export secondary CAD files for spatial control. Users can configure shapes #footnote[See #link("https://cpp.openfoam.org/v13/classFoam_1_1searchableSurface.html")[`searchableSurface`] for details.] such as `searchableBox`, `searchableSphere`, or `searchableCylinder` by specifying their canonical spatial coordinates, such as minimum and maximum diagonal vectors for bounding boxes, or center coordinates and radii for spherical volumes. The creation of a cylinder is illustrated in @lst-refinement-cylinder.
+In addition to importing external triangulated CAD surfaces, the `geometry` sub-dictionary permits the definition of native analytical geometric shapes. These internal entities are defined directly using mathematical primitives, eliminating the requirement to export secondary CAD files for spatial control. Users can configure shapes #footnote[See #link("https://cpp.openfoam.org/v13/classFoam_1_1searchableSurface.html")[`searchableSurface`] for details.] such as `searchableBox`, `searchableSphere`, or `searchableCylinder` by specifying their canonical spatial coordinates, such as minimum and maximum diagonal vectors for bounding boxes, or center coordinates and radii for spherical volumes. The creation of some entities is illustrated in @lst-searchable-surfaces-example.
 
 #figure(
-```cpp
-geometry
-{
-    // ... other surfaces here ...
+  ```cpp
+  geometry
+  {
+      // ... other surfaces here ...
 
-    refinementInjector
-    {
-        type cylinder;
-        point1 (0.0  0.0  0.0);
-        point2 (0.0  0.0  1.0);
-        radius 0.1;
-    }
-}
-```,
-caption: [Create a cylinder for later refinement control in region.],
-) <lst-refinement-cylinder>
+      myBox
+      {
+          type      box;
+          min       (0.0  0.0  0.0);
+          max       (10.0 10.0 10.0);
+      }
+
+      mySphere
+      {
+          type       sphere;
+          centre     (10.0  10.0  10.0);
+          radius     5.0;
+      }
+
+      myCylinder
+      {
+          type      cylinder;
+          point1    (0.0  0.0  0.0);
+          point2    (0.0  0.0  1.0);
+          radius    0.1;
+      }
+  }
+  ```,
+  caption: [Examples of searchable surfaces creation.],
+) <lst-searchable-surfaces-example>
 
 These searchable entities play multiple roles across the meshing workflow. Primarily, they are referenced within the downstream `castellatedMeshControls` section (discussed in @chapter-3) to establish volumetric refinement zones, enforcing higher cell densities in wakes, mixing layers, or designated flow paths. Furthermore, analytical geometries can serve as bounding templates or help define spatial domains when identifying simulation boundaries, ensuring that geometric structures and refinement zones are accurately linked throughout the execution of `snappyHexMesh`.
 
