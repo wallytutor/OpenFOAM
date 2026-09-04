@@ -21,7 +21,223 @@ if sys.platform != "linux":
 TIME_DIR_REGEX = r"^[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$"
 
 
-class ArgumentsPresets:
+def banner(message: str) -> None:
+    """ Print a formatted banner message to standard output.
+
+    Parameters
+    ----------
+    message : str
+        Message text to display inside standard workflow banner.
+
+    Returns
+    -------
+    None
+        Output is written directly to standard stdout stream.
+    """
+    print(f"{78 * '='}\n> {message}\n")
+
+
+def validate_input(msg: str) -> bool:
+    while True:
+        match (ans := input(f"{msg} (y/N): ").lower().strip()):
+            case "y":
+                return True
+            case "n":
+                return False
+            case _:
+                print(f"Invalid input {ans}; please, answer (y/N)")
+                continue
+
+
+class FoamHelpers:
+    """ Helper routines for OpenFOAM case environment and structure. """
+
+    __slots__ = ()
+
+    @staticmethod
+    def source_openfoam_env(
+            foam_root: str | Path = "/opt/openfoam13",
+            shell: str = "bash"
+        ) -> None:
+        """ Source OpenFOAM environment variables into current environment.
+
+        Parameters
+        ----------
+        foam_root : str | Path = "/opt/openfoam13"
+            Root installation path of OpenFOAM distribution.
+        shell : str = "bash"
+            Shell executable used to run environment configuration script.
+
+        Returns
+        -------
+        None
+            Updates active environment variables in os.environ directly.
+        """
+        # Do not source if already sourced, it's slow...
+        wm_project_dir = os.environ.get("WM_PROJECT_DIR", None)
+        if wm_project_dir and Path(wm_project_dir).resolve() == Path(foam_root).resolve():
+            return
+
+        banner(f"Sourcing OpenFOAM environment for {shell}")
+        rc = Path(foam_root) / f"etc/{shell}rc"
+
+        if not rc.exists():
+            raise FileNotFoundError(
+                f"OpenFOAM environment file not found: {rc}"
+            )
+
+        # TODO check if in csh it is also source.
+        args = [shell, "-c", f"source {rc} && env"]
+        proc = run(args, stdout=PIPE, text=True, check=True)
+
+        for line in proc.stdout.splitlines():
+            key, _, val = line.partition("=")
+
+            if key and val:
+                os.environ[key] = val
+
+    @staticmethod
+    def get_latest_time(
+            path: Path,
+            regex: str = TIME_DIR_REGEX
+        ) -> float | None:
+        """ Find numerical value of latest simulation time directory.
+
+        Parameters
+        ----------
+        path : Path
+            Target directory containing execution time step folders.
+        regex : str = TIME_DIR_REGEX
+            Regular expression matching valid time directory names.
+
+        Returns
+        -------
+        float | None
+            Highest numerical time step found, or None if empty.
+        """
+        times = []
+
+        if not path.is_dir():
+            return None
+
+        for item in path.iterdir():
+            if item.is_dir() and re.match(regex, item.name):
+                try:
+                    times.append(float(item.name))
+                except ValueError:
+                    pass
+
+        return max(times) if times else None
+
+    @staticmethod
+    def get_processor_dirs(
+            root_dir: Path | None = None
+        ) -> list[Path]:
+        """ Return processor directories.
+
+        Parameters
+        ----------
+        root_dir : Path | None = None
+            Case directory path to check. Defaults to current working dir.
+
+        Returns
+        -------
+        list[Path]
+            List of processor directory paths.
+        """
+        here = root_dir if root_dir else Path.cwd()
+        return [p for p in here.glob("processor*") if p.is_dir()]
+
+    @staticmethod
+    def is_openfoam_case(root_dir: Path | None = None) -> bool:
+        """ Check if target path contains a valid OpenFOAM case.
+
+        Parameters
+        ----------
+        root_dir : Path | None = None
+            Case directory path to verify. Defaults to current working dir.
+
+        Returns
+        -------
+        bool
+            True if system/controlDict file is present.
+        """
+        if root_dir and not root_dir.exists():
+            return False
+
+        here = root_dir if root_dir else Path.cwd()
+        return (here / "system/controlDict").exists()
+
+    @staticmethod
+    def ensure_openfoam_case(func: Callable) -> Callable:
+        """ Decorate workflow function to ensure OpenFOAM case context.
+
+        Parameters
+        ----------
+        func : Callable
+            Workflow entrypoint function to wrap.
+
+        Returns
+        -------
+        Callable
+            Wrapped workflow execution function.
+        """
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            t0 = perf_counter()
+            here = kwargs.get("root_dir", Path.cwd())
+
+            if not FoamHelpers.is_openfoam_case(here):
+                raise NotADirectoryError(f"Not an OpenFOAM case: {here}")
+
+            Path("case.foam").touch()
+
+            values = func(*args, **kwargs)
+
+            print(f"Workflow took {perf_counter() - t0} seconds")
+            return values
+
+        return wrapper
+
+    @classmethod
+    def is_restart(
+            cls,
+            cores: int,
+            root_dir: Path | None = None
+        ) -> bool:
+        """ Verify if directory contains valid past data for simulation restart.
+
+        Parameters
+        ----------
+        cores : int
+            Number of processor subdomains configured for parallel run.
+        root_dir : Path | None = None
+            Case directory path to check. Defaults to current working dir.
+
+        Returns
+        -------
+        bool
+            True if consistent time step outputs exist across all domains.
+        """
+        here = root_dir if root_dir else Path.cwd()
+
+        if not cls.is_openfoam_case(here):
+            raise FileNotFoundError(f"Not an OpenFOAM case: {here}")
+
+        procs = cls.get_processor_dirs(here)
+
+        if len(procs) != cores:
+            return False
+
+        if (top_latest := cls.get_latest_time(here)) is None:
+            return False
+
+        proc_times = [cls.get_latest_time(p) for p in procs]
+
+        return all(t is not None and t == top_latest for t in proc_times)
+
+
+class FoamArguments:
     """ Reusable ArgumentParser preset builders for OpenFOAM workflows. """
 
     __slots__ = ()
@@ -98,7 +314,7 @@ class ArgumentsPresets:
         )
 
         if source_env:
-            source_openfoam_env()
+            FoamHelpers.source_openfoam_env()
 
         return parser
 
@@ -155,368 +371,166 @@ class ArgumentsPresets:
         return parser
 
 
-def banner(message: str) -> None:
-    """ Print a formatted banner message to standard output.
-
-    Parameters
-    ----------
-    message : str
-        Message text to display inside standard workflow banner.
-
-    Returns
-    -------
-    None
-        Output is written directly to standard stdout stream.
-    """
-    print(f"{78 * '='}\n> {message}\n")
-
-
-def validate_input(msg: str) -> bool:
-    while True:
-        match (ans := input(f"{msg} (y/N): ").lower().strip()):
-            case "y":
-                return True
-            case "n":
-                return False
-            case _:
-                print(f"Invalid input {ans}; please, answer (y/N)")
-                continue
-
-
-def source_openfoam_env(
-        foam_root: str | Path = "/opt/openfoam13",
-        shell: str = "bash"
-    ) -> None:
-    """ Source OpenFOAM environment variables into current environment.
-
-    Parameters
-    ----------
-    foam_root : str | Path = "/opt/openfoam13"
-        Root installation path of OpenFOAM distribution.
-    shell : str = "bash"
-        Shell executable used to run environment configuration script.
-
-    Returns
-    -------
-    None
-        Updates active environment variables in os.environ directly.
-    """
-    # Do not source if already sourced, it's slow...
-    wm_project_dir = os.environ.get("WM_PROJECT_DIR", None)
-    if wm_project_dir and Path(wm_project_dir).resolve() == Path(foam_root).resolve():
-        return
-
-    banner(f"Sourcing OpenFOAM environment for {shell}")
-    rc = Path(foam_root) / f"etc/{shell}rc"
-
-    if not rc.exists():
-        raise FileNotFoundError(
-            f"OpenFOAM environment file not found: {rc}"
-        )
-
-    # TODO check if in csh it is also source.
-    args = [shell, "-c", f"source {rc} && env"]
-    proc = run(args, stdout=PIPE, text=True, check=True)
-
-    for line in proc.stdout.splitlines():
-        key, _, val = line.partition("=")
-
-        if key and val:
-            os.environ[key] = val
-
-
-def get_latest_time(
-        path: Path,
-        regex: str = TIME_DIR_REGEX
-    ) -> float | None:
-    """ Find numerical value of latest simulation time directory.
-
-    Parameters
-    ----------
-    path : Path
-        Target directory containing execution time step folders.
-    regex : str = TIME_DIR_REGEX
-        Regular expression matching valid time directory names.
-
-    Returns
-    -------
-    float | None
-        Highest numerical time step found, or None if empty.
-    """
-    times = []
-
-    if not path.is_dir():
-        return None
-
-    for item in path.iterdir():
-        if item.is_dir() and re.match(regex, item.name):
-            try:
-                times.append(float(item.name))
-            except ValueError:
-                pass
-
-    return max(times) if times else None
-
-
-def get_processor_dirs(
-        root_dir: Path | None = None
-    ) -> list[Path]:
-    """ Return processor directories.
-
-    Parameters
-    ----------
-    root_dir : Path | None = None
-        Case directory path to check. Defaults to current working dir.
-
-    Returns
-    -------
-    list[Path]
-        List of processor directory paths.
-    """
-    here = root_dir if root_dir else Path.cwd()
-    return [p for p in here.glob("processor*") if p.is_dir()]
-
-
-def is_openfoam_case(root_dir: Path | None = None) -> bool:
-    """ Check if target path contains a valid OpenFOAM case.
-
-    Parameters
-    ----------
-    root_dir : Path | None = None
-        Case directory path to verify. Defaults to current working dir.
-
-    Returns
-    -------
-    bool
-        True if system/controlDict file is present.
-    """
-    if root_dir and not root_dir.exists():
-        return False
-
-    here = root_dir if root_dir else Path.cwd()
-    return (here / "system/controlDict").exists()
-
-
-def ensure_openfoam_case(func: Callable) -> Callable:
-    """ Decorate workflow function to ensure OpenFOAM case context.
-
-    Parameters
-    ----------
-    func : Callable
-        Workflow entrypoint function to wrap.
-
-    Returns
-    -------
-    Callable
-        Wrapped workflow execution function.
-    """
-    @functools.wraps(func)
-    def wrapper(*args, **kwargs):
-        t0 = perf_counter()
-        here = kwargs.get("root_dir", Path.cwd())
-
-        if not is_openfoam_case(here):
-            raise NotADirectoryError(f"Not an OpenFOAM case: {here}")
-
-        Path("case.foam").touch()
-
-        values = func(*args, **kwargs)
-
-        print(f"Workflow took {perf_counter() - t0} seconds")
-        return values
-
-    return wrapper
-
-
-def is_restart(
-        cores: int,
-        root_dir: Path | None = None
-    ) -> bool:
-    """ Verify if directory contains valid past data for simulation restart.
-
-    Parameters
-    ----------
-    cores : int
-        Number of processor subdomains configured for parallel run.
-    root_dir : Path | None = None
-        Case directory path to check. Defaults to current working dir.
-
-    Returns
-    -------
-    bool
-        True if consistent time step outputs exist across all domains.
-    """
-    here = root_dir if root_dir else Path.cwd()
-
-    if not is_openfoam_case(here):
-        raise FileNotFoundError(f"Not an OpenFOAM case: {here}")
-
-    procs = get_processor_dirs(here)
-
-    if len(procs) != cores:
-        return False
-
-    if (top_latest := get_latest_time(here)) is None:
-        return False
-
-    proc_times = [get_latest_time(p) for p in procs]
-
-    return all(t is not None and t == top_latest for t in proc_times)
-
-
-def clean_times(
-        root_dir: Path | None = None,
-        *,
-        remove_zero: bool = True
-    ) -> None:
-    """ Clean simulation time step output directories.
-
-    Parameters
-    ----------
-    root_dir : Path | None = None
-        Case directory path to clean. Defaults to current working dir.
-    remove_zero : bool = True
-        Whether to remove the initial conditions zero directory.
-
-    Returns
-    -------
-    None
-        Time step directories are removed in-place.
-    """
-    cwd = Path(root_dir) if root_dir else Path.cwd()
-
-    for item in cwd.iterdir():
-        if item.is_dir() and re.match(TIME_DIR_REGEX, item.name):
-            try:
-                t = float(item.name)
-            except ValueError:
-                continue
-
-            if t > 0.0 or (t == 0.0 and remove_zero):
-                shutil.rmtree(item, ignore_errors=True)
-
-
-def clean_logs(
-        root_dir: Path | None = None,
-    ) -> None:
-    """ Clean execution log files matching log.* pattern.
-
-    Parameters
-    ----------
-    root_dir : Path | None = None
-        Case directory path to clean. Defaults to current working dir.
-
-    Returns
-    -------
-    None
-        Log files matching log.* are removed in-place.
-    """
-    cwd = Path(root_dir) if root_dir else Path.cwd()
-
-    for log_file in cwd.glob("log.*"):
-        if log_file.is_file():
-            log_file.unlink(missing_ok=True)
-
-
-def clean_processors_dirs(
-        root_dir: Path | None = None,
-    ) -> None:
-    """ Remove all processor directories from a case.
-
-    Parameters
-    ----------
-    root_dir : Path | None = None
-        Case directory path to clean. Defaults to current working dir.
-
-    Returns
-    -------
-    None
-        Processor directories are removed in-place.
-    """
-    for p in get_processor_dirs(root_dir):
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
-
-
-def clean_case(
-        root_dir: str | Path | None = None,
-        *,
-        remove_zero: bool = True,
-        extra_dirs: Sequence[str | Path] | None = None,
-        extra_files: Sequence[str | Path] | None = None,
-        extra_patterns: Sequence[str] | None = None,
-        **kwargs: Any,
-    ) -> None:
-    """ Clean execution outputs, mesh directories, and log files in case.
-
-    Parameters
-    ----------
-    root_dir : str | Path | None = None
-        Target case root directory. Defaults to current working dir.
-    remove_zero : bool = True
-        Whether to remove the 0 initial conditions directory.
-    extra_dirs : Sequence[str | Path] | None = None
-        Additional directory paths to remove.
-    extra_files : Sequence[str | Path] | None = None
-        Additional file paths to remove.
-    extra_patterns : Sequence[str] | None = None
-        Glob patterns for matching files/directories to delete.
-    **kwargs : Any
-        Additional case cleaning options and arguments.
-
-    Returns
-    -------
-    None
-        Case workspace is cleaned in place.
-    """
-    cwd = Path(root_dir) if root_dir else Path.cwd()
-
-    if not is_openfoam_case(cwd):
-        raise FileNotFoundError(f"Not an OpenFOAM case: {cwd}")
-
-    clean_times(cwd, remove_zero=remove_zero)
-    clean_processors_dirs(cwd)
-    clean_logs(cwd)
-
-    to_remove = [
-        cwd / "constant" / "extendedFeatureEdgeMesh",
-        cwd / "constant" / "polyMesh",
-        cwd / "postProcessing",
-    ]
-
-    if extra_dirs:
-        for ed in extra_dirs:
-            to_remove.append(Path(ed) if not isinstance(ed, Path) else ed)
-
-    for p in to_remove:
-        if p.is_dir():
-            shutil.rmtree(p, ignore_errors=True)
-
-    if (geom_dir := cwd / "constant" / "geometry").is_dir():
-        for f in geom_dir.glob("*.eMesh"):
-            if f.is_file():
-                f.unlink(missing_ok=True)
-
-    if (case_foam := cwd / "case.foam").exists():
-        case_foam.unlink(missing_ok=True)
-
-    if extra_files:
-        for ef in extra_files:
-            p = Path(ef) if not isinstance(ef, Path) else ef
-
-            if p.is_file():
-                p.unlink(missing_ok=True)
-
-    if extra_patterns:
-        for pattern in extra_patterns:
-            for match in cwd.glob(pattern):
-                if match.is_file():
-                    match.unlink(missing_ok=True)
-                elif match.is_dir():
-                    shutil.rmtree(match, ignore_errors=True)
-
-
-class Runner:
+class FoamCleaner:
+    """ Utilities for cleaning OpenFOAM case directories and outputs. """
+
+    __slots__ = ()
+
+    @staticmethod
+    def times(
+            root_dir: Path | None = None,
+            *,
+            remove_zero: bool = True
+        ) -> None:
+        """ Clean simulation time step output directories.
+
+        Parameters
+        ----------
+        root_dir : Path | None = None
+            Case directory path to clean. Defaults to current working dir.
+        remove_zero : bool = True
+            Whether to remove the initial conditions zero directory.
+
+        Returns
+        -------
+        None
+            Time step directories are removed in-place.
+        """
+        cwd = Path(root_dir) if root_dir else Path.cwd()
+
+        for item in cwd.iterdir():
+            if item.is_dir() and re.match(TIME_DIR_REGEX, item.name):
+                try:
+                    t = float(item.name)
+                except ValueError:
+                    continue
+
+                if t > 0.0 or (t == 0.0 and remove_zero):
+                    shutil.rmtree(item, ignore_errors=True)
+
+    @staticmethod
+    def logs(
+            root_dir: Path | None = None,
+        ) -> None:
+        """ Clean execution log files matching log.* pattern.
+
+        Parameters
+        ----------
+        root_dir : Path | None = None
+            Case directory path to clean. Defaults to current working dir.
+
+        Returns
+        -------
+        None
+            Log files matching log.* are removed in-place.
+        """
+        cwd = Path(root_dir) if root_dir else Path.cwd()
+
+        for log_file in cwd.glob("log.*"):
+            if log_file.is_file():
+                log_file.unlink(missing_ok=True)
+
+    @staticmethod
+    def processors_dirs(
+            root_dir: Path | None = None,
+        ) -> None:
+        """ Remove all processor directories from a case.
+
+        Parameters
+        ----------
+        root_dir : Path | None = None
+            Case directory path to clean. Defaults to current working dir.
+
+        Returns
+        -------
+        None
+            Processor directories are removed in-place.
+        """
+        for p in FoamHelpers.get_processor_dirs(root_dir):
+            if p.is_dir():
+                shutil.rmtree(p, ignore_errors=True)
+
+    @classmethod
+    def case(
+            cls,
+            root_dir: str | Path | None = None,
+            *,
+            remove_zero: bool = True,
+            extra_dirs: Sequence[str | Path] | None = None,
+            extra_files: Sequence[str | Path] | None = None,
+            extra_patterns: Sequence[str] | None = None,
+            **kwargs: Any,
+        ) -> None:
+        """ Clean execution outputs, mesh directories, and log files in case.
+
+        Parameters
+        ----------
+        root_dir : str | Path | None = None
+            Target case root directory. Defaults to current working dir.
+        remove_zero : bool = True
+            Whether to remove the 0 initial conditions directory.
+        extra_dirs : Sequence[str | Path] | None = None
+            Additional directory paths to remove.
+        extra_files : Sequence[str | Path] | None = None
+            Additional file paths to remove.
+        extra_patterns : Sequence[str] | None = None
+            Glob patterns for matching files/directories to delete.
+        **kwargs : Any
+            Additional case cleaning options and arguments.
+
+        Returns
+        -------
+        None
+            Case workspace is cleaned in place.
+        """
+        cwd = Path(root_dir) if root_dir else Path.cwd()
+
+        if not FoamHelpers.is_openfoam_case(cwd):
+            raise FileNotFoundError(f"Not an OpenFOAM case: {cwd}")
+
+        cls.times(cwd, remove_zero=remove_zero)
+        cls.processors_dirs(cwd)
+        cls.logs(cwd)
+
+        to_remove = [
+            cwd / "constant" / "extendedFeatureEdgeMesh",
+            cwd / "constant" / "polyMesh",
+            cwd / "postProcessing",
+        ]
+
+        if extra_dirs:
+            for ed in extra_dirs:
+                to_remove.append(Path(ed) if not isinstance(ed, Path) else ed)
+
+        for p in to_remove:
+            if p.is_dir():
+                shutil.rmtree(p, ignore_errors=True)
+
+        if (geom_dir := cwd / "constant" / "geometry").is_dir():
+            for f in geom_dir.glob("*.eMesh"):
+                if f.is_file():
+                    f.unlink(missing_ok=True)
+
+        if (case_foam := cwd / "case.foam").exists():
+            case_foam.unlink(missing_ok=True)
+
+        if extra_files:
+            for ef in extra_files:
+                p = Path(ef) if not isinstance(ef, Path) else ef
+
+                if p.is_file():
+                    p.unlink(missing_ok=True)
+
+        if extra_patterns:
+            for pattern in extra_patterns:
+                for match in cwd.glob(pattern):
+                    if match.is_file():
+                        match.unlink(missing_ok=True)
+                    elif match.is_dir():
+                        shutil.rmtree(match, ignore_errors=True)
+
+
+class FoamRunner:
     """ Manage serial and parallel execution of OpenFOAM applications. """
 
     __slots__ = ()
@@ -670,7 +684,7 @@ class Runner:
         if cores < 2:
             return
 
-        if is_restart(cores) and not force:
+        if FoamHelpers.is_restart(cores) and not force:
             return
 
         dict_file = Path("system/decomposeParDict")
@@ -800,7 +814,7 @@ class Runner:
         None
             Executes preprocessing, decomposition, solver, and optional rec.
         """
-        if not is_restart(cores) and callable(preprocess):
+        if not FoamHelpers.is_restart(cores) and callable(preprocess):
             preprocess()
 
         cls.decompose(cores=cores, patching=decomposing)
@@ -861,7 +875,7 @@ class Runner:
         )
 
 
-class Meshing:
+class FoamMeshing:
     """ Utility routines for mesh generation and conversion operations. """
 
     __slots__ = ()
@@ -889,11 +903,11 @@ class Meshing:
             Executes post-meshing utilities.
         """
         if renumber_mesh:
-            Runner.serial("renumberMesh")
+            FoamRunner.serial("renumberMesh")
 
         if check_mesh:
             opts = kwargs.get("checkMesh_options", [])
-            Runner.serial(["checkMesh"] + opts)
+            FoamRunner.serial(["checkMesh"] + opts)
 
     @classmethod
     def gmsh_to_foam_single_region(
@@ -932,7 +946,7 @@ class Meshing:
         if not geometry.exists():
             raise FileNotFoundError(geometry)
 
-        Runner.serial(["gmshToFoam", str(geometry)])
+        FoamRunner.serial(["gmshToFoam", str(geometry)])
 
         if callable(patching):
             patching()
@@ -1008,7 +1022,7 @@ class Meshing:
             geometry(cores)
 
         if extract_surface_features:
-            Runner.surface_features(force=False)
+            FoamRunner.surface_features(force=False)
 
         if clean_extended_features:
             if (feat_dir := Path("constant/extendedFeatureEdgeMesh")).is_dir():
@@ -1019,26 +1033,26 @@ class Meshing:
                 print("Skipping blockMesh — polyMesh already exists.")
             else:
                 opts = kwargs.get("blockMesh_options", [])
-                Runner.serial(["blockMesh"] + opts)
+                FoamRunner.serial(["blockMesh"] + opts)
 
         if callable(preprocess):
             preprocess()
 
-        Runner.decompose(cores=cores, patching=decomposing)
+        FoamRunner.decompose(cores=cores, patching=decomposing)
 
         cmd = ["snappyHexMesh"] + kwargs.get("snappyHexMesh_options", [])
 
-        Runner.parallel(
+        FoamRunner.parallel(
             args     = cmd,
             cores    = cores,
             force    = force
         )
 
         if reconstruct:
-            Runner.reconstruct(constant=True)
+            FoamRunner.reconstruct(constant=True)
 
         if clean_parallel_dirs:
-            clean_processors_dirs()
+            FoamCleaner.processors_dirs()
 
         if callable(postprocess):
             postprocess()
@@ -1046,7 +1060,7 @@ class Meshing:
         cls.post_meshing(renumber_mesh, check_mesh, **kwargs)
 
 
-class CommonProjectManager:
+class FoamProject:
     """ Manage OpenFOAM case project execution workflows.
 
     Parameters
@@ -1057,9 +1071,9 @@ class CommonProjectManager:
         Workflow callback handling meshing tasks.
     how_to_run : Callable
         Workflow callback handling solver execution tasks.
-    how_to_clean : Callable = clean_case
+    how_to_clean : Callable = FoamCleaner.case
         Workflow callback handling case cleanup tasks.
-    get_args : str | Callable = ArgumentsPresets.common
+    get_args : str | Callable = FoamArguments.common
         Callback for parsing command line arguments.
     """
 
@@ -1076,19 +1090,19 @@ class CommonProjectManager:
             root_dir: Path,
             how_to_mesh: Callable,
             how_to_run: Callable,
-            how_to_clean: Callable = clean_case,
-            get_args: str | Callable = ArgumentsPresets.common,
+            how_to_clean: Callable = FoamCleaner.case,
+            get_args: str | Callable = FoamArguments.common,
         ) -> None:
         if not root_dir.exists():
             raise FileNotFoundError(root_dir)
 
         if isinstance(get_args, str):
-            get_args = getattr(ArgumentsPresets, get_args)
+            get_args = getattr(FoamArguments, get_args)
 
         self._root_dir = root_dir
-        self._mesher   = ensure_openfoam_case(how_to_mesh)
-        self._runner   = ensure_openfoam_case(how_to_run)
-        self._cleaner  = ensure_openfoam_case(how_to_clean)
+        self._mesher   = FoamHelpers.ensure_openfoam_case(how_to_mesh)
+        self._runner   = FoamHelpers.ensure_openfoam_case(how_to_run)
+        self._cleaner  = FoamHelpers.ensure_openfoam_case(how_to_clean)
         self._get_args = get_args
 
     def valid_options(self, args: Any) -> bool:
@@ -1141,17 +1155,17 @@ class CommonProjectManager:
         ###
 
         if args.clean_logs:
-            clean_logs(self._root_dir)
+            FoamCleaner.logs(self._root_dir)
 
         if args.clean_processors:
-            clean_processors_dirs(self._root_dir)
+            FoamCleaner.processors_dirs(self._root_dir)
 
         ###
         # Reconstruction / etc
         ###
 
         if args.reconstruct and not process:
-            Runner.reconstruct(latest=args.latest)
+            FoamRunner.reconstruct(latest=args.latest)
             return
 
         ###

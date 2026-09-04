@@ -10,12 +10,12 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[2] / "script"))
 
-from foamutils import Runner, Meshing, CommonProjectManager
+from foamutils import FoamRunner, FoamMeshing, FoamProject
 
 
 def main(*args: Any) -> None:
     """ Execute main CLI workflow for the 2D OpenFOAM case. """
-    obj = CommonProjectManager(
+    obj = FoamProject(
         root_dir    = HERE,
         how_to_mesh = how_to_mesh,
         how_to_run  = how_to_run,
@@ -40,11 +40,11 @@ def how_to_mesh(args: Any) -> None:
         ]
 
         for entry, value in changes:
-            Runner.dict_set_entry(file, entry, value)
+            FoamRunner.dict_set_entry(file, entry, value)
 
     Path("case.foam").touch()
 
-    Meshing.gmsh_to_foam_single_region(
+    FoamMeshing.gmsh_to_foam_single_region(
         mesh_file = "constant/geometry/domain.msh",
         patching  = patching
     )
@@ -85,12 +85,12 @@ def how_to_run(args: Any) -> None:
                 raise ValueError(f"Unsupported core count: {cores}")
 
         file = str(dict_file)
-        Runner.dict_set_entry(file, "numberOfSubdomains", f"{cores}")
-        Runner.dict_set_entry(file, "simpleCoeffs/n", n_coeffs)
+        FoamRunner.dict_set_entry(file, "numberOfSubdomains", f"{cores}")
+        FoamRunner.dict_set_entry(file, "simpleCoeffs/n", n_coeffs)
 
     Path("case.foam").touch()
 
-    Runner.foam_run(
+    FoamRunner.foam_run(
         cores       = args.cores,
         reconstruct = args.reconstruct,
         preprocess  = preprocess,
