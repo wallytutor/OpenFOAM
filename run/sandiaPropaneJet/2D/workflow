@@ -10,7 +10,7 @@ from typing import Any
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE.parents[2] / "script"))
 
-from foamutils import FoamRunner, FoamMeshing, FoamProject
+from majordome.openfoam import FoamRunner, FoamMeshing, FoamProject
 
 
 def main(*args: Any) -> None:
