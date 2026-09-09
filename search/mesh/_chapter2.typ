@@ -30,7 +30,7 @@ Within the master configuration dictionary `snappyHexMeshDict`, all surface geom
   caption: [Add file `constant/geometry/cylinder.stl` referring to patch name `cylinder` (used in meshing and boundary conditions).],
 ) <lst-geometry-cylinder>
 
-As an alternative, it is possible to include all named regions in a single STL file, as illustrated in @lst-geometry-multisurface. This is the recommended practice #footnote[That was not the case in the past; using this approach allows for disabling `multiRegionFeatureSnap` and in general produce a simpler snapping workflow.].
+As an alternative, it is possible to include all named regions in a single STL file, as illustrated in @lst-geometry-multisurface. This is the recommended practice #footnote[That was not the case in the past; using this approach allows for disabling `multiRegionFeatureSnap` and in general produce a simpler snapping workflow.]. Keep in mind that if you intend to extract features with `surfaceFeatures` (@appendix-2-sec-surfaceFeatures), then you should also export the STL files of the regions for which `.eMesh` files are to be generated, as the tool does not support region-based extraction from a monolithic multi-regions STL file.
 
 #figure(
   ```cpp
