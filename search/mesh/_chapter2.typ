@@ -30,6 +30,30 @@ Within the master configuration dictionary `snappyHexMeshDict`, all surface geom
   caption: [Add file `constant/geometry/cylinder.stl` referring to patch name `cylinder` (used in meshing and boundary conditions).],
 ) <lst-geometry-cylinder>
 
+As an alternative, it is possible to include all named regions in a single STL file, as illustrated in @lst-geometry-multisurface. This is the recommended practice #footnote[That was not the case in the past; using this approach allows for disabling `multiRegionFeatureSnap` and in general produce a simpler snapping workflow.].
+
+#figure(
+  ```cpp
+  geometry
+  {
+      fluid
+      {
+        type triSurfaceMesh;
+        file "fluid.stl";
+
+        regions
+        {
+          // <stl name> { name <patch name>; }
+          inlet   { name inlet; }
+          outlet  { name outlet; }
+          heater  { name walls; }
+        }
+      }
+  }
+  ```,
+  caption: [Add file `constant/geometry/fluid.stl` with multiple named surfaces.],
+) <lst-geometry-multisurface>
+
 == Analytical and searchable geometric entities
 
 In addition to importing external triangulated CAD surfaces, the `geometry` sub-dictionary permits the definition of native analytical geometric shapes. These internal entities are defined directly using mathematical primitives, eliminating the requirement to export secondary CAD files for spatial control. Users can configure shapes #footnote[See #link("https://cpp.openfoam.org/v13/classFoam_1_1searchableSurface.html")[`searchableSurface`] for details.] such as `searchableBox`, `searchableSphere`, or `searchableCylinder` by specifying their canonical spatial coordinates, such as minimum and maximum diagonal vectors for bounding boxes, or center coordinates and radii for spherical volumes. The creation of some entities is illustrated in @lst-searchable-surfaces-example.

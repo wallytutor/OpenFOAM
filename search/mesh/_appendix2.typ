@@ -15,9 +15,11 @@ When conceiving a geometry, one must always take care of the units used for dime
   caption: [Use of `surfaceTransformPoints` for scaling an STL surface.],
 ) <lst-surfaceTransformPoints-scaling>
 
-== Using `surfaceFeatures` to extract features
+== Surface orientation <appendix-2-sec-surfaceOrient>
 
-== ParaView
+== Extracting surface features <appendix-2-sec-surfaceFeatures>
+
+== ParaView <appendix-2-sec-paraview>
 
 ParaView provides specialized filters and operations for geometric preparation, boundary manipulation, and mesh quality inspection. Its interface allow users to manually highlight individual elements, groups of faces, or polylines directly on the 3D model. It provides flexible visual control to identify localized geometric sections, such as a specific pipe ring, that require independent refinement levels.
 

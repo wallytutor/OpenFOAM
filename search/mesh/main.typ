@@ -47,6 +47,7 @@ We will discuss refinement controls, including the placement of _refinement regi
 #show: appendix
 #include "_appendix1.typ"
 #include "_appendix2.typ"
+#include "_appendix3.typ"
 
 // ----------------------------------------------------------------------------
 // EOF
