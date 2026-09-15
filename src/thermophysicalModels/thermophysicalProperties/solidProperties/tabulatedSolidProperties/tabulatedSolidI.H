@@ -27,15 +27,27 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+inline Foam::scalar Foam::tabulatedSolid::rho() const
+{
+    return rho(Tstd);
+}
+
+
 inline Foam::scalar Foam::tabulatedSolid::rho(const scalar T) const
 {
-    return rhoTable_.valid() ? rhoTable_.value(T) : 0.0;
+    return rhoTable_.valid() ? rhoTable_->value(T) : 0.0;
+}
+
+
+inline Foam::scalar Foam::tabulatedSolid::Cp() const
+{
+    return Cp(Tstd);
 }
 
 
 inline Foam::scalar Foam::tabulatedSolid::Cp(const scalar T) const
 {
-    return CpTable_.valid() ? CpTable_.value(T) : 0.0;
+    return CpTable_.valid() ? CpTable_->value(T) : 0.0;
 }
 
 
@@ -47,7 +59,7 @@ inline Foam::scalar Foam::tabulatedSolid::hf() const
 
 inline Foam::scalar Foam::tabulatedSolid::hs(const scalar T) const
 {
-    return CpTable_.valid() ? CpTable_.integral(Tstd, T) : 0.0;
+    return CpTable_.valid() ? CpTable_->integral(Tstd, T) : 0.0;
 }
 
 
@@ -69,9 +81,15 @@ inline Foam::scalar Foam::tabulatedSolid::ea(const scalar T) const
 }
 
 
+inline Foam::scalar Foam::tabulatedSolid::kappa() const
+{
+    return kappa(Tstd);
+}
+
+
 inline Foam::scalar Foam::tabulatedSolid::kappa(const scalar T) const
 {
-    return kappaTable_.valid() ? kappaTable_.value(T) : 0.0;
+    return kappaTable_.valid() ? kappaTable_->value(T) : 0.0;
 }
 
 

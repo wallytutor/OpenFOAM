@@ -11,9 +11,16 @@ tabulatedSolidProperties/
 ├── tabulatedSolid.H
 ├── tabulatedSolid.C
 ├── tabulatedSolidI.H
-└── Make/
-    ├── files
-    └── options
+├── Make/
+│   ├── files
+│   └── options
+└── test/
+    ├── testTabulatedSolid.C
+    ├── Allrun
+    ├── Allclean
+    └── Make/
+        ├── files
+        └── options
 ```
 
 ---
@@ -93,4 +100,22 @@ solids
 
     }
 }
+```
+
+---
+
+## Running Tests
+
+To build and run the test suite:
+
+```bash
+cd test
+./Allrun
+```
+
+To clean test build artifacts:
+
+```bash
+cd test
+./Allclean
 ```
