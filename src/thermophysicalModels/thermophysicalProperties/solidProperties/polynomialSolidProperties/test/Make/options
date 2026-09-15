@@ -1,0 +1,12 @@
+EXE_INC = \
+    -I$(FOAM_SRC)/thermophysicalModels/specie/lnInclude \
+    -I$(FOAM_SRC)/thermophysicalModels/thermophysicalProperties/lnInclude \
+    -I$(FOAM_SRC)/OpenFOAM/lnInclude \
+    -I../lnInclude
+
+EXE_LIBS = \
+    -lspecie \
+    -lthermophysicalProperties \
+    -lOpenFOAM \
+    -L$(FOAM_USER_LIBBIN) \
+    -lpolynomialSolidProperties

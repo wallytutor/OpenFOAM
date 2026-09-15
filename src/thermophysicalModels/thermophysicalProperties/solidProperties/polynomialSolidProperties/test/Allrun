@@ -1,0 +1,15 @@
+#!/bin/sh
+cd "${0%/*}" || exit
+
+# Source OpenFOAM environment if not already loaded
+if [ -z "$WM_PROJECT_DIR" ]; then
+    if [ -f /opt/openfoam13/etc/bashrc ]; then
+        . /opt/openfoam13/etc/bashrc
+    fi
+fi
+
+echo "Compiling test application..."
+wmake || exit 1
+
+echo "Running test application..."
+testPolynomialSolid

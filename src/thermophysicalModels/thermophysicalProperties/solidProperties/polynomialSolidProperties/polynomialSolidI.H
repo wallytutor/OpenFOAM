@@ -27,9 +27,21 @@ License
 
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
+inline Foam::scalar Foam::polynomialSolid::rho() const
+{
+    return rho(Tstd);
+}
+
+
 inline Foam::scalar Foam::polynomialSolid::rho(const scalar T) const
 {
     return rhoCoeffs_.value(T);
+}
+
+
+inline Foam::scalar Foam::polynomialSolid::Cp() const
+{
+    return Cp(Tstd);
 }
 
 
@@ -66,6 +78,12 @@ inline Foam::scalar Foam::polynomialSolid::es(const scalar T) const
 inline Foam::scalar Foam::polynomialSolid::ea(const scalar T) const
 {
     return es(T) + hf();
+}
+
+
+inline Foam::scalar Foam::polynomialSolid::kappa() const
+{
+    return kappa(Tstd);
 }
 
 

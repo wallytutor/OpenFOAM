@@ -46,7 +46,9 @@ Foam::polynomialSolid::polynomialSolid()
     solidProperties(0, 0, 0, 0, 0),
     rhoCoeffs_(),
     CpCoeffs_(),
-    kappaCoeffs_()
+    kappaCoeffs_(),
+    hf_(0),
+    emissivity_(0)
 {
 }
 
@@ -55,20 +57,42 @@ Foam::polynomialSolid::polynomialSolid(const dictionary& dict)
     solidProperties(0, 0, 0, 0, 0),
     rhoCoeffs_(dict.lookup("rhoCoeffs")),
     CpCoeffs_(dict.lookup("CpCoeffs")),
-    kappaCoeffs_(dict.lookup("kappaCoeffs")),
-    hf_(dict.lookup<scalar>("Hf")),
+    kappaCoeffs_(dict.lookup(dict.found("kappaCoeffs") ? "kappaCoeffs" : "KCoeffs")),
+    hf_(dict.lookupBackwardsCompatible<scalar>({"Hf", "hf"})),
     emissivity_(dict.lookup<scalar>("emissivity"))
+{
+    solidProperties::operator=
+    (
+        solidProperties
+        (
+            rho(Tstd),
+            Cp(Tstd),
+            kappa(Tstd),
+            hf_,
+            emissivity_
+        )
+    );
+}
+
+Foam::polynomialSolid::polynomialSolid(const polynomialSolid& ps)
+:
+    solidProperties(ps),
+    rhoCoeffs_(ps.rhoCoeffs_),
+    CpCoeffs_(ps.CpCoeffs_),
+    kappaCoeffs_(ps.kappaCoeffs_),
+    hf_(ps.hf_),
+    emissivity_(ps.emissivity_)
 {}
 
 // * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
 
 void Foam::polynomialSolid::write(Ostream& os) const
 {
-    os  << rhoCoeffs_   << token::SPACE
-        << CpCoeffs_    << token::SPACE
-        << kappaCoeffs_ << token::SPACE
-        << hf_          << token::SPACE
-        << emissivity_;
+    writeEntry(os, "rhoCoeffs", rhoCoeffs_);
+    writeEntry(os, "CpCoeffs", CpCoeffs_);
+    writeEntry(os, "kappaCoeffs", kappaCoeffs_);
+    writeEntry(os, "Hf", hf_);
+    writeEntry(os, "emissivity", emissivity_);
 }
 
 // ************************************************************************* //

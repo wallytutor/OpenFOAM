@@ -11,9 +11,16 @@ polynomialSolidProperties/
 ├── polynomialSolid.H
 ├── polynomialSolid.C
 ├── polynomialSolidI.H
-└── Make/
-    ├── files
-    └── options
+├── Make/
+│   ├── files
+│   └── options
+└── test/
+    ├── testPolynomialSolid.C
+    ├── Allrun
+    ├── Allclean
+    └── Make/
+        ├── files
+        └── options
 ```
 
 ---
@@ -72,4 +79,22 @@ solids
         kappaCoeffs  (1.5 0 0 0 0 0 0 0);
     }
 }
+```
+
+---
+
+## Running Tests
+
+To build and run the test suite:
+
+```bash
+cd test
+./Allrun
+```
+
+To clean test build artifacts:
+
+```bash
+cd test
+./Allclean
 ```

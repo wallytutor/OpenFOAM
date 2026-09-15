@@ -79,6 +79,9 @@ public:
         //- Construct from dictionary
         polynomialSolid(const dictionary& dict);
 
+        //- Copy constructor
+        polynomialSolid(const polynomialSolid& ps);
+
         //- Construct and return a clone
         virtual autoPtr<solidProperties> clone() const
         {
@@ -90,9 +93,11 @@ public:
         // Physical constants which define the solidProperties
 
             //- Density [kg/m^3]
+            inline scalar rho() const;
             inline scalar rho(const scalar T) const;
 
             //- Specific heat capacity [J/kg/K]
+            inline scalar Cp() const;
             inline scalar Cp(const scalar T) const;
 
             //- Heat of formation [J/kg]
@@ -102,15 +107,16 @@ public:
             inline scalar hs(const scalar T) const;
 
             //- Absolute enthalpy [J/kg]
-            inline scalar ha(scalar T) const;
+            inline scalar ha(const scalar T) const;
 
             //- Sensible internal energy [J/kg]
             inline scalar es(const scalar T) const;
 
             //- Absolute internal energy [J/kg]
-            inline scalar ea(scalar T) const;
+            inline scalar ea(const scalar T) const;
 
             //- Thermal conductivity [W/m/K]
+            inline scalar kappa() const;
             inline scalar kappa(const scalar T) const;
 
             //- Emissivity []
