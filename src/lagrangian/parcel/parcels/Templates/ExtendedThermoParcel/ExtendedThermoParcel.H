@@ -43,6 +43,11 @@ SourceFiles
 #include "fluidThermo.H"
 #include "demandDrivenEntry.H"
 
+// WWW: this is a workaround to get the temperature dependence here through an
+// up-cast of the base class. In the future we need to make the cloud have a
+// real `extendedSolidProperties` class with temperature dependence.
+#include "tabulatedSolid.H"
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 namespace Foam
@@ -273,6 +278,29 @@ protected:
 
 
     // Protected Member Functions
+
+        // WWW: this is a workaround for a single solid; in the future
+        // we should update who `cloud.composition().Cp` is evaluated,
+        // thus supporting a mixture of different particle types.
+        //- Helper to evaluate Cp(T) from cloud solid thermo
+        template<class TrackCloudType>
+        inline scalar solidCp
+        (
+            const TrackCloudType& cloud,
+            const scalar p,
+            const scalar T
+        ) const
+        {
+            // WWW: this was a first hallucination/error, this cannot be done
+            // Query the first solid component defined in physicalProperties/solids
+            // solidProperties inherits from thermophysicalProperties: Cp(p, T)
+            // return cloud.thermo().solids().properties()[0].Cp(p, T);
+
+            // WWW: upcast pointer to actual solid type.
+            const auto& baseSolid = cloud.thermo().solids().properties()[0];
+            const auto& customSolid = refCast<const tabulatedSolid>(baseSolid);
+            return customSolid.Cp(T);
+        }
 
         //- Calculate new particle temperature
         template<class TrackCloudType>

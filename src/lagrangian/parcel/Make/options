@@ -16,6 +16,7 @@ EXE_INC = \
     -I./clouds/derived/extendedThermoCloud \
     -I./parcels/derived/extendedThermoParcel \
     -I./parcels/Templates/ExtendedThermoParcel \
+    -I./../../thermophysicalModels/thermophysicalProperties/solidProperties/tabulatedSolidProperties \
     -I$(LIB_SRC)/lagrangian/parcel/lnInclude
 
 

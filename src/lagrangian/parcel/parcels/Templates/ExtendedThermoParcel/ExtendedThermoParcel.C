@@ -204,9 +204,13 @@ void Foam::ExtendedThermoParcel<ParcelType>::calc
         );
 
     // Update the heat capacity
-    static const scalarField Y(1, 1);
-    Cp_ = cloud.composition().Cp(0, Y, td.pc(), T0);
-
+    // WWW: When no composition model is used (or a dummy single-phase
+    // model is used), Cp_ never queries the solid component data with
+    // the instantaneous temperature during heat transfer integration.
+    // static const scalarField Y(1, 1);
+    // Cp_ = cloud.composition().Cp(0, Y, td.pc(), T0);
+    // WWW: maintain Cp evaluated at the newly attained parcel temperature
+    this->Cp_ = this->solidCp(cloud, td.pc(), this->T_);
 
     // Motion
     // ~~~~~~
@@ -278,12 +282,18 @@ Foam::scalar Foam::ExtendedThermoParcel<ParcelType>::calcHeatTransfer
     const scalar V = this->volume(d);
     const scalar m = rho*V;
 
+    // WWW: Dynamic Cp update at start of step:
+    Cp_ = this->solidCp(cloud, td.pc(), T_);
+
     // Calc heat transfer coefficient
     scalar htc = cloud.heatTransfer().htc(d, Re, Pr, kappa, NCpW);
 
+    // WWW: predictor: using current Cp
     // Calculate the integration coefficients
-    const scalar bcp = htc*As/(m*Cp_);
-    const scalar acp = bcp*td.Tc();
+    scalar CpEff = Cp_;
+    scalar bcp = htc*As/(m*CpEff);
+    scalar acp = bcp*td.Tc();
+    // TODO ancp as a function
     scalar ancp = Sh;
     if (cloud.radiation())
     {
@@ -294,10 +304,33 @@ Foam::scalar Foam::ExtendedThermoParcel<ParcelType>::calcHeatTransfer
 
         ancp += As*epsilon*(Gc/4.0 - sigma*pow4(T_));
     }
-    ancp /= m*Cp_;
+    ancp /= m*CpEff;
 
+    // WWW: predict tentative deltaT
     // Integrate to find the new parcel temperature
-    const scalar deltaT = cloud.TIntegrator().delta(T_, dt, acp + ancp, bcp);
+    scalar deltaT = cloud.TIntegrator().delta(T_, dt, acp + ancp, bcp);
+
+    // WWW: corrector, evaluate effective Cp at interval midpoint Tmid
+    const scalar Tmid = max(cloud.constProps().TMin(), T_ + 0.5*deltaT);
+    CpEff = this->solidCp(cloud, td.pc(), Tmid);
+
+    // WWW: recompute integration coefficients with CpEff
+    bcp = htc*As/(m*CpEff);
+    acp = bcp*td.Tc();
+    ancp = Sh;
+    if (cloud.radiation())
+    {
+        const tetIndices tetIs = this->currentTetIndices(td.mesh);
+        const scalar Gc = td.GInterp().interpolate(this->coordinates(), tetIs);
+        const scalar sigma = physicoChemical::sigma.value();
+        const scalar epsilon = cloud.constProps().epsilon0();
+
+        ancp += As*epsilon*(Gc/4.0 - sigma*pow4(T_));
+    }
+    ancp /= m*CpEff;
+
+    // Re-integrate to find corrected deltaT
+    deltaT = cloud.TIntegrator().delta(T_, dt, acp + ancp, bcp);
     const scalar deltaTncp = ancp*dt;
     const scalar deltaTcp = deltaT - deltaTncp;
 
@@ -305,9 +338,12 @@ Foam::scalar Foam::ExtendedThermoParcel<ParcelType>::calcHeatTransfer
     scalar Tnew = T_ + deltaT;
     Tnew = min(max(Tnew, cloud.constProps().TMin()), cloud.constProps().TMax());
 
-    dhsTrans -= m*Cp_*deltaTcp;
+    // WWW: sensible enthalpy transfer evaluated using effective capacity
+    dhsTrans -= m*CpEff*deltaTcp;
+    Sph = dt*m*CpEff*bcp;
 
-    Sph = dt*m*Cp_*bcp;
+    // WWW: set stored parcel Cp to match state at new temperature
+    Cp_ = this->solidCp(cloud, td.pc(), Tnew);
 
     return Tnew;
 }
