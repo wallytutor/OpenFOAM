@@ -32,4 +32,5 @@ LIB_LIBS = \
     -lradiationModels \
     -lsampling \
     -lfiniteVolume \
-    -lmeshTools
+    -lmeshTools \
+    -llagrangianParcel

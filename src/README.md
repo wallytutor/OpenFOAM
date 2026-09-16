@@ -40,4 +40,4 @@ libs
 
     - `EXE_INC`: keep the original list untouched, add the local include directories in the end. Sometimes the library will fail to compile because the original list was lacking something (in a library as OpenFOAM it probably worked because the missing files were sourced elsewhere during compilation and the authors never had to add then), append these in the end so that we can distinguish them from the ones already in the list.
 
-    - `LIB_LIBS`: so far there was no occurrence of a missing linking library, but proceed as for `EXE_INC` if it ever happens.
+    - `LIB_LIBS`: it the project compiles but on run-time there is a missing linking library, but proceed as for `EXE_INC` by listing the library in the end. It might be tricky to identify where the functionality comes from, maybe start by `ls $FOAM_LIBBIN` and look for possibly related files.
