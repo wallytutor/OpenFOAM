@@ -1,0 +1,21 @@
+PARCELS=parcels
+BASEPARCELS=$(PARCELS)/baseClasses
+DERIVEDPARCELS=$(PARCELS)/derived
+
+CLOUDS=clouds
+BASECLOUDS=$(CLOUDS)/baseClasses
+DERIVEDCLOUDS=$(CLOUDS)/derived
+
+# cloud names
+# $(CLOUDS)/Templates/ThermoCloud/ThermoCloudName.C
+
+# clouds
+$(DERIVEDCLOUDS)/extendedThermoCloud/extendedThermoCloud.C
+
+# parcel names
+$(PARCELS)/Templates/ExtendedThermoParcel/ExtendedThermoParcelName.C
+
+# sub-models
+$(DERIVEDPARCELS)/extendedThermoParcel/makeExtendedThermoParcelSubmodels.C
+
+LIB = $(FOAM_USER_LIBBIN)/libextendedLagrangianParcel
