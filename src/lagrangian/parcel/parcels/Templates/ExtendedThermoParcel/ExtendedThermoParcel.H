@@ -318,6 +318,39 @@ protected:
             scalar& Sph                // linearised heat transfer coefficient
         );
 
+        //- Calculate temperature increment
+        template<class TrackCloudType>
+        scalar calcDeltaT
+        (
+            TrackCloudType& cloud,
+            trackingData& td,
+            const scalar dt,
+            const scalar Sh,
+            const scalar As,
+            const scalar m,
+            const scalar CpEff,
+            const scalar htc,
+            scalar& deltaTcp,
+            scalar& Sph
+        );
+
+        //- Calculate problem coefficient
+        template<class TrackCloudType>
+        scalar calcAncp
+        (
+            TrackCloudType& cloud,
+            trackingData& td,
+            const scalar Sh,
+            const scalar As,
+            const scalar m,
+            const scalar CpEff
+        );
+
+        template<class TrackCloudType>
+        inline scalar boundT(TrackCloudType& cloud, const scalar T) const
+        {
+            return min(max(T, cloud.constProps().TMin()), cloud.constProps().TMax());
+        }
 
 public:
 
