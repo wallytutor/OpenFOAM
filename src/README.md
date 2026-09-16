@@ -1,8 +1,8 @@
 # OpenFOAM extensions
 
-## Lagrangian
+Run `Allwmake` from this directory to create the full library. For creating parts of it only, navigate to the required directory and run `Allmake` if present. Otherwise, if a `Make` directory is available, run `wmake libso`. These are the three possible library levels to be built.
 
-From `lagrangian/` run `Allwmake`.
+## Lagrangian
 
 ### Extended Thermo Parcel
 
@@ -16,12 +16,12 @@ Extending a parcel requires several templates to be adapted. The following build
 
 - The derived cloud instantiation [extendedThermoCloud](lagrangian/parcel/clouds/derived/extendedThermoCloud)
 
-For using it, append the following to `controlDict` (it depends on `libtabulatedSolidProperties` or `libpolynomialSolidProperties` so that non-constant properties are supported):
+For using it, append the following to `controlDict` (it depends on `libextendedThermophysicalProperties` so that non-constant properties are supported):
 
 ```C
 libs
 (
-    "libtabulatedSolidProperties.so"
+    "libextendedThermophysicalProperties.so"
     "libextendedLagrangianParcel.so"
 );
 ```

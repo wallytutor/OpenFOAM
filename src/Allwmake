@@ -1,0 +1,81 @@
+#!/bin/sh
+cd ${0%/*} || exit 1    # Run from this directory
+
+# Parse arguments for library compilation
+. $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
+
+# Pstream/Allwmake $targetType $*
+
+# OSspecific/${WM_OSTYPE:-POSIX}/Allwmake $targetType $*
+# wmake $targetType OpenFOAM
+
+# wmake $targetType fileFormats
+# wmake $targetType surfMesh
+# wmake $targetType triSurface
+# wmake $targetType meshTools
+
+# Decomposition methods needed by dummyThirdParty
+# (dummy metis, scotch etc) needed by e.g. meshTools
+# dummyThirdParty/Allwmake $targetType $*
+
+# wmake $targetType finiteVolume
+
+# wmake $targetType ODE
+# wmake $targetType physicalProperties
+thermophysicalModels/Allwmake $targetType $*
+
+# wmake $targetType tracking
+# wmake $targetType lagrangian/basic
+# wmake $targetType Lagrangian/Lagrangian
+
+# generic/Allwmake $targetType $*
+
+# wmake $targetType sampling
+# wmake $targetType meshCheck
+# wmake $targetType topoSetSources
+# wmake $targetType fvTopoSetSources
+
+# wmake $targetType motionSolvers
+
+# wmake $targetType mesh/extrudeModel
+# wmake $targetType polyTopoChange
+
+# wmake $targetType conversion
+
+# parallel/Allwmake $targetType $*
+
+# wmake $targetType fvMeshStitchers
+# fvMeshMovers/Allwmake $targetType $*
+# fvMeshTopoChangers/Allwmake $targetType $*
+# wmake $targetType fvMeshDistributors
+
+# wmake $targetType randomProcesses
+
+# twoPhaseModels/Allwmake $targetType $*
+# multiphaseModels/Allwmake $targetType $*
+# MomentumTransportModels/Allwmake $targetType $*
+# ThermophysicalTransportModels/Allwmake $targetType $*
+# wmake $targetType radiationModels
+# wmake $targetType combustionModels
+# mesh/Allwmake $targetType $*
+# renumber/Allwmake $targetType $*
+# fvAgglomerationMethods/Allwmake $targetType $*
+# wmake $targetType fvMotionSolver
+
+# wmake $targetType fvConstraints
+
+# fvModels/Allwmake $targetType $*
+# functionObjects/Allwmake $targetType $*
+
+lagrangian/Allwmake $targetType $*
+# Lagrangian/Allwmake $targetType $*
+# rigidBodyMotion/Allwmake $targetType $*
+
+# wmake $targetType fvModels/propellerDisk
+# wmake $targetType fvModels/rigidBodyPropellerDisk
+
+# wmake $targetType specieTransfer
+# wmake $targetType atmosphericModels
+# wmake $targetType waves
+
+#------------------------------------------------------------------------------

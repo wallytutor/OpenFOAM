@@ -1,0 +1,4 @@
+solidProperties/polynomialSolidProperties/polynomialSolid.C
+solidProperties/tabulatedSolidProperties/tabulatedSolid.C
+
+LIB = $(FOAM_USER_LIBBIN)/libextendedThermophysicalProperties
