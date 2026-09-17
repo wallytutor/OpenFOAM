@@ -1,6 +1,0 @@
-#includeEtc "caseDicts/setConstraintTypes"
-
-"(cyclicFront|cyclicBack)"
-{
-    type            cyclic;
-}

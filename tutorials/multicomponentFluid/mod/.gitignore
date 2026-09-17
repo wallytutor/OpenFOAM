@@ -1,5 +1,0 @@
-# Helper to open in ParaView
-*.foam
-
-processor*/s
-VTK/

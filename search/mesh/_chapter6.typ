@@ -1,1 +1,0 @@
-= Boundary conditions <chapter-6>
