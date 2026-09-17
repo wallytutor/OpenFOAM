@@ -144,3 +144,5 @@ docs/site/
 **/*.html
 **/*_files/
 **/*.quarto_ipynb
+
+/.quarto/
