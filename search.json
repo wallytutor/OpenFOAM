@@ -4,9 +4,9 @@
     "href": "index.html",
     "title": "OpenFOAM Extensions",
     "section": "",
-    "text": "1 OpenFOAM extensions\nRun Allwmake from this directory to create the full library. For creating parts of it only, navigate to the required directory and run Allmake if present. Otherwise, if a Make directory is available, run wmake libso. These are the three possible library levels to be built.",
+    "text": "1 OpenFOAM Extensions\nCurated OpenFOAM 13 directory with additional workflow tools.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM extensions</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
     ]
   },
   {
@@ -14,9 +14,9 @@
     "href": "index.html#compilation-methods",
     "title": "OpenFOAM Extensions",
     "section": "1.1 Compilation methods",
-    "text": "1.1 Compilation methods\nIt is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:\n\nIf a directory provides an Allwmake file, it allows to compile the whole tree below it; this is the case for the root directory, for instance.\nIf a directory provides a subdirectory called Make/, then it supports the individual library build which is done by running wmake libso from that directory.\n\nAll builds are written to $FOAM_USER_LIBBIN.",
+    "text": "1.1 Compilation methods\nIt is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:\n\nIf a directory provides an Allwmake file, it allows to compile the whole tree below it; this is the case for the root directory, for instance.\nIf a directory of src/ provides a subdirectory called Make/, then it supports the individual library build which is done by running wmake libso from that directory.\n\nAll builds are written to $FOAM_USER_LIBBIN.",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM extensions</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
     ]
   },
   {
@@ -26,107 +26,122 @@
     "section": "1.2 Running tests",
     "text": "1.2 Running tests\nSome libraries may provide test programs under a test/ sub-directory, and all of them are structured in the same way. The following instructions indicate how to build, run, and clean those directories.\nTo build and run the test suite:\ncd test\n./Allrun\nTo clean test build artifacts:\ncd test\n./Allclean",
     "crumbs": [
-      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM extensions</span>"
-    ]
-  },
-  {
-    "objectID": "lagrangian/index.html",
-    "href": "lagrangian/index.html",
-    "title": "2  Lagrangian",
-    "section": "",
-    "text": "2.1 Parcels",
-    "crumbs": [
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Lagrangian</span>"
-    ]
-  },
-  {
-    "objectID": "lagrangian/index.html#parcels",
-    "href": "lagrangian/index.html#parcels",
-    "title": "2  Lagrangian",
-    "section": "",
-    "text": "2.1.1 Extended Thermo Parcel\n\nProvides a variant of thermoCloud with varying specific heat.\n\nImportant: this extension currently support a single solid phase which needs to be a tabulatedSolid as provided in the thermophysical properties below. This will need to be generalized at some point.\nExtending a parcel requires several templates to be adapted. The following building blocks are present in the implementation of extendedThermoCloud:\n\nParcel template class in found in ExtendedThermoParcel\nThe derived parcel instantiation extendedThermoParcel\nThe derived cloud instantiation extendedThermoCloud\n\nOr in a tree view:\nparcel\n├── clouds\n│   └── derived\n│       └── extendedThermoCloud\n│           ├── extendedThermoCloud.C\n│           └── extendedThermoCloud.H\n└── parcels\n    ├── Templates\n    │   └── ExtendedThermoParcel\n    │       ├── ExtendedThermoParcel.C\n    │       ├── ExtendedThermoParcel.H\n    │       ├── ExtendedThermoParcelI.H\n    │       ├── ExtendedThermoParcelIO.C\n    │       ├── ExtendedThermoParcelName.C\n    │       └── ExtendedThermoParcelTrackingDataI.H\n    └── derived\n        └── extendedThermoParcel\n            ├── extendedThermoParcel.H\n            └── makeExtendedThermoParcelSubmodels.C\nFor using it, append the following to controlDict (it depends on extended thermophysical properties so that non-constant properties are supported):\nlibs\n(\n    \"libextendedThermophysicalProperties.so\"\n    \"libextendedLagrangianParcel.so\"\n);",
-    "crumbs": [
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Lagrangian</span>"
-    ]
-  },
-  {
-    "objectID": "thermophysicalModels/index.html",
-    "href": "thermophysicalModels/index.html",
-    "title": "3  Thermophysical Models",
-    "section": "",
-    "text": "3.1 Thermophysical Properties",
-    "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Thermophysical Models</span>"
-    ]
-  },
-  {
-    "objectID": "thermophysicalModels/index.html#thermophysical-properties",
-    "href": "thermophysicalModels/index.html#thermophysical-properties",
-    "title": "3  Thermophysical Models",
-    "section": "",
-    "text": "3.1.1 Polynomial Solid Properties\nLibrary: thermophysicalProperties/solidProperties/polynomialSolidProperties\nExtends OpenFOAM’s solidProperties base class using Polynomial&lt;8&gt; to support temperature-dependent 8th-order polynomials density (\\(\\rho(T)\\)), specific heat capacity (\\(C_p(T)\\)), and themal conductivity (\\(\\kappa\\)).\nIt is structured as follows:\n├── Make\n│   ├── files\n│   └── options\n├── polynomialSolid.C\n├── polynomialSolid.H\n├── polynomialSolidI.H\n└── test\n    ├── Allclean\n    ├── Allrun\n    ├── Make\n    │   ├── files\n    │   └── options\n    └── testPolynomialSolid.C\nIn system/controlDict one must load the compiled library at startup:\nlibs\n(\n    \"libpolynomialSolidProperties.so\"\n);\nIn constant/physicalProperties you can now specify polynomialSolid under solids {}:\nsolids\n{\n    polynomialSolid\n    {\n        molWeight   60.084;\n        Hf          0.0;\n        emissivity  0.9;\n\n        // Polynomial coefficients for rho(T) = r0 + r1*T + r2*T^2 + ...\n        rhoCoeffs    (2500 -0.1 0 0 0 0 0 0);\n\n        // Polynomial coefficients for Cp(T) = c0 + c1*T + c2*T^2 + ...\n        CpCoeffs     (800 0.5 -1e-4 0 0 0 0 0);\n\n        // Polynomial coefficients for kappa(T) = c0 + c1*T + c2*T^2 + ...\n        kappaCoeffs  (1.5 0 0 0 0 0 0 0);\n    }\n}\n\n\n3.1.2 Tabulated Solid Properties\nExtends OpenFOAM’s solidProperties base class using Function1&lt;scalar&gt; to support tabulated temperature-dependent density (\\(\\rho(T)\\)), specific heat capacity (\\(C_p(T)\\)), and themal conductivity (\\(\\kappa\\)).\nIt is structured as follows:\n├── Make\n│   ├── files\n│   └── options\n├── tabulatedSolid.C\n├── tabulatedSolid.H\n├── tabulatedSolidI.H\n└── test\n    ├── Allclean\n    ├── Allrun\n    ├── Make\n    │   ├── files\n    │   └── options\n    └── testTabulatedSolid.C\nIn system/controlDict one must load the compiled library at startup:\nlibs\n(\n    \"libtabulatedSolidProperties.so\"\n);\nIn constant/physicalProperties you can now specify tabulatedSolid under solids {}:\nsolids\n{\n    tabulatedSolid\n    {\n        molWeight   60.084;\n        Hf          0.0;\n        emissivity  0.9;\n\n        // Tabulated density rho(T) [kg/m^3]\n        rho\n        table\n        (\n            (300  2500)\n            (600  2450)\n            (1200 2380)\n        );\n\n        // Tabulated specific heat Cp(T) [J/(kg K)]\n        Cp\n        table\n        (\n            (300  800)\n            (500  950)\n            (800  1100)\n            (1200 1250)\n        );\n\n        // Tabulated thermal conductivity [W/(m K)]\n        kappa\n        table\n        (\n            (300  1.5)\n            (500  1.5)\n            (800  1.5)\n            (1200 1.5)\n        );\n\n    }\n}",
-    "crumbs": [
-      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Thermophysical Models</span>"
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
     ]
   },
   {
     "objectID": "CONTRIBUTING.html",
     "href": "CONTRIBUTING.html",
-    "title": "4  Contributing",
+    "title": "2  Contributing",
     "section": "",
-    "text": "4.1 Directives",
+    "text": "2.1 Directives",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Contributing</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Contributing</span>"
     ]
   },
   {
     "objectID": "CONTRIBUTING.html#directives",
     "href": "CONTRIBUTING.html#directives",
-    "title": "4  Contributing",
+    "title": "2  Contributing",
     "section": "",
     "text": "Comments added by this repository to explain changes performed to base libraries are tagged with // WWW: so that they can be tracked in the future.\nWhenever possible/applicable, copy the original files list from the library you are modifying to use as a starting point. Remove or comment out files that are not implemented in this repository. Modify the base path of LIB to use LIB = $(FOAM_USER_LIBBIN)/&lt;your-library-name&gt; so that the path is writable.\nThe same apply to options, which requires a few extra guidelines concerning its declared variables:\n\nEXE_INC: keep the original list untouched, add the local include directories in the end. Sometimes the library will fail to compile because the original list was lacking something (in a library as OpenFOAM it probably worked because the missing files were sourced elsewhere during compilation and the authors never had to add then), append these in the end so that we can distinguish them from the ones already in the list.\nLIB_LIBS: it the project compiles but on run-time there is a missing linking library, but proceed as for EXE_INC by listing the library in the end. It might be tricky to identify where the functionality comes from, maybe start by ls $FOAM_LIBBIN and look for possibly related files.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Contributing</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Contributing</span>"
     ]
   },
   {
     "objectID": "CONTRIBUTING.html#wishlist",
     "href": "CONTRIBUTING.html#wishlist",
-    "title": "4  Contributing",
-    "section": "4.2 Wishlist",
-    "text": "4.2 Wishlist\n\nUnification/generalization of sub-classes of solidProperties as a new extendedSolidProperties; this can then be used as a replacement to solidProperties in the extendedThermoParcel framework (possible need to generalize the cloud definition).",
+    "title": "2  Contributing",
+    "section": "2.2 Wishlist",
+    "text": "2.2 Wishlist\n\nUnification/generalization of sub-classes of solidProperties as a new extendedSolidProperties; this can then be used as a replacement to solidProperties in the extendedThermoParcel framework (possible need to generalize the cloud definition).",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Contributing</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Contributing</span>"
     ]
   },
   {
     "objectID": "CONTRIBUTING.html#building-the-docs",
     "href": "CONTRIBUTING.html#building-the-docs",
-    "title": "4  Contributing",
-    "section": "4.3 Building the docs",
-    "text": "4.3 Building the docs\nA Makefile is provided in the root directory: running make will generate a local documentation, make publish can be used by admins to publish to GitHub Pages, and make clean strips the generated outputs and intermediate files from the folder.",
+    "title": "2  Contributing",
+    "section": "2.3 Building the docs",
+    "text": "2.3 Building the docs\nA Makefile is provided in the root directory: running make will generate a local documentation, make publish can be used by admins to publish to GitHub Pages, and make clean strips the generated outputs and intermediate files from the folder.",
     "crumbs": [
-      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Contributing</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Contributing</span>"
     ]
   },
   {
     "objectID": "CHANGELOG.html",
     "href": "CHANGELOG.html",
-    "title": "5  Changelog",
+    "title": "3  Changelog",
     "section": "",
-    "text": "5.1 2026-09-16",
+    "text": "3.1 2026-09-16",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Changelog</span>"
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Changelog</span>"
     ]
   },
   {
     "objectID": "CHANGELOG.html#section",
     "href": "CHANGELOG.html#section",
-    "title": "5  Changelog",
+    "title": "3  Changelog",
     "section": "",
     "text": "Adapted extendedThermoCloud to upcast the solid object to a tabulatedSolid as a prototype for temperature dependent properties. Currently this supports a single species and need to be generalized in the future.\nUnified the build of all libraries under a single Allwmake at the sources root, following the full library standard. Added compilation instructions at multiple levels to README.md\nAdded extendedThermoCloud support by extending thermoCloud; this extension if fact only needed working with thermoParcel as the physics was found to be at the parcel level. Added related library sources under lagrangian/parcel/{cloud,parcels}.",
     "crumbs": [
-      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Changelog</span>"
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Changelog</span>"
+    ]
+  },
+  {
+    "objectID": "applications/jmakLaplacianFoam/README.html",
+    "href": "applications/jmakLaplacianFoam/README.html",
+    "title": "4  jmakLaplacianFoam",
+    "section": "",
+    "text": "Solver for time-temperature reactive heat release in solids. Implements differential Johnson–Mehl–Avrami–Kolmogorov (JMAK) reaction progress kinetics for non-isothermal process as proposed by Mittemeijer et al..\nA sample case simulating the temperature evolution of a cylinder immersed in coded external convective boundary conditions is provided for illustration of usage.\nIn the future, it would be desirable to have the following features implemented:\n\nHandle non-linearities in thermal properties.\nGeneralization for an arbitrary number of reactions.\nImplement solidThermo to use externalWallHeatFluxTemperature.\n\n\nThis solver was initially implemented and tested with OpenFOAM v2212 and later migrated to OpenFOAM 13. The original implementation is made available under legacy directory and is no longer maintained.",
+    "crumbs": [
+      "Applications",
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>jmakLaplacianFoam</span>"
+    ]
+  },
+  {
+    "objectID": "src/lagrangian/index.html",
+    "href": "src/lagrangian/index.html",
+    "title": "5  Lagrangian",
+    "section": "",
+    "text": "5.1 Parcels",
+    "crumbs": [
+      "Libraries",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Lagrangian</span>"
+    ]
+  },
+  {
+    "objectID": "src/lagrangian/index.html#parcels",
+    "href": "src/lagrangian/index.html#parcels",
+    "title": "5  Lagrangian",
+    "section": "",
+    "text": "5.1.1 Extended Thermo Parcel\n\nProvides a variant of thermoCloud with varying specific heat.\n\nImportant: this extension currently support a single solid phase which needs to be a tabulatedSolid as provided in the thermophysical properties below. This will need to be generalized at some point.\nExtending a parcel requires several templates to be adapted. The following building blocks are present in the implementation of extendedThermoCloud:\n\nParcel template class in found in ExtendedThermoParcel\nThe derived parcel instantiation extendedThermoParcel\nThe derived cloud instantiation extendedThermoCloud\n\nOr in a tree view:\nparcel\n├── clouds\n│   └── derived\n│       └── extendedThermoCloud\n│           ├── extendedThermoCloud.C\n│           └── extendedThermoCloud.H\n└── parcels\n    ├── Templates\n    │   └── ExtendedThermoParcel\n    │       ├── ExtendedThermoParcel.C\n    │       ├── ExtendedThermoParcel.H\n    │       ├── ExtendedThermoParcelI.H\n    │       ├── ExtendedThermoParcelIO.C\n    │       ├── ExtendedThermoParcelName.C\n    │       └── ExtendedThermoParcelTrackingDataI.H\n    └── derived\n        └── extendedThermoParcel\n            ├── extendedThermoParcel.H\n            └── makeExtendedThermoParcelSubmodels.C\nFor using it, append the following to controlDict (it depends on extended thermophysical properties so that non-constant properties are supported):\nlibs\n(\n    \"libextendedThermophysicalProperties.so\"\n    \"libextendedLagrangianParcel.so\"\n);",
+    "crumbs": [
+      "Libraries",
+      "<span class='chapter-number'>5</span>  <span class='chapter-title'>Lagrangian</span>"
+    ]
+  },
+  {
+    "objectID": "src/thermophysicalModels/index.html",
+    "href": "src/thermophysicalModels/index.html",
+    "title": "6  Thermophysical Models",
+    "section": "",
+    "text": "6.1 Thermophysical Properties",
+    "crumbs": [
+      "Libraries",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Thermophysical Models</span>"
+    ]
+  },
+  {
+    "objectID": "src/thermophysicalModels/index.html#thermophysical-properties",
+    "href": "src/thermophysicalModels/index.html#thermophysical-properties",
+    "title": "6  Thermophysical Models",
+    "section": "",
+    "text": "6.1.1 Polynomial Solid Properties\nLibrary: thermophysicalProperties/solidProperties/polynomialSolidProperties\nExtends OpenFOAM’s solidProperties base class using Polynomial&lt;8&gt; to support temperature-dependent 8th-order polynomials density (\\(\\rho(T)\\)), specific heat capacity (\\(C_p(T)\\)), and themal conductivity (\\(\\kappa\\)).\nIt is structured as follows:\n├── Make\n│   ├── files\n│   └── options\n├── polynomialSolid.C\n├── polynomialSolid.H\n├── polynomialSolidI.H\n└── test\n    ├── Allclean\n    ├── Allrun\n    ├── Make\n    │   ├── files\n    │   └── options\n    └── testPolynomialSolid.C\nIn system/controlDict one must load the compiled library at startup:\nlibs\n(\n    \"libpolynomialSolidProperties.so\"\n);\nIn constant/physicalProperties you can now specify polynomialSolid under solids {}:\nsolids\n{\n    polynomialSolid\n    {\n        molWeight   60.084;\n        Hf          0.0;\n        emissivity  0.9;\n\n        // Polynomial coefficients for rho(T) = r0 + r1*T + r2*T^2 + ...\n        rhoCoeffs    (2500 -0.1 0 0 0 0 0 0);\n\n        // Polynomial coefficients for Cp(T) = c0 + c1*T + c2*T^2 + ...\n        CpCoeffs     (800 0.5 -1e-4 0 0 0 0 0);\n\n        // Polynomial coefficients for kappa(T) = c0 + c1*T + c2*T^2 + ...\n        kappaCoeffs  (1.5 0 0 0 0 0 0 0);\n    }\n}\n\n\n6.1.2 Tabulated Solid Properties\nExtends OpenFOAM’s solidProperties base class using Function1&lt;scalar&gt; to support tabulated temperature-dependent density (\\(\\rho(T)\\)), specific heat capacity (\\(C_p(T)\\)), and themal conductivity (\\(\\kappa\\)).\nIt is structured as follows:\n├── Make\n│   ├── files\n│   └── options\n├── tabulatedSolid.C\n├── tabulatedSolid.H\n├── tabulatedSolidI.H\n└── test\n    ├── Allclean\n    ├── Allrun\n    ├── Make\n    │   ├── files\n    │   └── options\n    └── testTabulatedSolid.C\nIn system/controlDict one must load the compiled library at startup:\nlibs\n(\n    \"libtabulatedSolidProperties.so\"\n);\nIn constant/physicalProperties you can now specify tabulatedSolid under solids {}:\nsolids\n{\n    tabulatedSolid\n    {\n        molWeight   60.084;\n        Hf          0.0;\n        emissivity  0.9;\n\n        // Tabulated density rho(T) [kg/m^3]\n        rho\n        table\n        (\n            (300  2500)\n            (600  2450)\n            (1200 2380)\n        );\n\n        // Tabulated specific heat Cp(T) [J/(kg K)]\n        Cp\n        table\n        (\n            (300  800)\n            (500  950)\n            (800  1100)\n            (1200 1250)\n        );\n\n        // Tabulated thermal conductivity [W/(m K)]\n        kappa\n        table\n        (\n            (300  1.5)\n            (500  1.5)\n            (800  1.5)\n            (1200 1.5)\n        );\n\n    }\n}",
+    "crumbs": [
+      "Libraries",
+      "<span class='chapter-number'>6</span>  <span class='chapter-title'>Thermophysical Models</span>"
     ]
   }
 ]
