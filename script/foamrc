@@ -2,5 +2,6 @@
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+. "$SCRIPT_DIR/utilsrc"
 . "$SCRIPT_DIR/coresrc"
 . "$SCRIPT_DIR/meshingrc"
