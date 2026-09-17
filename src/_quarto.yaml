@@ -1,0 +1,32 @@
+project:
+  type: book
+
+execute:
+  cache:   true
+  echo:    false
+  warning: false
+
+book:
+  title: "OpenFOAM Extensions"
+  author: "Walter Dal'Maz Silva"
+  date: "today"
+  sidebar:
+    style: "docked"
+    search: true
+    collapse-level: 2
+
+  chapters:
+    - index.md
+    - lagrangian/index.md
+    - thermophysicalModels/index.md
+    - CONTRIBUTING.md
+    - CHANGELOG.md
+
+format:
+  html:
+    reference-location: document
+    highlight-style: github
+    theme:
+      - pulse
+
+  typst: default

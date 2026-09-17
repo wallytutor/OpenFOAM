@@ -1,2 +1,6 @@
 lnInclude/
 Make/linux*/
+
+/_book/
+/.quarto/
+**/*.quarto_ipynb

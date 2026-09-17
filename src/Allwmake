@@ -108,6 +108,7 @@ lagrangian/Allwmake $targetType $*
 # wmake $targetType atmosphericModels
 # wmake $targetType waves
 
+quarto render
 final_banner
 
 #------------------------------------------------------------------------------
