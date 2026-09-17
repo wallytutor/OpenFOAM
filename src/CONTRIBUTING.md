@@ -15,3 +15,7 @@
 ## Wishlist
 
 - [ ] Unification/generalization of sub-classes of `solidProperties` as a new `extendedSolidProperties`; this can then be used as a replacement to `solidProperties` in the `extendedThermoParcel` framework (possible need to generalize the cloud definition).
+
+## Building the docs
+
+A `Makefile` is provided in the root directory: running `make` will generate a local documentation, `make publish` can be used by admins to publish to GitHub Pages, and `make clean` strips the generated outputs and intermediate files from the folder.
