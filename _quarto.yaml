@@ -17,10 +17,17 @@ book:
 
   chapters:
     - index.md
-    - lagrangian/index.md
-    - thermophysicalModels/index.md
     - CONTRIBUTING.md
     - CHANGELOG.md
+
+    - part: Applications
+      chapters:
+        - applications/jmakLaplacianFoam/README.md
+
+    - part: Libraries
+      chapters:
+        - src/lagrangian/index.md
+        - src/thermophysicalModels/index.md
 
 format:
   html:

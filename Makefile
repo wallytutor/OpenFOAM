@@ -7,4 +7,7 @@ publish:
 	quarto publish gh-pages --no-prompt --no-browser
 
 clean:
-	rm -rf _book
+	rm -rf _book/
+
+dist-clean: clean
+	rm -rf .quarto/
