@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+
+FOAM_TARGET=/opt/openfoam13
+
+message_red() {
+    echo -e "\033[31m$1\033[0m"
+}
+
+message_bold_green() {
+    echo -e "\033[1;32m$1\033[0m"
+}
+
+header_bold_green() {
+    message_bold_green "========================================"
+    message_bold_green "$1"
+    message_bold_green "========================================"
+}
+
+handleOpenFOAM() {
+    if [ ! -d $FOAM_TARGET ]; then
+        local repo="dl.openfoam.org"
+        local keyasc="/etc/apt/trusted.gpg.d/openfoam.asc"
+
+        sudo sh -c "wget -O - https://$repo/gpg.key > $keyasc"
+        sudo add-apt-repository http://$repo/ubuntu
+
+        sudo apt-get update
+        sudo apt-get install -y openfoam13
+    fi
+
+    message_bold_green "OpenFOAM found at $FOAM_TARGET"
+    # message_red "> Consider adding '. $FOAM_TARGET/etc/bashrc' to ~/bashrc"
+
+    if [ ! -v WM_PROJECT ]; then
+        . $FOAM_TARGET/etc/bashrc
+    fi
+}
+
+handleQuarto() {
+    if command -v quarto >/dev/null 2>&1; then
+        message_bold_green "Already installed: quarto $(quarto --version)"
+    else
+        local version="1.9.37"
+        local releases="https://github.com/quarto-dev/quarto-cli/releases/download"
+        wget "$releases/v$version/quarto-$version-linux-amd64.deb"
+        sudo apt-get install -y ./quarto-$version-linux-amd64.deb
+        rm quarto-$version-linux-amd64.deb
+        quarto install tinytex
+    fi
+}
+
+handleUvInstall() {
+    if command -v uv >/dev/null 2>&1; then
+        message_bold_green "Already installed: $(uv --version)"
+    else
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        source $HOME/.local/bin/env
+    fi
+}
+
+handleUvMode() {
+    # In WSL, if not working in /home/<user>/, the the following before
+    # running `uv` to avoid symlink issues:
+    if grep -qi "microsoft" /proc/version; then
+        if ! realpath "$PWD" | grep -q "^$(realpath "$HOME")"; then
+            # echo "Running in WSL outside HOME: setting UV_LINK_MODE=copy"
+            export UV_LINK_MODE=copy
+        fi
+    fi
+}
+
+handleEnvironment() {
+    local targetEnv="${PWD}/.venv"
+
+    if [ -n "$VIRTUAL_ENV" ] && [ "$VIRTUAL_ENV" != "$targetEnv" ]; then
+        echo "Inside a virtual environment: $(which python)"
+        echo "Deactivating current virtual environment"
+        deactivate
+    fi
+
+    if [ -d "$targetEnv" ]; then
+        echo "Activating existing virtual environment"
+        source "$targetEnv/bin/activate"
+    else
+        echo "Creating new virtual environment with uv"
+        uv venv --python 3.12 "$targetEnv"
+        source "$targetEnv/bin/activate"
+        uv pip install -r requirements.txt
+    fi
+}
+
+bootstrapToolbox() {
+    header_bold_green "Bootstraping tools..."
+
+    # Handles requiring elevation:
+    handleOpenFOAM
+    handleQuarto
+
+    # Install `uv` if not already installed:
+    handleUvInstall
+
+    # Handle WSL mode if applicable:
+    handleUvMode
+}

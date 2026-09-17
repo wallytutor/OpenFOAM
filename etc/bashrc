@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+# Path to this script:
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+# Get repository root directory (parent of etc/):
+PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
+
+# Path to scripts directory:
+PROJECT_SRC="${PROJECT_DIR}/script"
+
+# Handle OpenFOAM environment sourcing and tweaks:
+if [ -f "/opt/openfoam13/etc/bashrc" ]; then
+    # Pre-source full OpenFOAM environment:
+    source /opt/openfoam13/etc/bashrc
+
+    # Tweak OpenFOAM environment variables:
+    WM_PROJECT_USER_DIR="${PROJECT_DIR}"
+    FOAM_RUN="${PROJECT_DIR}/run"
+    FOAM_USER_APPBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/bin"
+    FOAM_USER_LIBBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/lib"
+fi
+
+# Source all *rc files in the script directory:
+if [ -d "${PROJECT_SRC}" ]; then
+    for rc_file in "${PROJECT_SRC}"/*rc; do
+        if [ -f "${rc_file}" ]; then
+            source "${rc_file}"
+        fi
+    done
+fi

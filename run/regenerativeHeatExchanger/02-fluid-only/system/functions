@@ -1,0 +1,77 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    object      functions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeFunc residuals (
+    name   = residuals,
+    fields = (U h)
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchFlowRate
+(
+    name   = flowRateCold,
+    patch  = fluidCold,
+    field  = phi
+)
+
+#includeFunc patchFlowRate
+(
+    name   = flowRateHot,
+    patch  = fluidHot,
+    field  = phi
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = temperatureCold,
+    patch  = fluidCold,
+    field  = T
+)
+
+#includeFunc patchAverage
+(
+    name   = temperatureHot,
+    patch  = fluidHot,
+    field  = T
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc patchAverage
+(
+    name   = pressureCold,
+    patch  = fluidCold,
+    field  = p
+)
+
+#includeFunc patchAverage
+(
+    name   = pressureHot,
+    patch  = fluidHot,
+    field  = p
+)
+
+// ------------------------------------------------------------------------- //
+
+#includeFunc yPlus
+(
+    name   = yPlus,
+    patch  = fluid_to_solid
+)
+
+// ************************************************************************* //

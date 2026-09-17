@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+build/
+*.pyc
+*.egg-info/
+.ipynb_checkpoints/
+.quarto/
+**/*.quarto_ipynb
+
+!01-fluid-only/
+!02-fluid-only/
+!03-fluid-only/
+!04-fluid-solid/
+!05-parametric/

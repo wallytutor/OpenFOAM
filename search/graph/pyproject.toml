@@ -1,0 +1,14 @@
+[project]
+name = "graph"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "majordome",
+    "networkx>=3.6.1",
+]
+
+[tool.uv.sources.majordome]
+git = "https://github.com/wallytutor/python-majordome.git"
+branch = "main"

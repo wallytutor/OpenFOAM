@@ -1,0 +1,14 @@
+# Downloaded data
+/reference/
+/*.zip
+
+# Generated STL
+*.stl
+*.eMesh
+*.extendedFeatureEdgeMesh
+
+# Replaced from templates
+decomposeParDict
+
+# Cases
+!/2D/

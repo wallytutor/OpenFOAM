@@ -1,0 +1,15 @@
+# Development notes
+
+- Preliminary setup for laminar case based on [multicomponentFluid/counterFlowFlame2DLTS](https://github.com/OpenFOAM/OpenFOAM-dev/tree/master/tutorials/multicomponentFluid/counterFlowFlame2DLTS).
+
+- Extension for turbulent flow is based on [multicomponentFluid/DLR_A_LTS](https://github.com/OpenFOAM/OpenFOAM-dev/tree/master/tutorials/multicomponentFluid/DLR_A_LTS).
+
+- Additional elements and fast chemistry retrieved from [multicomponentFluid/smallPoolFire2D](https://github.com/OpenFOAM/OpenFOAM-dev/tree/master/tutorials/multicomponentFluid/smallPoolFire2D).
+
+## Turbulence
+
+- The boundary condition for $k$ is provided by [turbulentIntensityKineticEnergyInlet](https://cpp.openfoam.org/v13/classFoam_1_1turbulentIntensityKineticEnergyInletFvPatchScalarField.html), which evaluates the turbulent kinetic energy for a given turbulent intensity $I$, that being the only parameter.
+
+- For $\epsilon$, a [turbulentMixingLengthDissipationRateInlet](https://cpp.openfoam.org/v13/classFoam_1_1turbulentMixingLengthDissipationRateInletFvPatchScalarField.html) is used, requiring the specification of the mixing lenght scale, generally set to 7% of the hydraulic diameter.
+
+- The wall boundary conditions for $k-\epsilon$ are based on [kqRWallFunction](https://cpp.openfoam.org/v13/classFoam_1_1kqRWallFunctionFvPatchField.html) and [epsilonWallFunction](https://cpp.openfoam.org/v13/classFoam_1_1epsilonWallFunctionFvPatchScalarField.html), respectively. These are trivially applied as there is no parameterization to be done.

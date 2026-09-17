@@ -1,0 +1,17 @@
+# Any log:
+log.*
+*.log
+
+# Generated files:
+.jupyter_cache/
+docs/*.pdf
+
+# Keep mesh:
+!domain.msh
+
+# Keep steps:
+!01-flow/
+!02-flow/
+!03-spec/
+!04-dust/
+!05-heat/

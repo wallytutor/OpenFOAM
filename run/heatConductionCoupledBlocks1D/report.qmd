@@ -1,0 +1,86 @@
+---
+title: Heat transfer analysis of coupled blocks in 1D
+author: Walter Dal'Maz Silva
+date: today
+---
+
+The present note compiles the results of a transient heat conduction simulation of two coupled blocks in 1D. The simulation is set up and run using OpenFOAM 13, and the results are post-processed to analyze the temperature evolution and heat flux at the interface between the blocks.
+
+The reference material consists of a layer of 4 inches over a block of common Portland cement making up a total thickness of 1 meter. The system is initially at 75 °F and the surface temperature of the reference material is set to 1000 °F at time zero, while the opposite end (of Portland cement block) is held at constant temperature of 75 °F. The simulation runs for a total of 10 minutes with intermediate results recorded every 12 seconds.
+
+```{python}
+#| echo: false
+import pandas as pd
+from pathlib import Path
+from majordome.simulation import FoamPostProcessingLoader
+from majordome.utilities import plot_xy
+from model import plot_conductivity
+from model import plot_specific_heat_capacity
+from model import post_process
+```
+
+```{=latex}
+\newpage
+```
+
+## Results
+
+Below we illustrate the temperature evolution in the block and compare it with the analytical solution for transient heat conduction in a semi-infinite solid of constant properties.
+
+```{python}
+#| echo: false
+#| fig-align: center
+#| out-width: 80%
+post_process()
+```
+
+<!-- ```{python}
+#| echo: false
+# Load the heat flux data from the post-processing directory:
+post = FoamPostProcessingLoader(domain="block")
+df = post.load_report("blockToMediaHeatFlux")
+
+# Select the right columns/unit conversions:
+t = df["Time"].to_numpy() / 60
+y = df["q [W/m^2]"].to_numpy() * -1
+
+# Plot the results:
+p = plot_xy(t, y)
+p.axes[0].set_xlabel("time [min]")
+p.axes[0].set_ylabel("Heat flux [W/m²]")
+p.axes[0].set_title("Heat flux at the block-media interface")
+p.figure.savefig("heat_flux.png", dpi=300)
+``` -->
+
+```{=latex}
+\newpage
+```
+
+## Material properties
+
+The following table summarizes the material properties used in the simulation for the Portland cement block:
+
+| Property               | Value | Units  |
+| ---------------------: | :---: | :----: |
+| Specific mass          | 2010  | kg/m³  |
+| Thermal conductivity   | 0.53  | W/m·K  |
+| Specific heat capacity | 736   | J/kg·K |
+
+For the reference material, the thermal conductivity is temperature-dependent and is given by the following function:
+
+```{python}
+#| echo: false
+#| fig-align: center
+#| out-width: 50%
+plot_conductivity()
+```
+
+
+For the specific heat capacity, we have tabulated data that is interpolated to obtain the values at the relevant temperatures. The plot below illustrates the specific heat capacity as a function of temperature:
+
+```{python}
+#| echo: false
+#| fig-align: center
+#| out-width: 50%
+plot_specific_heat_capacity()
+```

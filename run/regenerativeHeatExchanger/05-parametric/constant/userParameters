@@ -1,0 +1,37 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      userParameters;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+fluidTemperature 873.15;
+
+solidTemperature 300.0;
+
+inletVelocity -10.524707279601818;
+
+duration 21600.0;
+
+dumpInterval      300.0;
+
+nProcs $NUM_PROCS;
+
+envTemperature    298.15;
+
+envCoefficient    10.0;
+
+wallThickness     0.25;
+
+wallConductivity  2.0;
+
+// ************************************************************************* //

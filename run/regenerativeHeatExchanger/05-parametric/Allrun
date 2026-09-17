@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# ---------------------------------------------------------------------
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Source OpenFOAM environment helpers
+source ../../../script/foamrc
+
+# Select number of cores to use for parallel run
+export NUM_PROCS=$(safe_run_ncores 20)
+
+# ---------------------------------------------------------------------
+
+# Ensure mesh is present by extracting from archive if not already done
+if [ ! -d "constant/fluid/polyMesh" ]; then
+    mkdir -p constant/fluid/polyMesh
+    tar -xf ../mesh_fluid.tar.xz -C constant/fluid/polyMesh
+fi
+
+if [ ! -d "constant/solid/polyMesh" ]; then
+    mkdir -p constant/solid/polyMesh
+    tar -xf ../mesh_solid.tar.xz -C constant/solid/polyMesh
+fi
+
+if [ ! -d "0.00000000e+00" ]; then
+    mkdir -p 0.00000000e+00
+    tar -xf ../mesh_zero.tar.xz -C 0.00000000e+00
+fi
+
+# ---------------------------------------------------------------------
+
+# Define directories for fluid and solid regions
+fluidDir="0.00000000e+00/fluid"
+solidDir="0.00000000e+00/solid"
+
+# Expand original conditions to actual mesh
+foamDictionary 0.orig/fluid/p      -expand > $fluidDir/p
+foamDictionary 0.orig/fluid/T      -expand > $fluidDir/T
+foamDictionary 0.orig/fluid/U      -expand > $fluidDir/U
+foamDictionary 0.orig/fluid/alphat -expand > $fluidDir/alphat
+foamDictionary 0.orig/fluid/nut    -expand > $fluidDir/nut
+foamDictionary 0.orig/fluid/k      -expand > $fluidDir/k
+foamDictionary 0.orig/fluid/omega  -expand > $fluidDir/omega
+foamDictionary 0.orig/solid/T      -expand > $solidDir/T
+
+# ---------------------------------------------------------------------
+
+# Run the case in parallel
+decomposePar -allRegions
+mpiexec -n $NUM_PROCS foamMultiRun -parallel > log.foamMultiRun
+
+# Reconstruct the results of final time step
+reconstructPar -latestTime -allRegions
+
+# Generate logs for post-processing
+foamLog log.foamMultiRun

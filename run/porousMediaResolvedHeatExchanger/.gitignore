@@ -1,0 +1,15 @@
+# Generated STL surface files:
+*.stl
+
+# Generated media:
+*.png
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+.venv/
+
+# Ignore all scripts except for samples:
+script/*
+!script/sample_*

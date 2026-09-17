@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+# Run from this directory:
+cd ${0%/*} || exit 1
+
+# To open with ParaView:
+touch case.foam
+
+# if [ ! -d constant/polyMesh ]; then
+#     (
+#         # Copy initial conditions:
+#         cp -avr 0.orig/ 0/
+
+#         # Convert base Gmsh mesh to OpenFOAM:
+#         gmshToFoam ../domain.msh
+
+#         # Fix patches types:
+#         createPatch
+
+#         file=constant/polyMesh/boundary
+#         foamDictionary $file -entry entry0/walls/type -set wall
+#         # foamDictionary $file -entry entry0/front/type -set wedge
+#         # foamDictionary $file -entry entry0/back/type  -set wedge
+
+#         # Perform preliminary renumbering:
+#         renumberMesh
+
+#         # Check global mesh:
+#         checkMesh
+#     ) &> log.initialize
+# else
+#     echo "Case already initialized, run Allclean before reinitializing."
+# fi
+
+# Run simulation:
+# foamRun &> log.simulation
+
+# Extract results:
+# foamToVTK -latestTime

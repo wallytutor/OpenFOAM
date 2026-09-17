@@ -1,0 +1,7 @@
+absorptionEmissionModel constant;
+absorptionEmissionModel greyMeanCombustion;
+
+#include "props-const"
+#include "props-wsgg"
+
+scatterModel    none;

@@ -1,0 +1,21 @@
+dust
+{
+    type              patchInjection;
+    patchName         inletAxial;
+
+    U0                (146.8 0.0 0.0);
+    flowRateProfile   constant 1;
+    uniformParcelSize nParticle;
+
+    parcelsPerSecond  3395;
+    nParticle         100;
+
+    SOI               0;
+    duration          1.0e+304;
+
+    sizeDistribution
+    {
+        type            fixedValue;
+        value           50e-06;
+    }
+}

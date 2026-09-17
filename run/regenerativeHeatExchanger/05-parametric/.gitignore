@@ -1,0 +1,15 @@
+case.foam
+mesh.msh
+stop.sh
+cellToRegion
+constant/cellToRegion
+constant/polyMesh/
+constant/solid/polyMesh/
+constant/fluid/polyMesh/
+postProcessing
+processor*/
+VTK/
+log.*
+logs
+*[0-9].[0-9]*e[+-][0-9][0-9]*/
+*.png

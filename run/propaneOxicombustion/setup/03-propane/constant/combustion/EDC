@@ -1,0 +1,7 @@
+combustionModel  EDC;
+
+EDCCoeffs
+{
+    // version v2005;
+    version v2016;
+}

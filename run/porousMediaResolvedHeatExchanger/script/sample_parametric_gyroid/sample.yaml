@@ -1,0 +1,27 @@
+# Input parameters for porous-media-geometry
+# uv run porous-media-geometry sample.yaml --overwrite
+
+output: surface.stl
+plot_mesh: true
+
+functional_shapes:
+  functional: gyroid.py
+
+  # Domain limits and resolution:
+  x_lims: [-3.141592653589793, 3.141592653589793]
+  y_lims: [-3.141592653589793, 3.141592653589793]
+  z_lims: [-3.141592653589793, 3.141592653589793]
+  nx: 200
+  ny: 200
+  nz: 200
+  level: 0.5
+
+  # Surface decoration parameters:
+  relative_roughness: 0.005
+  wave_amplitude: 0.005
+  wave_number: 0.1
+
+  # Surface-specific parameters:
+  mx: 3
+  my: 3
+  mz: 3
