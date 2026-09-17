@@ -100,6 +100,16 @@
     ]
   },
   {
+    "objectID": "CONTRIBUTING.html#building-the-docs",
+    "href": "CONTRIBUTING.html#building-the-docs",
+    "title": "4  Contributing",
+    "section": "4.3 Building the docs",
+    "text": "4.3 Building the docs\nA Makefile is provided in the root directory: running make will generate a local documentation, make publish can be used by admins to publish to GitHub Pages, and make clean strips the generated outputs and intermediate files from the folder.",
+    "crumbs": [
+      "<span class='chapter-number'>4</span>  <span class='chapter-title'>Contributing</span>"
+    ]
+  },
+  {
     "objectID": "CHANGELOG.html",
     "href": "CHANGELOG.html",
     "title": "5  Changelog",
