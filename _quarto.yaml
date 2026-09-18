@@ -29,6 +29,10 @@ book:
         - src/lagrangian/index.md
         - src/thermophysicalModels/index.md
 
+    - part: Samples
+      chapters:
+        - sample/silicaParticleMelting/README.qmd
+
 format:
   html:
     reference-location: document

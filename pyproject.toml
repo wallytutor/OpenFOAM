@@ -1,0 +1,18 @@
+[project]
+name = "openfoam"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "ipykernel>=7.3.0",
+    "jupyter>=1.1.1",
+    "majordome",
+    "nbformat>=5.11.1",
+]
+
+[tool.uv.sources.majordome]
+path = "../majordome"
+editable = true
+# git = "https://github.com/wallytutor/python-majordome.git"
+# branch = "main"

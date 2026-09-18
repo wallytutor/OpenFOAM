@@ -1,0 +1,73 @@
+# Silica Particle Melting
+
+Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable. This intends to illustrate the proper capture of the particle melting, as supported by the following libraries provided in this repository:
+
+- libextendedThermophysicalProperties: provides `tabulatedSolid`, used for representation of piecewise-linear silica properties, allowing the incorporation of the *lumped* reaction enthalpies in specific heat.
+
+- libextendedLagrangianParcel: provides `extendedThermoCloud` allowing the simulation of non-constant properties lagrangian particles.
+
+```{python}
+#| echo: false
+import pandas as pd
+from pathlib import Path
+from majordome import MajordomePlot, FoamCaseHandle
+
+
+def load_fluid():
+    if (path := Path("blessed/fluid.csv")).exists():
+        return pd.read_csv(path)
+
+    opts = dict(sep=r"\s+", header=None, comment="#", names=["t", "T"])
+    df = pd.read_csv("postProcessing/probe/0.000000e+00/T", **opts)
+    df.to_csv(path, index=False)
+
+    return df
+
+
+def load_solid():
+    if (path := Path("blessed/solid.csv")).exists():
+        return pd.read_csv(path)
+
+    handle = FoamCaseHandle(".")
+
+    def get_row(t, get=handle.get_dict):
+        return {"t": get(f"{t}/age")[0], "T": get(f"{t}/T")[0]}
+
+    regex = r"[0-9].[0-9]*e[+-][0-9]*/lagrangian/cloud"
+    df = pd.DataFrame(map(get_row, Path(".").glob(regex)))
+    df = df.sort_values("t")
+    df.to_csv(path, index=False)
+
+    return df
+
+@MajordomePlot.new(size=(5, 4))
+def plot_single_particle_heating(*, plot):
+    df1 = load_solid()
+    df2 = load_fluid()
+
+    t1 = df1["t"].to_numpy() * 1000
+    T1 = df1["T"].to_numpy()
+
+    t2 = df2["t"].to_numpy() * 1000
+    T2 = df2["T"].to_numpy()
+
+    fig, ax = plot.subplots()
+    ax[0].plot(t1, T1, color="k", label="Solid")
+    ax[0].plot(t2, T2, color="r", label="Flue gas")
+    ax[0].set_xlabel("Time [ms]")
+    ax[0].set_ylabel("Temperature [K]")
+    ax[0].set_xlim(0, 50)
+    ax[0].set_ylim(500, 3500)
+    ax[0].legend(loc=1, fontsize="small")
+    ax[0].grid(False)
+```
+
+@fig-single-particle-heating displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between $23-32\text{ms}$ associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.
+
+```{python}
+#| echo: false
+#| label: fig-single-particle-heating
+#| fig-align: center
+#| fig-cap: Verification of single particle heating thermal history.
+_ = plot_single_particle_heating()
+```

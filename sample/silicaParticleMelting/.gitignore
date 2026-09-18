@@ -15,3 +15,6 @@ VTK/
 
 # Unignore initial conditions:
 !0.orig/
+
+# Ensure blessed is not ignored:
+!blessed/*.csv
