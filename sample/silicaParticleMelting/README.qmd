@@ -1,10 +1,16 @@
 # Silica Particle Melting
 
-Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable. This intends to illustrate the proper capture of the particle melting, as supported by the following libraries provided in this repository:
+::: {.callout-note title="About"}
 
-- libextendedThermophysicalProperties: provides `tabulatedSolid`, used for representation of piecewise-linear silica properties, allowing the incorporation of the *lumped* reaction enthalpies in specific heat.
+Sample case can be found [here](https://github.com/wallytutor/OpenFOAM/tree/main/sample/silicaParticleMelting). It intends to illustrate the proper capture of a solid particle melting, as supported by the following libraries provided in this repository:
 
-- libextendedLagrangianParcel: provides `extendedThermoCloud` allowing the simulation of non-constant properties lagrangian particles.
+- `libextendedThermophysicalProperties`: provides `tabulatedSolid`, used for representation of piecewise-linear silica properties, allowing the incorporation of the *lumped* reaction enthalpies in specific heat.
+
+- `libextendedLagrangianParcel`: provides `extendedThermoCloud` allowing the simulation of non-constant properties lagrangian particles.
+
+:::
+
+Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable.
 
 ```{python}
 #| echo: false

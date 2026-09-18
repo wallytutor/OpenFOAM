@@ -1,4 +1,10 @@
-# Heat Release by a Reacting Solid
+# JMAK Solid Kinetics
+
+::: {.callout-note title="About"}
+
+Sample case can be found [here](https://github.com/wallytutor/OpenFOAM/tree/main/sample/solidReactionCylinder). It illustrates the use of `jmakLaplacianFoam` solver provided in this repository.
+
+:::
 
 Simulate the temperature evolution of a reacting cylinder (diameter 3 inches and height of 6 inches) immersed in coded external convective boundary conditions representing steady air at room temperature. The solid is undergoing volumetric reactions represented by a JMAK kinetics with heat release, leading to a thermal build-up near the sample core. This could represent, *e.g.*, a cement hydration process.
 
