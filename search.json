@@ -143,5 +143,16 @@
       "Libraries",
       "<span class='chapter-number'>6</span>  <span class='chapter-title'>Thermophysical Models</span>"
     ]
+  },
+  {
+    "objectID": "sample/silicaParticleMelting/README.html",
+    "href": "sample/silicaParticleMelting/README.html",
+    "title": "7  Silica Particle Melting",
+    "section": "",
+    "text": "Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable. This intends to illustrate the proper capture of the particle melting, as supported by the following libraries provided in this repository:\n\nlibextendedThermophysicalProperties: provides tabulatedSolid, used for representation of piecewise-linear silica properties, allowing the incorporation of the lumped reaction enthalpies in specific heat.\nlibextendedLagrangianParcel: provides extendedThermoCloud allowing the simulation of non-constant properties lagrangian particles.\n\nFigure 7.1 displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between \\(23-32\\text{ms}\\) associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.\n\n\n\n\n\n\n\n\nFigure 7.1: Verification of single particle heating thermal history.",
+    "crumbs": [
+      "Samples",
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Silica Particle Melting</span>"
+    ]
   }
 ]
