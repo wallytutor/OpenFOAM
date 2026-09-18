@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 
-<title>7&nbsp; Heat Release by a Reacting Solid – OpenFOAM Extensions</title>
+<title>7&nbsp; JMAK Solid Kinetics – OpenFOAM Extensions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -85,7 +85,7 @@ ul.task-list li input[type="checkbox"] {
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html">Samples</a></li><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Heat Release by a Reacting Solid</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html">Samples</a></li><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">JMAK Solid Kinetics</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -180,7 +180,7 @@ ul.task-list li input[type="checkbox"] {
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../../sample/solidReactionCylinder/README.html" class="sidebar-item-text sidebar-link active">
- <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Heat Release by a Reacting Solid</span></span></a>
+ <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">JMAK Solid Kinetics</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
@@ -202,9 +202,9 @@ ul.task-list li input[type="checkbox"] {
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html">Samples</a></li><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Heat Release by a Reacting Solid</span></a></li></ol></nav>
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html">Samples</a></li><li class="breadcrumb-item"><a href="../../sample/solidReactionCylinder/README.html"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">JMAK Solid Kinetics</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">Heat Release by a Reacting Solid</span></h1>
+<h1 class="title"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">JMAK Solid Kinetics</span></h1>
 </div>
 
 
@@ -221,9 +221,22 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
+<div class="callout callout-style-default callout-note callout-titled" title="About">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Note</span>About
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Sample case can be found <a href="https://github.com/wallytutor/OpenFOAM/tree/main/sample/solidReactionCylinder">here</a>. It illustrates the use of <code>jmakLaplacianFoam</code> solver provided in this repository.</p>
+</div>
+</div>
 <p>Simulate the temperature evolution of a reacting cylinder (diameter 3 inches and height of 6 inches) immersed in coded external convective boundary conditions representing steady air at room temperature. The solid is undergoing volumetric reactions represented by a JMAK kinetics with heat release, leading to a thermal build-up near the sample core. This could represent, <em>e.g.</em>, a cement hydration process.</p>
 <p><a href="#fig-plot-probe" class="quarto-xref">Figure&nbsp;<span>7.1</span></a> illustrates the temperature evolution at a probe placed near the core of the cylinder. The humps are associated to the different reactions that take place over time.</p>
-<div id="cell-fig-plot-probe" class="cell" data-execution_count="2">
+<div id="cell-fig-plot-probe" class="cell" data-execution_count="3">
 <div class="cell-output cell-output-display">
 <div id="fig-plot-probe" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
@@ -238,7 +251,7 @@ Figure&nbsp;7.1: Thermal history at probe location.
 </div>
 </div>
 <p><a href="#fig-plot-slice" class="quarto-xref">Figure&nbsp;<span>7.2</span></a> demonstrates how the temperature is distributed in a vertical cut of the cylinder after 8h. Plots of <em>beta</em> indicate the JMAK progress of the reaction: we see that reaction 1 has saturated at 1.23, enabling reaction 2 that has already progressed considerably, and reaction 3 is still in earlier stage.</p>
-<div id="cell-fig-plot-slice" class="cell" data-execution_count="3">
+<div id="cell-fig-plot-slice" class="cell" data-execution_count="4">
 <div class="cell-output cell-output-display">
 <div id="fig-plot-slice" class="quarto-float quarto-figure quarto-figure-center anchored" data-fig-align="center">
 <figure class="quarto-float quarto-float-fig figure">
