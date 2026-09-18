@@ -94,7 +94,7 @@
     "href": "applications/jmakLaplacianFoam/README.html",
     "title": "4  jmakLaplacianFoam",
     "section": "",
-    "text": "Solver for time-temperature reactive heat release in solids. Implements differential Johnson–Mehl–Avrami–Kolmogorov (JMAK) reaction progress kinetics for non-isothermal process as proposed by Mittemeijer et al..\nA sample case simulating the temperature evolution of a cylinder immersed in coded external convective boundary conditions is provided for illustration of usage.\nIn the future, it would be desirable to have the following features implemented:\n\nHandle non-linearities in thermal properties.\nGeneralization for an arbitrary number of reactions.\nImplement solidThermo to use externalWallHeatFluxTemperature.\n\n\nThis solver was initially implemented and tested with OpenFOAM v2212 and later migrated to OpenFOAM 13. The original implementation is made available under legacy directory and is no longer maintained.",
+    "text": "Solver for time-temperature reactive heat release in solids. Implements differential Johnson–Mehl–Avrami–Kolmogorov (JMAK) reaction progress kinetics for non-isothermal process as proposed by Mittemeijer et al..\nIn the future, it would be desirable to have the following features implemented:\n\nHandle non-linearities in thermal properties.\nGeneralization for an arbitrary number of reactions.\nImplement solidThermo to use externalWallHeatFluxTemperature.\n\n\nThis solver was initially implemented and tested with OpenFOAM v2212 and later migrated to OpenFOAM 13. The original implementation is made available under legacy directory and is no longer maintained.",
     "crumbs": [
       "Applications",
       "<span class='chapter-number'>4</span>  <span class='chapter-title'>jmakLaplacianFoam</span>"
@@ -145,14 +145,25 @@
     ]
   },
   {
-    "objectID": "sample/silicaParticleMelting/README.html",
-    "href": "sample/silicaParticleMelting/README.html",
-    "title": "7  Silica Particle Melting",
+    "objectID": "sample/solidReactionCylinder/README.html",
+    "href": "sample/solidReactionCylinder/README.html",
+    "title": "7  Heat Release by a Reacting Solid",
     "section": "",
-    "text": "Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable. This intends to illustrate the proper capture of the particle melting, as supported by the following libraries provided in this repository:\n\nlibextendedThermophysicalProperties: provides tabulatedSolid, used for representation of piecewise-linear silica properties, allowing the incorporation of the lumped reaction enthalpies in specific heat.\nlibextendedLagrangianParcel: provides extendedThermoCloud allowing the simulation of non-constant properties lagrangian particles.\n\nFigure 7.1 displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between \\(23-32\\text{ms}\\) associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.\n\n\n\n\n\n\n\n\nFigure 7.1: Verification of single particle heating thermal history.",
+    "text": "Simulate the temperature evolution of a reacting cylinder (diameter 3 inches and height of 6 inches) immersed in coded external convective boundary conditions representing steady air at room temperature. The solid is undergoing volumetric reactions represented by a JMAK kinetics with heat release, leading to a thermal build-up near the sample core. This could represent, e.g., a cement hydration process.\nFigure 7.1 illustrates the temperature evolution at a probe placed near the core of the cylinder. The humps are associated to the different reactions that take place over time.\n\n\n\n\n\n\n\n\nFigure 7.1: Thermal history at probe location.\n\n\n\n\n\nFigure 7.2 demonstrates how the temperature is distributed in a vertical cut of the cylinder after 8h. Plots of beta indicate the JMAK progress of the reaction: we see that reaction 1 has saturated at 1.23, enabling reaction 2 that has already progressed considerably, and reaction 3 is still in earlier stage.\n\n\n\n\n\n\n\n\nFigure 7.2: Temperature profile at a slice of the domain after 8h.",
     "crumbs": [
       "Samples",
-      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Silica Particle Melting</span>"
+      "<span class='chapter-number'>7</span>  <span class='chapter-title'>Heat Release by a Reacting Solid</span>"
+    ]
+  },
+  {
+    "objectID": "sample/silicaParticleMelting/README.html",
+    "href": "sample/silicaParticleMelting/README.html",
+    "title": "8  Silica Particle Melting",
+    "section": "",
+    "text": "Simulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable. This intends to illustrate the proper capture of the particle melting, as supported by the following libraries provided in this repository:\n\nlibextendedThermophysicalProperties: provides tabulatedSolid, used for representation of piecewise-linear silica properties, allowing the incorporation of the lumped reaction enthalpies in specific heat.\nlibextendedLagrangianParcel: provides extendedThermoCloud allowing the simulation of non-constant properties lagrangian particles.\n\nFigure 8.1 displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between \\(23-32\\text{ms}\\) associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.\n\n\n\n\n\n\n\n\nFigure 8.1: Verification of single particle heating thermal history.",
+    "crumbs": [
+      "Samples",
+      "<span class='chapter-number'>8</span>  <span class='chapter-title'>Silica Particle Melting</span>"
     ]
   }
 ]
