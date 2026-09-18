@@ -1,8 +1,128 @@
 # Heat Release by a Reacting Solid
 
-Simulate the temperature evolution of a reacting cylinder immersed in coded external convective boundary conditions.
-
+Simulate the temperature evolution of a reacting cylinder (diameter 3 inches and height of 6 inches) immersed in coded external convective boundary conditions representing steady air at room temperature. The solid is undergoing volumetric reactions represented by a JMAK kinetics with heat release, leading to a thermal build-up near the sample core. This could represent, *e.g.*, a cement hydration process.
 
 ```{python}
+#| echo: false
+# Below we import all required tools for the analysis of the simulation.
+import pandas as pd
 import pyvista as pv
+from pathlib import Path
+from majordome import MajordomePlot
+
+# Notice that the backend is set to static so the documentation builds
+# properly, leaving the default value when running from a graphical
+# environment allows for dynamic visualization, if required.
+pv.set_jupyter_backend("static")
+
+# Function `load_probe` is provided so that we can reload default data
+# if the simulation has not been run locally. Here we are tracking the
+# time evolution of a temperature probe near the core of the sample.
+def load_probe():
+    if (path := Path("blessed/probe.csv")).exists():
+        return pd.read_csv(path)
+
+    opts = dict(sep=r"\s+", header=None, comment="#", names=["t", "T"])
+    df = pd.read_csv("postProcessing/probe/0/T", **opts)
+    df.to_csv(path, index=False)
+
+    return df
+
+# Function `load_slice` serve the same purpose as `load_probe`. Here it
+# is loads time-step 48, corresponding to 8h.
+def load_slice():
+    if (path := Path("blessed/slice.vtp")).exists():
+        return pv.read(path)
+
+    reader = pv.POpenFOAMReader("case.foam")
+    case_time = reader.time_values[48]
+    reader.set_active_time_value(case_time)
+
+    mesh = reader.read()
+    internal = mesh["internalMesh"]
+
+    data = internal.slice(normal="z", origin=(0.0, 0.0, 0.0))
+    data = data.cell_data_to_point_data()
+    data.save(path)
+
+    return data
+
+
+@MajordomePlot.new(size=(5, 4))
+def plot_probe(*, plot):
+    df = load_probe()
+
+    t = df["t"].to_numpy() / 3600
+    T = df["T"].to_numpy() - 273.15
+
+    fig, ax = plot.subplots()
+    ax[0].plot(t, T, color="k")
+    ax[0].set_xlabel("Time [h]")
+    ax[0].set_ylabel("Temperature [°C]")
+    ax[0].set_xlim(0, 18)
+    ax[0].set_ylim(25, 45)
+    ax[0].grid(False)
+
+
+def plot_slice(**kwargs):
+    """ Custom display of slice results. """
+    kwargs.setdefault("show_edges", False)
+    kwargs.setdefault("scalar_bar_args", {
+        "vertical": True,
+        "height": 0.8,
+        "width": 0.08,
+        "position_x": 0.05
+    })
+
+    mesh = load_slice()
+    mesh["T"] -= 273.15
+
+    pl = pv.Plotter(shape=(1, 4))
+    pl.window_size = (1200, 400)
+
+    pl.subplot(0, 0)
+    pl.camera_position = "xy"
+    pl.add_mesh(mesh, scalars="T", cmap="hot", **kwargs)
+    pl.reset_camera()
+
+    pl.subplot(0, 1)
+    pl.camera_position = "xy"
+    pl.add_mesh(mesh, scalars="beta1", cmap="hot", **kwargs)
+    pl.reset_camera()
+
+    pl.subplot(0, 2)
+    pl.camera_position = "xy"
+    pl.add_mesh(mesh, scalars="beta2", cmap="hot", **kwargs)
+    pl.reset_camera()
+
+    pl.subplot(0, 3)
+    pl.camera_position = "xy"
+    pl.add_mesh(mesh, scalars="beta3", cmap="hot", **kwargs)
+    pl.reset_camera()
+
+    pl.enable_parallel_projection()
+    pl.enable_2d_style()
+    pl.enable_zoom_style()
+
+    pl.show()
+```
+
+@fig-plot-probe illustrates the temperature evolution at a probe placed near the core of the cylinder. The humps are associated to the different reactions that take place over time.
+
+```{python}
+#| echo: false
+#| label: fig-plot-probe
+#| fig-align: center
+#| fig-cap: Thermal history at probe location.
+_ = plot_probe()
+```
+
+@fig-plot-slice demonstrates how the temperature is distributed in a vertical cut of the cylinder after 8h. Plots of *beta* indicate the JMAK progress of the reaction: we see that reaction 1 has saturated at 1.23, enabling reaction 2 that has already progressed considerably, and reaction 3 is still in earlier stage.
+
+```{python}
+#| echo: false
+#| label: fig-plot-slice
+#| fig-align: center
+#| fig-cap: Temperature profile at a slice of the domain after 8h.
+plot_slice()
 ```

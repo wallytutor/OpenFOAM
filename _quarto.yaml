@@ -31,6 +31,7 @@ book:
 
     - part: Samples
       chapters:
+        - sample/solidReactionCylinder/README.qmd
         - sample/silicaParticleMelting/README.qmd
 
 format:
