@@ -1,0 +1,153 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format    ascii;
+
+    class     dictionary;
+
+    location  "constant";
+
+    object    cloudProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+type  extendedThermoCloud;
+
+solution
+{
+    coupled                    true;
+
+    transient                  true;
+
+    cellValueSourceCorrection  false;
+
+    maxCo                      0.2;
+
+    sourceTerms
+    {
+        schemes
+        {
+            U          explicit 1;
+
+            h          explicit 1;
+
+            radiation  explicit 1;
+        }
+    }
+
+    interpolationSchemes
+    {
+        rho    cell;
+
+        U      cellPoint;
+
+        mu     cell;
+
+        T      cell;
+
+        Cp     cell;
+
+        kappa  cell;
+
+        p      cell;
+    }
+
+    integrationSchemes
+    {
+        U  Euler;
+
+        T  Euler;
+    }
+}
+
+constantProperties
+{
+    rho0            2648;
+
+    T0              298.15;
+
+    Cp0             741.9;
+
+    constantVolume  true;
+}
+
+subModels
+{
+    particleForces
+    {
+    }
+
+    injectionModels
+    {
+        dust
+        {
+            type               manualInjection;
+
+            uniformParcelSize  volume;
+
+            positionsFile      "cloudPositions";
+
+            SOI                2.0000000000e-06;
+
+            massTotal          1.3864895578e-09;
+
+            U0                 (0 0 0);
+
+            sizeDistribution
+            {
+                type   fixedValue;
+
+                value  1.00000e-04;
+            }
+        }
+    }
+
+    radiation                 false;
+
+    heatTransferModel         RanzMarshall;
+
+    patchInteractionModel     standardWallInteraction;
+
+    compositionModel          singlePhaseMixture;
+
+    dispersionModel           none;
+
+    phaseChangeModel          none;
+
+    stochasticCollisionModel  none;
+
+    surfaceFilmModel          none;
+
+    RanzMarshallCoeffs
+    {
+        BirdCorrection  false;
+    }
+
+    standardWallInteractionCoeffs
+    {
+        type  rebound;
+    }
+
+    singlePhaseMixtureCoeffs
+    {
+        phases
+        (
+            solid
+            {
+                tabulatedSolid 1.0;
+            }
+        );
+    }
+}
+
+cloudFunctions
+{
+}
+
+// ************************************************************************* //

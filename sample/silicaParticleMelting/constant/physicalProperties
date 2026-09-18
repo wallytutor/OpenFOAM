@@ -1,0 +1,114 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format    ascii;
+
+    class     dictionary;
+
+    location  "constant";
+
+    object    physicalProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+thermoType
+{
+    type             heRhoThermo;
+
+    mixture          pureMixture;
+
+    transport        polynomial;
+
+    thermo           hPolynomial;
+
+    equationOfState  perfectGas;
+
+    specie           specie;
+
+    energy           sensibleEnthalpy;
+}
+
+mixture
+{
+    specie
+    {
+        molWeight  22.827130616325874;
+    }
+
+    thermodynamics
+    {
+        CpCoeffs<8>  (
+            1280.735966518363
+            0.08814128026451938
+            0.000729867097500104
+            -7.7836924710e-07
+            4.0897948394e-10
+            -1.2264731740e-13
+            1.9961177437e-17
+            -1.3661687955e-21
+        );
+
+        Sf           0;
+
+        Hf           0;
+    }
+
+    transport
+    {
+        muCoeffs<8>     (
+            -2.1565959246e-07
+            6.0495949856e-08
+            -3.0445609066e-11
+            1.9036451365e-14
+            -8.6902032109e-18
+            2.5279417419e-21
+            -4.1393136965e-25
+            2.8867763833e-29
+        );
+
+        kappaCoeffs<8>  (
+            -0.005575331953424924
+            0.0001878218151274755
+            -1.5716220607e-07
+            1.8016115298e-10
+            -1.1799624711e-13
+            4.2939760830e-17
+            -8.1649030407e-21
+            6.3288372187e-25
+        );
+    }
+}
+
+liquids
+{
+}
+
+solids
+{
+    tabulatedSolid
+    {
+        Hf          0.0;
+        emissivity  0.9;
+
+        rho table
+        (
+            #include "data/rho"
+        );
+        Cp table
+        (
+            #include "data/cp"
+        );
+        kappa table
+        (
+            #include "data/kappa"
+        );
+    }
+}
+
+// ************************************************************************* //
