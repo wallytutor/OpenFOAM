@@ -1816,7 +1816,7 @@ wheels = [
 [[package]]
 name = "majordome"
 version = "1.5.0"
-source = { editable = "../majordome" }
+source = { git = "https://github.com/wallytutor/python-majordome.git?branch=main#36dda0cecf28cfe363053eb9a05b7ed37fd43531" }
 dependencies = [
     { name = "branca" },
     { name = "cantera" },
@@ -1849,60 +1849,6 @@ dependencies = [
     { name = "sympy" },
     { name = "tabulate" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "beautifulsoup4", marker = "extra == 'recommended'", specifier = ">=4.14.3" },
-    { name = "branca", specifier = ">=0.8.2" },
-    { name = "cantera", specifier = ">=3.2.0" },
-    { name = "casadi", specifier = ">=3.7.2" },
-    { name = "docstring-parser", specifier = ">=0.18.0" },
-    { name = "exifread", specifier = ">=3.5.1" },
-    { name = "folium", specifier = ">=0.20.0" },
-    { name = "gmsh", specifier = ">=4.15.2" },
-    { name = "gpxpy", specifier = ">=1.6.2" },
-    { name = "gradio", marker = "extra == 'recommended'", specifier = ">=6.13.0" },
-    { name = "hyperspy", specifier = ">=2.4.0" },
-    { name = "ipykernel", specifier = ">=7.3.0" },
-    { name = "ipykernel", marker = "extra == 'docs'", specifier = ">=7.2.0" },
-    { name = "ipython", specifier = ">=9.13.0" },
-    { name = "juliacall", marker = "extra == 'auchimiste'", specifier = ">=0.9.35" },
-    { name = "juliapkg", marker = "extra == 'auchimiste'", specifier = ">=0.1.26" },
-    { name = "jupyter-cache", marker = "extra == 'docs'", specifier = ">=1.0.1" },
-    { name = "jupyter-client", marker = "extra == 'docs'", specifier = ">=8.8.0" },
-    { name = "jupyterlab", marker = "extra == 'docs'", specifier = ">=4.5.6" },
-    { name = "jupyterlab", marker = "extra == 'recommended'", specifier = ">=4.5.6" },
-    { name = "jupytext", marker = "extra == 'docs'", specifier = ">=1.19.1" },
-    { name = "jupytext", marker = "extra == 'recommended'", specifier = ">=1.19.1" },
-    { name = "majordome-build", git = "https://github.com/wallytutor/majordome-build.git" },
-    { name = "markdown-it-py", specifier = ">=4.0.0" },
-    { name = "matplotlib", specifier = ">=3.10.9" },
-    { name = "meshio", marker = "extra == 'recommended'", specifier = ">=5.3.5" },
-    { name = "numba", marker = "extra == 'recommended'", specifier = ">=0.65.1" },
-    { name = "numpy", specifier = ">=2.4.4" },
-    { name = "opencv-python", marker = "extra == 'recommended'", specifier = ">=4.13.0.92" },
-    { name = "pandas", extras = ["excel"], specifier = ">=3.0.2" },
-    { name = "pdf2image", specifier = ">=1.17.0" },
-    { name = "pillow", specifier = ">=12.2.0" },
-    { name = "polars", specifier = ">=1.40.1" },
-    { name = "polars", marker = "extra == 'recommended'", specifier = ">=1.40.1" },
-    { name = "pyarrow", specifier = ">=25.0.0" },
-    { name = "pygments", specifier = ">=2.20.0" },
-    { name = "pyparsing", specifier = ">=3.3.2" },
-    { name = "pypdf", specifier = ">=6.10.2" },
-    { name = "pytesseract", specifier = ">=0.3.13" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=9.0.3" },
-    { name = "python-pptx", marker = "extra == 'recommended'", specifier = ">=1.0.2" },
-    { name = "pythonnet", marker = "extra == 'docs'", specifier = ">=3.0.5" },
-    { name = "pyvista", extras = ["all"], specifier = ">=0.47.3" },
-    { name = "ruamel-yaml", specifier = ">=0.19.1" },
-    { name = "scikit-image", specifier = ">=0.26.0" },
-    { name = "scipy", specifier = ">=1.17.1" },
-    { name = "sympy", specifier = ">=1.14.0" },
-    { name = "tabulate", specifier = ">=0.10.0" },
-    { name = "tinydb", marker = "extra == 'recommended'", specifier = ">=4.8.2" },
-]
-provides-extras = ["test", "docs", "recommended", "auchimiste"]
 
 [[package]]
 name = "majordome-build"
@@ -2536,7 +2482,7 @@ dependencies = [
 requires-dist = [
     { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "jupyter", specifier = ">=1.1.1" },
-    { name = "majordome", editable = "../majordome" },
+    { name = "majordome", git = "https://github.com/wallytutor/python-majordome.git?branch=main" },
     { name = "nbformat", specifier = ">=5.11.1" },
 ]
 

@@ -1,9 +1,16 @@
+export QUARTO_PYTHON=$(PWD)/.venv/bin/python
+
+.PHONY = all sync render publish clean dist-clean
+
 all: render
 
-render:
+sync:
+	uv sync
+
+render: sync
 	quarto render
 
-publish:
+publish: sync
 	quarto publish gh-pages --no-prompt --no-browser
 
 clean:
