@@ -10,6 +10,10 @@ message_bold_green() {
     echo -e "\033[1;32m$1\033[0m"
 }
 
+message_bold_yellow() {
+    echo -e "\033[1;33m$1\033[0m"
+}
+
 header_bold_green() {
     message_bold_green "========================================"
     message_bold_green "$1"

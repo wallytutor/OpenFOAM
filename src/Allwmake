@@ -7,32 +7,12 @@
 # Run from this directory
 cd ${0%/*} || exit 1
 
-# Get path to this directory:
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
 # Parse arguments for library compilation:
 . $WM_PROJECT_DIR/wmake/scripts/AllwmakeParseArguments
-
-# Source repository tools:
-. "$SCRIPT_DIR/../script/foamrc"
-
-# Ensure minimum environment is present:
-bootstrapToolbox
-
-# =====================================================================
-# Functions
-# =====================================================================
-
-final_banner() {
-    header_bold_green "Check libraries under $FOAM_USER_LIBBIN"
-    message_red "$(ls -hl $FOAM_USER_LIBBIN)"
-}
 
 # =====================================================================
 # Workflow
 # =====================================================================
-
-header_bold_green "Starting compilation..."
 
 # Pstream/Allwmake $targetType $*
 
@@ -107,12 +87,6 @@ lagrangian/Allwmake $targetType $*
 # wmake $targetType specieTransfer
 # wmake $targetType atmosphericModels
 # wmake $targetType waves
-
-# =====================================================================
-# Post-workflow
-# =====================================================================
-
-final_banner
 
 # =====================================================================
 # EOF
