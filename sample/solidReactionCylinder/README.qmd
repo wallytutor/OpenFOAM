@@ -1,0 +1,8 @@
+# Heat Release by a Reacting Solid
+
+Simulate the temperature evolution of a reacting cylinder immersed in coded external convective boundary conditions.
+
+
+```{python}
+import pyvista as pv
+```
