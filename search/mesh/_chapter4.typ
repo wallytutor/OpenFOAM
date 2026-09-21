@@ -35,4 +35,56 @@ Layer addition is notoriously recognized as the most challenging and sensitive p
 
 To diagnose and resolve these issues efficiently, users should adopt a modular workflow. By keeping `addLayers` set to false while finalizing `castellatedMesh` and `snap`, the core body-fitted mesh can be fully validated before initiating layer inflation. Once a high-quality snapped mesh is achieved, the case can be restarted from the snapped time directory with `castellatedMesh` and `snap` deactivated and `addLayers` set to true. When layer insertion fails to reach the requested layer count, relaxing internal quality constraints via the `relaxed` sub-dictionary within `meshQualityControls`, increasing `nLayerIter` and `nRelaxIter`, or locally increasing surface refinement to yield smaller, more flexible base cells will significantly improve layer coverage and mesh validity.
 
+== Add layers controls parameters
+
+=== Layer sizing and dimensions
+
+The key parameters for layer sizing is `relativeSizes`. It determines whether specified layer thicknesses are interpreted relative to the undistorted cell size of the background mesh adjacent to the boundary (`true`) or as absolute physical dimensions in meters (`false`). With `true`, a dimension of `0.4` represents 40% of the local background cell height. In addition to it, you must specify exactly *two* out of four sizing parameters (`expansionRatio`, `finalLayerThickness`, `firstLayerThickness`, `thickness`); defining more overspecifies the geometric series.
+
+- `expansionRatio`: The geometric expansion factor between consecutive layers moving away from the wall. A value of `1.2` means each successive layer outward is 20% thicker than the preceding layer.
+
+- `finalLayerThickness`: The target thickness of the outermost layer (the layer adjacent to the internal volume mesh). When `relativeSizes` is `true`, this sets the outermost layer to a given fraction of the adjacent undistorted background cell height to preserve a smooth volumetric size transition.
+
+- `firstLayerThickness`:
+
+- `thickness`:
+
+Other layer sizing parameters:
+
+- `minThickness`: The minimum permissible thickness for an individual cell layer (relative to the background cell or absolute, depending on `relativeSizes`). If mesh shrinking or quality-optimization steps compress a layer below this value, layer addition is canceled or collapsed locally.
+
+=== Extrusion topology and features
+
+- `featureAngle`: The maximum allowable angle between adjacent surface face normals across which layers can continuously extrude. In OpenFOAM, 0° corresponds to a flat plane and 90° represents perpendicular faces. If the normal turning angle across an edge exceeds 100°, layer extrusion terminates across that edge to prevent self-intersecting displacement vectors.
+
+- `slipFeatureAngle`: Controls sliding at intersecting, non-extruded boundary patches (such as symmetry planes, inlets, or slip walls). If the angle between the layer extrusion direction and the intersecting patch normal is greater than `slipFeatureAngle` (typically defaulting to $0.5 times "featureAngle"$), the mesh displacement is permitted to slip along that patch instead of sticking or collapsing rigidly.
+
+- `nGrow`: Specifies how many additional rings of connected faces around non-extruded points are flagged to terminate layer growth. Setting `nGrow 0` allows layers to terminate immediately at the offending feature. A positive integer grows the non-extrusion zone wider, helping mesh relaxation and convergence near sharp corners by providing a buffer against pinching.
+
+- `nBufferCellsNoExtrude`: Specifies the number of buffer cells used to step down layer thickness and count towards terminating edges. Rather than ending a 5-layer stack abruptly against a wall or non-extruded face, positive values create a gradual step-down transition (_e.g._, tapering from 5 to 4, 3, 2, 1 layers) to avoid abrupt cell mismatches in the volume mesh.
+
+=== Iteration and Convergence Controls
+
+- `nLayerIter`: The maximum overall iterations allowed for the layer addition process. snappyHexMesh will attempt up to this value in number of cycles of projecting the boundary vertices outward, smoothing internal displacements, and validating mesh quality.
+
+- `nRelaxedIter`: The iteration threshold beyond which the mesh mover switches from the strict quality criteria to the relaxed criteria defined in the `relaxed` sub-dictionary of `meshQualityControls`. If layer insertion struggles to converge within 20 iterations under standard metrics (e.g., non-orthogonality limits), relaxed settings are applied to encourage completion.
+
+=== Smoothing controls
+
+- `nSmoothSurfaceNormals`: The number of smoothing sweeps applied directly to the surface normal vectors along the boundary patches before computing initial layer extrusion paths.
+
+- `nSmoothNormals`: The number of smoothing sweeps applied to the interior mesh movement direction vectors. This smears the displacement directions into the internal domain, mitigating face skewness and edge collisions as the internal mesh compresses.
+
+- `nSmoothThickness`: The number of smoothing iterations applied to the layer thickness field across patch faces. This produces a continuous, gradual variation in layer thickness across adjoining faces and patches.
+
+=== Medial axis and quality limiting
+
+- `maxFaceThicknessRatio`: Terminates layer growth on boundary faces where the total extrusion thickness exceeds 50% of the face's characteristic size (or where faces are excessively warped). This prevents inverted or high-aspect-ratio degenerate cells along severely stretched boundary elements.
+
+- `maxThicknessToMedialRatio`: Truncates layer thickness in narrow passages, acute corners, or internal gaps where opposing walls converge. snappyHexMesh identifies the topological centerline between opposing surfaces (the medial axis). If total layer thickness exceeds this fraction of the distance to the medial axis, layer thickness is scaled down to avoid self-collision and negative cell volumes.
+
+- `minMedianAxisAngle`: The angular criterion used to detect the medial axis / centerline. When the vectors pointing toward nearest wall features differ across an edge by an angle sharper than 90°, that edge is designated as a medial axis location for the distance-field wave solver.
+
+- `nMedialAxisIter`: The maximum number of sweeps or diffusion iterations allocated to propagate, calculate, and smooth the medial axis distance field across the mesh domain.
+
 // EOF

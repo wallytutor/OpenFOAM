@@ -1,6 +1,6 @@
 export QUARTO_PYTHON=$(PWD)/.venv/bin/python
 
-.PHONY = all sync render publish clean dist-clean
+.PHONY: all sync render publish clean dist-clean
 
 all: render
 
