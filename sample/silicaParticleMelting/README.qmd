@@ -77,3 +77,9 @@ def plot_single_particle_heating(*, plot):
 #| fig-cap: Verification of single particle heating thermal history.
 _ = plot_single_particle_heating()
 ```
+
+::: {.callout-note title="To-do"}
+
+- Simulate the same case with the base `thermoCloud` to illustrate the uncontrolled heating the particle would undergo without latent heat incorporation.
+
+:::
