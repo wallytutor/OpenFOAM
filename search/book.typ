@@ -193,6 +193,41 @@
 }
 
 // --------------------------------------------------------------------------
+// admonitions
+// --------------------------------------------------------------------------
+
+#let admonition(
+  title: "Note",
+  color: rgb("#3b82f6"),
+  body
+) = block(
+  width: 100%,
+  stroke: (left: 4pt + color),
+  fill: color.lighten(92%),
+  inset: 10pt,
+  radius: (right: 4pt),
+  breakable: false,
+  stack(
+    spacing: 6pt,
+    text(weight: "bold", fill: color, title),
+    body,
+  )
+)
+
+#let exampleblock(title:"", body) = {
+  let sup = if title != "" { "Example: " + title } else { "Example" }
+  admonition(title: sup, color: rgb("#237ee6"), body)
+}
+
+#let info(body) = {
+  admonition(title: "Info", color: rgb("#3b82f6"), body)
+}
+
+#let warning(body) = {
+  admonition(title: "Warning", color: rgb("#f59e0b"), body)
+}
+
+// --------------------------------------------------------------------------
 // bookstyle
 // --------------------------------------------------------------------------
 

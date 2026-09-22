@@ -1,3 +1,5 @@
+#import "../book.typ": *
+
 = Inflation layers <chapter-4>
 
 In computational fluid dynamics, accurately predicting aerodynamic forces, wall shear stress, skin friction, heat transfer, and flow separation requires capturing the steep velocity and thermal gradients present in boundary layers. Standard Cartesian volume cells generated during castellation and snapping, while mathematically valid, are often too isotropic or too coarse near boundaries to resolve these thin shear layers without requiring an excessive global cell count. Boundary layer inflation introduces thin, anisotropic, prismatic cell layers aligned with solid boundary surfaces. While volume mesh resolution in `snappyHexMesh` is constrained by a strict two-to-one octree division ratio, the layer generation routine provides precise control over individual layer heights, expansion factors, and total layer counts along specific boundaries.
@@ -39,7 +41,17 @@ To diagnose and resolve these issues efficiently, users should adopt a modular w
 
 === Layer sizing and dimensions
 
-The key parameters for layer sizing is `relativeSizes`. It determines whether specified layer thicknesses are interpreted relative to the undistorted cell size of the background mesh adjacent to the boundary (`true`) or as absolute physical dimensions in meters (`false`). With `true`, a dimension of `0.4` represents 40% of the local background cell height. In addition to it, you must specify exactly *two* out of four sizing parameters (`expansionRatio`, `finalLayerThickness`, `firstLayerThickness`, `thickness`); defining more overspecifies the geometric series.
+Layer sizing controls determine prism height and expansion outward from the boundary surface. The interpretation of these values is governed by `relativeSizes`, which is a boolean switch (`true` or `false`). If active, thicknesses are specified as fractions of the local undistorted background cell height directly adjacent to the patch. Setting it to `false`, thicknesses are defined as absolute physical dimensions in domain units (typically meters).
+
+#exampleblock(title: "the relative size of a cell")[
+If setting `relativeSizes true`, then if an adjacent background volume cell has an edge height $Delta x = 2.0 "mm"$, setting a thickness of `0.5` equates to an absolute thickness of $1.0 "mm"$.
+]
+
+#exampleblock(title: "the absolute size of a cell")[
+  If setting `relativeSizes false`, then `firstLayerThickness 0.0005` creates layers with physical dimensions starting at $0.5 "mm"$, regardless of background mesh refinement.
+]
+
+Users must specify *exactly two* of the following four geometric progression parameters (the remaining two are calculated automatically to avoid over-constraining the geometric series):
 
 - `expansionRatio`: The geometric expansion factor between consecutive layers moving away from the wall. A value of `1.2` means each successive layer outward is 20% thicker than the preceding layer.
 
