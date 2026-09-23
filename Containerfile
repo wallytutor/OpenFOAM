@@ -74,6 +74,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path \
     --default-host x86_64-unknown-linux-gnu
 
 # Add Cargo to PATH for all container sessions:
+# TODO source from bashrc instead for robustness.
+# RUN echo "source /opt/cargo/env" >> /etc/bash.bashrc
 ENV PATH="/opt/cargo/bin:$PATH"
 
 RUN cargo install maturin
