@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+# DEPRECATED, prefer bashrc directly!
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+. "$SCRIPT_DIR/rc/utilsrc"
+. "$SCRIPT_DIR/rc/coresrc"
+. "$SCRIPT_DIR/rc/meshingrc"

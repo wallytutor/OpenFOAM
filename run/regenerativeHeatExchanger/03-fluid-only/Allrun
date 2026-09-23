@@ -6,7 +6,7 @@
 cd ${0%/*} || exit 1
 
 # Source OpenFOAM environment helpers
-source ../../../script/foamrc
+source ../../../etc/bashrc
 
 # Select number of cores to use for parallel run
 export NUM_PROCS=$(safe_run_ncores 20)
