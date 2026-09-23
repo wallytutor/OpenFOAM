@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# =====================================================================
+# Configurations
+# =====================================================================
+
+# Run from this directory
+cd ${0%/*} || exit 1
+
+# Get path to this directory:
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Source repository tools:
+. "$SCRIPT_DIR/etc/bashrc"
+
+# =====================================================================
+# Workflow
+# =====================================================================
+
+header_bold_green "Starting cleaning..."
+
+message_bold_yellow "> Cleaning applications..."
+(
+    wclean applications/jmakLaplacianFoam
+) > log.cleanApplications
+
+message_bold_yellow "> Cleaning libraries..."
+(
+    src/Allwclean
+) > log.cleanLibraries
+
+rm -rf platforms/
+
+# =====================================================================
+# EOF
+# =====================================================================
