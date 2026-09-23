@@ -24,6 +24,10 @@ export FOAM_RUN="${PROJECT_DIR}/run"
 export FOAM_USER_APPBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/bin"
 export FOAM_USER_LIBBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/lib"
 
+# Add user directories to path:
+export PATH="${FOAM_USER_APPBIN}:${PATH}"
+export LD_LIBRARY_PATH="${FOAM_USER_LIBBIN}:${LD_LIBRARY_PATH}"
+
 # Source all *rc files in the script directory:
 if [ -d "${PROJECT_RCS}" ]; then
     for rc_file in "${PROJECT_RCS}"/*rc; do
