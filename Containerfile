@@ -31,16 +31,24 @@ RUN update-locale LANG=en_US.UTF-8
 # just after a(nother) copy of the following line:
 RUN apt-get update
 
+# Base development toolkit (may be required by Python packages):
+RUN apt-get install -y build-essential git gcc g++ gfortran make cmake
+RUN apt-get install -y libboost-dev liblapack-dev libopenblas-dev
+
 # Install extra apt packages:
+# - software-properties-common for adding repositories
 # - wget for getting keys
 # - curl for downloading Rust
 # - neovim for code editing
-# - software-properties-common for adding repositories
+# - libssl-dev required by typst
+# - pkg-config required by typst
 RUN apt-get install -y \
+    software-properties-common \
     wget \
     curl \
     neovim \
-    software-properties-common
+    libssl-dev \
+    pkg-config
 
 # Install OpenFOAM:
 RUN sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
@@ -67,6 +75,17 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path \
 
 # Add Cargo to PATH for all container sessions:
 ENV PATH="/opt/cargo/bin:$PATH"
+
+RUN cargo install maturin
+RUN cargo install --locked typst-cli
+
+ARG QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download
+ARG QUARTO_VERSION=1.10.18
+ARG QUARTO_DEB=quarto-${QUARTO_VERSION}-linux-amd64.deb
+
+RUN wget ${QUARTO_URL}/v${QUARTO_VERSION}/${QUARTO_DEB} \
+    && dpkg -i ${QUARTO_DEB} \
+    && rm ${QUARTO_DEB}
 
 # ----------------------------------------------------------------------------
 # FINAL STEPS
