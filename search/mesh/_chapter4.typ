@@ -51,19 +51,57 @@ If setting `relativeSizes true`, then if an adjacent background volume cell has 
   If setting `relativeSizes false`, then `firstLayerThickness 0.0005` creates layers with physical dimensions starting at $0.5 "mm"$, regardless of background mesh refinement.
 ]
 
+Another sizing parameter that must always be provided is `minThickness`. It does not directly control layer size, but provides the lower threshold below which an individual prism layer is not allowed to compress. During the inward morphing and relaxation stage, the mesh mover squashes layers to maintain orthogonality and positive volume. If shrinkage pushes an individual layer below `minThickness`, the algorithm abandons layer addition locally and collapses or removes the stack.
+
+#exampleblock(title: "minimum layer thickness")[
+  With `relativeSizes` set to `true`, `minThickness` $0.1$ dictates that if quality constraints compress a layer below 10% of the background cell size, the layer insertion will be canceled on that patch face.
+]
+
 Users must specify *exactly two* of the following four geometric progression parameters (the remaining two are calculated automatically to avoid over-constraining the geometric series):
 
-- `expansionRatio`: The geometric expansion factor between consecutive layers moving away from the wall. A value of `1.2` means each successive layer outward is 20% thicker than the preceding layer.
+- `expansionRatio`:  The geometric factor applied from one layer to the next moving away from the surface into the volume.
 
-- `finalLayerThickness`: The target thickness of the outermost layer (the layer adjacent to the internal volume mesh). When `relativeSizes` is `true`, this sets the outermost layer to a given fraction of the adjacent undistorted background cell height to preserve a smooth volumetric size transition.
+#exampleblock(title: "`expansionRatio`")[
+  An `expansionRatio 1.2` means each successive layer (moving away from the wall) is 20% thicker than the preceding one.
+]
 
-- `firstLayerThickness`:
+- `firstLayerThickness`: The target height of the innermost prism cell directly in contact with the wall.
 
-- `thickness`:
+#exampleblock(title: "`firstLayerThickness`")[
+  In low-Reynolds wall-resolved LES/RANS requiring $y^+ approx 1$, setting `relativeSizes`  to `false` then `firstLayerThickness` equal $1.5 times 10^(-5)$ meters explicitly pins the first near-wall cell height to $15 mu"m"$.
+]
 
-Other layer sizing parameters:
+- `finalLayerThickness`: The target height of the outermost prism cell bordering the unstructured Cartesian volume cells.
 
-- `minThickness`: The minimum permissible thickness for an individual cell layer (relative to the background cell or absolute, depending on `relativeSizes`). If mesh shrinking or quality-optimization steps compress a layer below this value, layer addition is canceled or collapsed locally.
+#exampleblock(title: "`finalLayerThickness`")[
+  In high-Reynolds wall-function simulations, pairing `relativeSizes true;` with `finalLayerThickness 0.5;` forces the outermost prism to match $50\%$ of the neighboring background cell height, ensuring a smooth cell-volume transition across the interface.
+]
+
+- `thickness`: The cumulative height of the entire extruded prism stack.
+
+#exampleblock(title: "``")[
+  If experimental data or analytical estimates indicate a boundary layer thickness of $delta approx 5 "mm"$, set `relativeSizes` to `false` and `thickness` equal $0.005 "m"$ paired with `expansionRatio` equal $1.2$.
+]
+
+@lst-layer-sizing-yplus provides a minimal example of targeting a specific wall $y+$ over all wall patches matching a regular expression pattern `wall_.*`.
+
+#figure(
+  ```C
+  relativeSizes       false;
+  firstLayerThickness 0.0001;  // 0.1 mm first cell height
+  expansionRatio      1.2;     // 20% layer-to-layer growth
+  minThickness        1e-5;
+
+  layers
+  {
+      "wall_.*"
+      {
+          nSurfaceLayers 5;
+      }
+  }
+  ```,
+  caption: [Targeting a specific wall $y+$ using 2 out of 4 parameters.],
+) <lst-layer-sizing-yplus>
 
 === Extrusion topology and features
 
