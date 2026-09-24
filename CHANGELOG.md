@@ -2,6 +2,8 @@
 
 ## 2026-09-24
 
+- Added an exhaustive, readable, and well-commented test suite in `etc/test.sh` covering all shell functions under `etc/rc/` (`utilsrc`, `coresrc`, `meshingrc`) with strict 80-character line wrapping, deterministic mocking, and comprehensive edge-case assertions.
+
 - Enhanced `safe_run_ncores` in `etc/rc/coresrc` to accept an arbitrary sequence of fallback core counts. If the primary requested core count exceeds physical cores, fallback values are evaluated in order; if none are feasible or provided, execution falls back to half of the available physical cores. Also changed display of messages by sourcin `utilsrc` from `corerc` and improved re-sourcing time by testing for `WM_PROJECT` in `bashrc`.
 
 ## 2026-09-16
