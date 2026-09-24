@@ -7,7 +7,9 @@ if [ ! -f "/opt/openfoam13/etc/bashrc" ]; then
 fi
 
 # Pre-source full OpenFOAM environment:
-source /opt/openfoam13/etc/bashrc
+if [ ! -v WM_PROJECT ]; then
+    . /opt/openfoam13/etc/bashrc
+fi
 
 # Path to this script:
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)

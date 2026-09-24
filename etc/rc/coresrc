@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# Path to this script:
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+. "${SCRIPT_DIR}/utilsrc"
+
 get_physical_cores() {
     # Get the number of physical CPU cores.
     #
@@ -17,7 +21,7 @@ get_physical_cores() {
     #   get_physical_cores
 
     if ! command -v lscpu > /dev/null 2>&1; then
-        echo "Error: lscpu command not found. Cannot determine physical cores." >&2
+        error_message "Cannot determine physical cores as lscpu command is not found. " >&2
         return 1
     fi
 
@@ -25,7 +29,7 @@ get_physical_cores() {
     phys_cores=$(lscpu -p=core,socket | grep -v '^#' | sort -u | wc -l) || return 1
 
     if [ -z "$phys_cores" ] || ! [[ "$phys_cores" =~ ^[0-9]+$ ]] || [ "$phys_cores" -le 0 ]; then
-        echo "Error: failed to parse physical core count from lscpu output." >&2
+        error_message "Failed to parse physical core count from lscpu output." >&2
         return 1
     fi
 
@@ -36,14 +40,17 @@ safe_run_ncores() {
     # Return a safe number of cores for execution.
     #
     # Usage:
-    #   safe_run_ncores REQUESTED_CORES
+    #   safe_run_ncores REQUESTED_CORES [FALLBACK_CORES...]
     #
     # Arguments:
-    #   REQUESTED_CORES    Number of cores requested by the caller
+    #   REQUESTED_CORES       Primary number of cores requested by the caller
+    #   FALLBACK_CORES...     Optional fallback core counts to try in order
     #
     # Description:
     #   Returns the requested core count if it does not exceed physical cores.
-    #   If it exceeds physical cores, returns physical core count instead.
+    #   If it exceeds physical cores, attempts each optional fallback core count
+    #   in order. If none of the requested or fallback core counts are feasible,
+    #   returns half the number of available physical cores (at least 1).
     #   Diagnostics are printed to stderr; stdout only prints the final integer.
     #
     # Returns:
@@ -51,28 +58,50 @@ safe_run_ncores() {
     #
     # Examples:
     #   safe_run_ncores 8
-    #   ncores=$(safe_run_ncores 32)
+    #   safe_run_ncores 128 48
+    #   safe_run_ncores 128 64 32 16
+    #   ncores=$(safe_run_ncores 128 64 32 16)
 
-    local requested_cores="$1"
+    if [ $# -eq 0 ]; then
+        error_message "Missing REQUESTED_CORES argument." >&2
+        return 1
+    fi
+
+    for arg in "$@"; do
+        if ! [[ "$arg" =~ ^[0-9]+$ ]] || [ "$arg" -le 0 ]; then
+            error_message "Core count arguments must be positive integers (got '$arg')." >&2
+            return 1
+        fi
+    done
+
     local phys_cores
-
-    if [ -z "$requested_cores" ]; then
-        echo "Error: missing REQUESTED_CORES argument." >&2
-        return 1
-    fi
-
-    if ! [[ "$requested_cores" =~ ^[0-9]+$ ]] || [ "$requested_cores" -le 0 ]; then
-        echo "Error: REQUESTED_CORES must be a positive integer (got '$requested_cores')." >&2
-        return 1
-    fi
-
     phys_cores=$(get_physical_cores) || return 1
 
-    if [ "$requested_cores" -gt "$phys_cores" ]; then
-        echo "Requested cores ($requested_cores) exceed physical cores ($phys_cores)." >&2
-        echo "Using $phys_cores instead of requested $requested_cores." >&2
-        echo "$phys_cores"
-    else
+    local requested_cores="$1"
+    local half_cores=$(( phys_cores / 2 ))
+    [ "$half_cores" -le 0 ] && half_cores=1
+
+    if [ "$requested_cores" -le "$phys_cores" ]; then
         echo "$requested_cores"
+        return 0
     fi
+
+    warning_message "Requested cores ($requested_cores) exceed physical cores ($phys_cores)." >&2
+
+    shift
+    while [ $# -gt 0 ]; do
+        local fallback="$1"
+        if [ "$fallback" -le "$phys_cores" ]; then
+            warning_message "Using fallback cores ($fallback) instead of requested $requested_cores." >&2
+            echo "$fallback"
+            return 0
+        else
+            warning_message "Fallback cores ($fallback) exceed physical cores ($phys_cores)." >&2
+        fi
+        shift
+    done
+
+    warning_message "Using half of physical cores ($half_cores) instead of requested $requested_cores." >&2
+    echo "$half_cores"
+    return 0
 }
