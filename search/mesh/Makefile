@@ -7,7 +7,7 @@
 all: render
 
 render:
-	typst build --root .. main.typ
+	typst compile --root .. main.typ
 
 watch:
 	typst watch --root .. main.typ
