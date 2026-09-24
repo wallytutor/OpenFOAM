@@ -38,10 +38,11 @@ PIMPLE
 {
     nNonOrthogonalCorrectors 0;
 
-    residualControl
-    {
-        e                 1e-8;
-    }
+    // See lessons learned!
+    // residualControl
+    // {
+    //     e                 1e-8;
+    // }
 }
 
 relaxationFactors
