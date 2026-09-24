@@ -37,3 +37,16 @@ if [ -d "${PROJECT_RCS}" ]; then
         fi
     done
 fi
+
+# Source this file again:
+alias src="source ${SCRIPT_DIR}/bashrc"
+
+# Alias for listing directory contents:
+alias ll='ls -Alh --group-directories-first | sort -k9 -V -r'
+alias ls='ls -lh --group-directories-first'
+
+# Aliases for screen (a CFD must-have):
+alias scl="screen -ls"
+alias scx="screen -x"
+alias scs="screen -S"
+alias scr="screen -r"
