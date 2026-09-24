@@ -79,7 +79,7 @@ Users must specify *exactly two* of the following four geometric progression par
 
 - `thickness`: The cumulative height of the entire extruded prism stack.
 
-#exampleblock(title: "``")[
+#exampleblock(title: "`thickness`")[
   If experimental data or analytical estimates indicate a boundary layer thickness of $delta approx 5 "mm"$, set `relativeSizes` to `false` and `thickness` equal $0.005 "m"$ paired with `expansionRatio` equal $1.2$.
 ]
 
