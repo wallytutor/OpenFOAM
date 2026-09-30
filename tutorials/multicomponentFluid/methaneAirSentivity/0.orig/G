@@ -8,24 +8,33 @@
 FoamFile
 {
     format      ascii;
-    class       dictionary;
-    object      fvConstraints;
+    class       volScalarField;
+    location    "0";
+    object      G;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-limitp
+dimensions      [1 0 -3 0 0 0 0];
+
+internalField   uniform 0;
+
+boundaryField
 {
-    type       limitPressure;
-    min        5.0e+04;
-    max        1.5e+05;
+    "(inletAxial|inletAnnular|outlet)"
+    {
+        type            MarshakRadiation;
+        emissivityMode  lookup;
+        emissivity      uniform 1.0;
+        value           uniform 0;
+    }
+    walls
+    {
+        type            MarshakRadiation;
+        emissivityMode  lookup;
+        emissivity      uniform 1.0;
+        value           uniform 0;
+    }
 }
 
-limitT
-{
-    type       limitTemperature;
-    cellZone   all;
-    min        250.0;
-    max        2500.0;
-}
 
 // ************************************************************************* //

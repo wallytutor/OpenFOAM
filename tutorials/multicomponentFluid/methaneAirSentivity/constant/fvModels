@@ -5,27 +5,19 @@
     \\  /    A nd           | Version:  13
      \\/     M anipulation  |
 \*---------------------------------------------------------------------------*/
-FoamFile
-{
-    format      ascii;
-    class       dictionary;
-    object      fvConstraints;
+FoamFile {
+    format ascii;
+    class dictionary;
+    location "constant";
+    object fvModels;
 }
+
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-limitp
+radiation
 {
-    type       limitPressure;
-    min        5.0e+04;
-    max        1.5e+05;
-}
-
-limitT
-{
-    type       limitTemperature;
-    cellZone   all;
-    min        250.0;
-    max        2500.0;
+    type radiation;
+    libs ("libradiationModels.so");
 }
 
 // ************************************************************************* //

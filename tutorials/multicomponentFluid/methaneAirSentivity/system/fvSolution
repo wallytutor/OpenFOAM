@@ -23,9 +23,6 @@ solvers
 
     p
     {
-        // solver           PCG;
-        // preconditioner   DIC;
-        // Faster than PCG for pressure Poisson
         solver           GAMG;
         smoother         GaussSeidel;
         tolerance        1e-6;
