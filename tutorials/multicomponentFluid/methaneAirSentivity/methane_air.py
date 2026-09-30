@@ -238,10 +238,10 @@ def plot_slice(
 
     pl.add_ruler(
         pointa=[0.000, -0.02, 0.0],
-        pointb=[3.001, -0.02, 0.0],
+        pointb=[4.001, -0.02, 0.0],
         title="Coordinate [m]"
     )
-    region_bounds = [-0.1, 3.0, 0.0, 0.3, -0.01, 0.01]
+    region_bounds = [-0.1, 4.0, 0.0, 0.3, -0.01, 0.01]
     pl.view_xy(bounds=region_bounds)
     pl.zoom_camera(3.5)
 
