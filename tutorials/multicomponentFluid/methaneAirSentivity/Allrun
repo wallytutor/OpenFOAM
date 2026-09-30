@@ -15,13 +15,14 @@ fi
 touch case.foam
 
 # Copy initial conditions:
-cp -r 0.orig 0
+cp -r 0.orig/ 0/
 
 # Run the simulation:
 runApplication foamRun
+mv log.foamRun log.foamRun.1
 
 # Make spark for combustion:
-runApplication setFields
+runApplication setFields -latestTime
 
 # Extend time:
 file=system/controlDict
@@ -33,5 +34,6 @@ foamDictionary $file -entry PIMPLE/maxCo -set 0.5 > /dev/null
 
 # Run the simulation:
 runApplication foamRun
+mv log.foamRun log.foamRun.2
 
 #------------------------------------------------------------------------------

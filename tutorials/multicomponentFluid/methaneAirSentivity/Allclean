@@ -17,4 +17,8 @@ rm -rf chemkin/reactions.inp
 rm -rf chemkin/thermo.dat
 rm -rf chemkin/transport*
 
+# Restore modified files
+git restore system/controlDict
+git restore system/fvSolution
+
 #------------------------------------------------------------------------------
