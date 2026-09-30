@@ -13,3 +13,6 @@ chemkin/transport
 
 # Properties check:
 chemkin/media/*
+
+# Solution restart:
+restart/

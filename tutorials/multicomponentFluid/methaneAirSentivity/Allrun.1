@@ -14,7 +14,7 @@ fi
 # To open with ParaView:
 touch case.foam
 
-if [ ! -d "200" ]; then
+if [ ! -d "restart" ]; then
     # Copy initial conditions:
     cp -r 0.orig/ 0/
 
@@ -33,26 +33,8 @@ if [ ! -d "200" ]; then
     # Remove decomposition files:
     rm -rf processor*
 
-    # Make spark for combustion:
-    runApplication setFields -latestTime
+    # Backup before setFields for restart purposes:
+    mv 200/ restart/
 fi
-
-# Extend time:
-file=system/controlDict
-foamDictionary $file -entry endTime -set 10000 > /dev/null
-
-# Parameterize compatible with combustion:
-file=system/fvSolution
-foamDictionary $file -entry PIMPLE/maxCo    -set 0.5 > /dev/null
-foamDictionary $file -entry PIMPLE/Yref/CH4 -set 0.1 > /dev/null
-foamDictionary $file -entry PIMPLE/Yref/O2  -set 0.1 > /dev/null
-
-# Decompose the domain:
-runApplication decomposePar
-mv log.decomposePar log.decomposePar.2
-
-# Run the simulation:
-runParallel foamRun
-mv log.foamRun log.foamRun.2
 
 #------------------------------------------------------------------------------
