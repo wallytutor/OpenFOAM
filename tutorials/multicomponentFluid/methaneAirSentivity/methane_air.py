@@ -306,7 +306,6 @@ def plot_reports(*, plot, root="."):
     y = df.iloc[:, 1].to_numpy()
 
     ax[0].plot(x, y, color="k")
-    ax[0].set_xlabel("Iteration counter")
     ax[0].set_ylabel(f"Temperature [K]")
 
     df = post.load_report("outletCO")
@@ -314,7 +313,6 @@ def plot_reports(*, plot, root="."):
     y = df.iloc[:, 1].to_numpy() * 1e6
 
     ax[1].plot(x, y, color="k")
-    ax[1].set_xlabel("Iteration counter")
     ax[1].set_ylabel(f"Carbon monoxide [ppmm]")
 
     df = post.load_report("probe", select=r"**/T")
@@ -322,13 +320,17 @@ def plot_reports(*, plot, root="."):
     y = df.iloc[:, 1].to_numpy()
 
     ax[2].plot(x, y, color="k")
-    ax[2].set_xlabel("Iteration counter")
     ax[2].set_ylabel(f"Probe temperature [K]")
+
+    for axis in ax:
+        axis.grid(False)
+        axis.set_xlabel("Iteration counter")
 
 
 @mj.plot(shape=(3, 1), size=(6, 8), sharex=True)
-def plot_fields(mesh, *, plot, root="."):
+def plot_fields(mesh, *, plot, **kwargs):
     x_points = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+    resolution = kwargs.get("resolution", 200)
 
     def plot_field(idx, name, scale=None):
         scale = scale or (lambda x: x)
@@ -337,7 +339,7 @@ def plot_fields(mesh, *, plot, root="."):
             line_data = mesh.sample_over_line(
                 [x_coord, 0.00, 0.0],
                 [x_coord, 0.40, 0.0],
-                resolution=100
+                resolution=resolution
             )
             x = line_data["Distance"] * 100
             y = scale(line_data[name])
