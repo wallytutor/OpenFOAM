@@ -4,11 +4,11 @@ import math
 import gmsh
 
 from pathlib import Path
-from ruamel.yaml import YAML
+
+import methane_air as ma
 
 #region: 0. Configuration
-with open("domain.yaml", encoding="utf-8") as f:
-    config = YAML().load(f)
+config = ma.prepare_dimensions(save=False)
 
 path = Path(__file__)
 wedge_angle  = math.radians(config["wedge_angle"])

@@ -19,6 +19,13 @@ _MESH = None
 _SETUP = mj.FoamDictFile(path="0.orig/_shared")
 
 
+def load_yaml(fname: str | Path) -> dict:
+    """ Load a YAML file. """
+    with open(fname, encoding="utf-8") as f:
+        config = YAML().load(f)
+    return config
+
+
 def get_power_supply(
         mech: ct.Solution,
         qdot_fuel: float,
@@ -50,7 +57,7 @@ def get_equivalent_diameters(
         diam_oxid_ext: float,
         diam_oxid_int: float,
         thick_wall: float,
-    ) -> tuple[float, float]:
+    ) -> tuple[float, float, float]:
     """ Compute equivalent diameters for fuel/oxidizer. """
     A_air_ext   = np.pi * (diam_oxid_ext / 2)**2
     A_air_int   = np.pi * (diam_oxid_int / 2)**2
@@ -64,6 +71,20 @@ def get_equivalent_diameters(
     D_fuel = float(0.001 * diam_fuel)
     D_oxid = float(0.001 * np.sqrt(4 * (A_air_one + A_fuel_pipe) / np.pi))
 
+    return D_fuel, D_oxid, e_wall
+
+
+def prepare_dimensions(save=False):
+    """ Prepare geometry dimensions on the fly."""
+    conf = load_yaml("initialize.yaml")
+
+    D_fuel, D_oxid, e_wall = get_equivalent_diameters(
+        conf["diam_fuel"],
+        conf["diam_oxid_ext"],
+        conf["diam_oxid_int"],
+        conf["thick_wall"],
+    )
+
     geometry_data = {
         "wedge_angle": 2.0,
         "len_inlet_ax": 3 * D_fuel,
@@ -76,16 +97,17 @@ def get_equivalent_diameters(
         "thk_side_box": 2 * D_oxid,
     }
 
-    yaml = YAML()
-    yaml.default_flow_style = False
-    yaml.indent(mapping=2, sequence=4, offset=2)
+    if save:
+        yaml = YAML()
+        yaml.default_flow_style = False
+        yaml.indent(mapping=2, sequence=4, offset=2)
 
-    output_file = Path("domain.yaml")
+        output_file = Path("domain.yaml")
 
-    with output_file.open("w", encoding="utf-8") as f:
-        yaml.dump(geometry_data, f)
+        with output_file.open("w", encoding="utf-8") as f:
+            yaml.dump(geometry_data, f)
 
-    return D_fuel, D_oxid
+    return geometry_data
 
 
 def mean_velocity(mdot, rho, T, A):
@@ -108,7 +130,7 @@ def turbulent_dissipation_rate(k, L, C_mu=0.09):
     return (C_mu**0.75) * (k**1.5) / L
 
 
-def flow_workflow(name, mdot, rho0, T, A, I=0.05):
+def flow_workflow(name, mdot, rho0, T, A, I=0.05, save=False):
     rho = (273.15 / T) * rho0
 
     U = mean_velocity(mdot, rho, T, A)
@@ -116,15 +138,16 @@ def flow_workflow(name, mdot, rho0, T, A, I=0.05):
     k = turbulent_kinetic_energy(U, I)
     e = turbulent_dissipation_rate(k, L)
 
-    key_name = name.upper()
-    _SETUP.set(f"{key_name}_T", T)
-    _SETUP.set(f"{key_name}_U", U)
-    _SETUP.set(f"{key_name}_RHO", rho)
-    _SETUP.set(f"{key_name}_L", L)
-    _SETUP.set(f"{key_name}_I", I)
-    _SETUP.set(f"{key_name}_K", k)
-    _SETUP.set(f"{key_name}_EPSILON", e)
-    _SETUP.save()
+    if save:
+        key_name = name.upper()
+        _SETUP.set(f"{key_name}_T", T)
+        _SETUP.set(f"{key_name}_U", U)
+        _SETUP.set(f"{key_name}_RHO", rho)
+        _SETUP.set(f"{key_name}_L", L)
+        _SETUP.set(f"{key_name}_I", I)
+        _SETUP.set(f"{key_name}_K", k)
+        _SETUP.set(f"{key_name}_EPSILON", e)
+        _SETUP.save()
 
     return tabulate(
         [
