@@ -15,10 +15,10 @@ fi
 touch case.foam
 
 # Partial clean just to run again:
-rm -rf 200/ processor* log.*
+rm -rf 0/ processor* log.*
 
 # Restart case:
-cp -r restart/ 200/
+cp -r restart/ 0/
 
 # Make spark for combustion:
 runApplication setFields -latestTime
