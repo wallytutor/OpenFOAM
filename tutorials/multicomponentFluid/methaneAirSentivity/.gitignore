@@ -5,6 +5,10 @@ log.*
 # Generated pdf:
 report.pdf
 
+# Initial conditions:
+0.orig/_shared
+domain.yaml
+
 # Mechanism intermediates:
 chemkin/reactions.inp
 chemkin/thermo.dat
