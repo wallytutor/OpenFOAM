@@ -27,33 +27,17 @@ gradSchemes
     default  cellLimited Gauss linear 1;
 }
 
-// Comments and possible improvements:
-// - Benchmark `Gauss limitedLinearV 1;` vs `Gauss linearUpwindV grad(U);`
-// - If excessive numerical diffusion is suspected in shear layers, evaluate
-//   switching `div(phi,k)` and `div(phi,epsilon)` from `bounded Gauss upwind;`
-//   to `bounded Gauss limitedLinear 0.2;`.
 divSchemes
 {
     default                              none;
-
-    // Prefer the bounded scheme to avoid over/undershooting of solution:
-    // turbulence                           Gauss limitedLinear 1;
     turbulence                           bounded Gauss upwind;
-
-    // species                              Gauss limitedLinear 1;
     species                              Gauss multivariateSelection
     {
-        O2              limitedLinear01 1;
-        C3H8            limitedLinear01 1;
+        CH4             limitedLinear01 1;
         CO              limitedLinear01 1;
         CO2             limitedLinear01 1;
-        H2              limitedLinear01 1;
         H2O             limitedLinear01 1;
-        H               limitedLinear01 1;
-        O               limitedLinear01 1;
-        OH              limitedLinear01 1;
-        HO2             limitedLinear01 1;
-        H2O2            limitedLinear01 1;
+        O2              limitedLinear01 1;
         N2              limitedLinear01 1;
         h               limitedLinear 1;
     };
