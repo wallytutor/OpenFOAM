@@ -40,6 +40,9 @@ function runAndReconstructStep() {
 
     # Backup before setFields for restart purposes:
     mv $tend/ restart.$step/
+
+    # Avoid warnings:
+    rm restart.$step/uniform/time
 }
 
 function restartFromStep() {
