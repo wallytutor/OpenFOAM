@@ -1,0 +1,25 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "system";
+    object      functions;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+#includeFunc Qdot
+
+#includeFunc probes(name=probe, points=((1.0 0.0 0.0)), T)
+
+#includeFunc patchAverage(name=outletT,  patch=outlet, T)
+
+#includeFunc patchAverage(name=outletCO, patch=outlet, CO)
+
+// ************************************************************************* //
