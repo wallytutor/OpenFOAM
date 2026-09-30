@@ -17,5 +17,7 @@ git = "https://github.com/wallytutor/majordome-build.git"
 branch = "main"
 
 [tool.uv.sources.majordome]
-git = "https://github.com/wallytutor/python-majordome.git"
-branch = "main"
+# git = "https://github.com/wallytutor/python-majordome.git"
+# branch = "main"
+path = "../../../../majordome"
+editable = true
