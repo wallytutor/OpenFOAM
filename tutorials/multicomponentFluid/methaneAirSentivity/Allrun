@@ -53,33 +53,14 @@ function runAndReconstructStep() {
 
     # Remove decomposition files:
     rm -rf processor*
-
-    # Backup before setFields for restart purposes:
-    mv $tend/ restart.$step/
-
-    # Avoid warnings:
-    rm restart.$step/uniform/time
-}
-
-function restartFromStep() {
-    local step=$1
-
-    # Partial clean just to run again:
-    rm -rf 0/ processor*/
-
-    # Restart case:
-    cp -r restart.$step/ 0/
 }
 
 function runFlowAlone() {
     local tend=$1
 
-    if [ -d "restart.1" ]; then
+    if [ -d "$tend" ]; then
         echo "Run 1 already completed"
     else
-        # Copy initial conditions:
-        # cp -r 0.orig/ 0/
-
         # Ensure consistent end-time:
         file=system/controlDict
         foamDictionary $file -entry endTime -set $tend > /dev/null
@@ -91,11 +72,9 @@ function runFlowAlone() {
 function runLowOrderOde() {
     local tend=$1
 
-    if [ -d "restart.2" ]; then
+    if [ -d "$tend" ]; then
         echo "Run 2 already completed"
     else
-        restartFromStep "1"
-
         # Make spark for combustion:
         runApplication setFields -latestTime
 
@@ -118,11 +97,9 @@ function runLowOrderOde() {
 function runHighOrderOde() {
     local tend=$1
 
-    if [ -d "restart.3" ]; then
+    if [ -d "$tend" ]; then
         echo "Run 3 already completed"
     else
-        restartFromStep "2"
-
         # Extend time:
         file=system/controlDict
         foamDictionary $file -entry endTime -set $tend > /dev/null
@@ -157,8 +134,8 @@ function mainWorkflow() {
     # Run simulations:
     pushd $target > /dev/null
     runFlowAlone    "2000"
-    runLowOrderOde  "1000"
-    runHighOrderOde "12000"
+    runLowOrderOde  "7000"
+    runHighOrderOde "20000"
     cp -r restart.3/ 1/
     popd > /dev/null
 }
