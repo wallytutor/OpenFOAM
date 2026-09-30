@@ -20,8 +20,6 @@ dia_inlet_ax = config["dia_inlet_ax"]
 thk_inlet_wl = config["thk_inlet_wl"]
 thk_inlet_an = config["thk_inlet_an"]
 thk_side_box = config["thk_side_box"]
-
-extended = True
 #endregion
 
 #region: 1. Initialize the model
@@ -52,9 +50,6 @@ opt.set_number("Mesh.ColorCarousel", 2)
 # XXX: mandatory for OpenFOAM meshing!
 opt.set_number("Mesh.ElementOrder", 1)
 opt.set_number("Mesh.MshFileVersion", 2.2)
-
-# XXX: mesh-specific settings
-opt.set_number("Mesh.MeshSizeMax", 0.01)
 #endregion
 
 #region: 3. Create base geometry
@@ -118,44 +113,41 @@ occ.add_rectangle(
     tag = 6
 )
 
-if not extended:
-    all_surf = [(2, k) for k in range(1, 6+1)]
-else:
-    # - Flue outlet (4 regions)
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = 0.0,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = dia_inlet_ax / 2.0,
-        tag = 7
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_inlet_wl,
-        tag = 8
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0 + thk_inlet_wl,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_inlet_an,
-        tag = 9
-    )
-    occ.add_rectangle(
-        x   = len_disperse,
-        y   = dia_inlet_ax / 2.0 + thk_inlet_wl + thk_inlet_an,
-        z   = 0.0,
-        dx  = len_flue_out,
-        dy  = thk_side_box,
-        tag = 10
-    )
+# - Flue outlet (4 regions)
+occ.add_rectangle(
+    x   = len_disperse,
+    y   = 0.0,
+    z   = 0.0,
+    dx  = len_flue_out,
+    dy  = dia_inlet_ax / 2.0,
+    tag = 7
+)
+occ.add_rectangle(
+    x   = len_disperse,
+    y   = dia_inlet_ax / 2.0,
+    z   = 0.0,
+    dx  = len_flue_out,
+    dy  = thk_inlet_wl,
+    tag = 8
+)
+occ.add_rectangle(
+    x   = len_disperse,
+    y   = dia_inlet_ax / 2.0 + thk_inlet_wl,
+    z   = 0.0,
+    dx  = len_flue_out,
+    dy  = thk_inlet_an,
+    tag = 9
+)
+occ.add_rectangle(
+    x   = len_disperse,
+    y   = dia_inlet_ax / 2.0 + thk_inlet_wl + thk_inlet_an,
+    z   = 0.0,
+    dx  = len_flue_out,
+    dy  = thk_side_box,
+    tag = 10
+)
 
-    all_surf = [(2, k) for k in range(1, 10+1)]
+all_surf = [(2, k) for k in range(1, 10+1)]
 
 occ.rotate(
     dimTags = all_surf,
@@ -180,13 +172,13 @@ occ.synchronize()
 # ---------------------------------------------------------------------
 
 # - Axial inlet zone over x-axis
-nx1 = 20
+nx1 = 10
 qx1 = 1.0
 msh.set_transfinite_curve(1, nx1, "Progression", qx1)
 msh.set_transfinite_curve(3, nx1, "Progression", qx1)
 
 # - Axial inlet zone over y-axis
-ny1 = 10
+ny1 = 6
 qy1 = 0.9
 msh.set_transfinite_curve(2,  ny1, "Progression", qy1)
 msh.set_transfinite_curve(4,  ny1, "Progression", 1/qy1)
@@ -203,7 +195,7 @@ msh.set_transfinite_curve(11, nx2, "Progression", qx2)
 msh.set_transfinite_curve(13, nx2, "Progression", qx2)
 
 # - Annular inlet zone over y-axis
-ny2 = 7
+ny2 = 15
 qy2 = 0.4
 msh.set_transfinite_curve(12, ny2, "Bump", qy2)
 msh.set_transfinite_curve(14, ny2, "Bump", qy2)
@@ -214,7 +206,7 @@ msh.set_transfinite_curve(15, ny2, "Bump", qy2)
 # ---------------------------------------------------------------------
 
 # - Dispersion zone over x-axis
-nx3 = 200
+nx3 = 100
 qx3 = 1.0
 msh.set_transfinite_curve(5,  nx3, "Progression", qx3)
 msh.set_transfinite_curve(7,  nx3, "Progression", qx3)
@@ -223,7 +215,7 @@ msh.set_transfinite_curve(16, nx3, "Progression", qx3)
 msh.set_transfinite_curve(18, nx3, "Progression", qx3)
 
 # - Inlet wall thickness zone over y-axis
-ny3 = 5
+ny3 = 2
 qy3 = 0.9
 msh.set_transfinite_curve(8,  ny3, "Progression", qy3)
 msh.set_transfinite_curve(10, ny3, "Progression", 1/qy3)
@@ -233,7 +225,7 @@ msh.set_transfinite_curve(10, ny3, "Progression", 1/qy3)
 # ---------------------------------------------------------------------
 
 ny4 = 25
-qy4 = 0.85
+qy4 = 0.9
 msh.set_transfinite_curve(17, ny4, "Progression", 1/qy4)
 msh.set_transfinite_curve(19, ny4, "Progression", qy4)
 
@@ -241,27 +233,26 @@ msh.set_transfinite_curve(19, ny4, "Progression", qy4)
 # OTHER
 # ---------------------------------------------------------------------
 
-if extended:
-    # - Flue outlet over x-axis
-    nx = 100
-    qx = 1.0
-    msh.set_transfinite_curve(20, nx, "Progression", qx)
-    msh.set_transfinite_curve(22, nx, "Progression", qx)
-    msh.set_transfinite_curve(24, nx, "Progression", qx)
-    msh.set_transfinite_curve(26, nx, "Progression", qx)
-    msh.set_transfinite_curve(28, nx, "Progression", qx)
+# - Flue outlet over x-axis
+nx = 150
+qx = 1.0
+msh.set_transfinite_curve(20, nx, "Progression", qx)
+msh.set_transfinite_curve(22, nx, "Progression", qx)
+msh.set_transfinite_curve(24, nx, "Progression", qx)
+msh.set_transfinite_curve(26, nx, "Progression", qx)
+msh.set_transfinite_curve(28, nx, "Progression", qx)
 
-    # Axial inlet zone
-    msh.set_transfinite_curve(21, ny1, "Progression", qy1)
+# Axial inlet zone
+msh.set_transfinite_curve(21, ny1, "Progression", qy1)
 
-    # Annular inlet zone
-    msh.set_transfinite_curve(25, ny2, "Bump", qy2)
+# Annular inlet zone
+msh.set_transfinite_curve(25, ny2, "Bump", qy2)
 
-    # Inlet wall thickness
-    msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
+# Inlet wall thickness
+msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
 
-    # Side expansion
-    msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
+# Side expansion
+msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
 
 for _, tag in all_surf:
     msh.set_transfinite_surface(tag=tag)
@@ -288,18 +279,11 @@ occ.synchronize()
 s_back = [k for _, k in all_surf]
 v_tags = s_back.copy()
 
-if extended:
-    s_front    = [14, 17, 21, 26, 29, 33, 36, 39, 42, 45]
-    s_inlet_ax = [11]
-    s_inlet_an = [23]
-    s_outlet   = [34, 37, 40, 43]
-    s_walls    = [12, 20, 22, 24, 31, 32, 44]
-else:
-    s_front    = [10, 13, 17, 22, 25, 29]
-    s_inlet_ax = [7]
-    s_inlet_an = [19]
-    s_outlet   = [11, 14, 23, 26]
-    s_walls    = [8, 16, 18, 20, 27, 28]
+s_front    = [14, 17, 21, 26, 29, 33, 36, 39, 42, 45]
+s_inlet_ax = [11]
+s_inlet_an = [23]
+s_outlet   = [34, 37, 40, 43]
+s_walls    = [12, 20, 22, 24, 31, 32, 44]
 
 mod.add_physical_group(
     dim  = 2,
