@@ -211,14 +211,17 @@ def read_data(
         time_index: int = -1
     ) -> pv.DataObject | None:
     """ Read case data for post-processing. """
-    if not Path(case_file).exists():
+    case_file = Path(case_file)
+    case_dir = case_file.parent
+
+    if not case_file.exists():
         raise FileNotFoundError(f"No such case {case_file}")
 
     reader = pv.POpenFOAMReader(case_file)
     reader.enable_all_cell_arrays()
     reader.enable_all_point_arrays()
 
-    if decomposed and list(Path(".").glob("processor*")):
+    if decomposed and list(case_dir.glob("processor*")):
         reader.case_type = "decomposed"
 
     try:
