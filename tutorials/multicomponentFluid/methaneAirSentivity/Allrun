@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+#region: general setup
 # Run from this directory:
 cd ${0%/*} || exit 1
 
@@ -13,67 +14,117 @@ fi
 
 # To open with ParaView:
 touch case.foam
+#endregion
 
-# Final step of run 1:
-tend=1500
-
-if [ ! -d "restart" ]; then
-    # Copy initial conditions:
-    cp -r 0.orig/ 0/
+#region: workflow functions
+function runAndReconstructStep() {
+    local tend=$1
+    local step=$2
 
     # Decompose the domain:
     runApplication decomposePar
-    mv log.decomposePar log.decomposePar.1
-
-    # Ensure consistent end-time:
-    file=system/controlDict
-    foamDictionary $file -entry endTime -set $tend > /dev/null
+    mv log.decomposePar log.decomposePar.$step
 
     # Run the simulation:
     runParallel foamRun
-    mv log.foamRun log.foamRun.1
+    mv log.foamRun log.foamRun.$step
 
     # Reconstruct the solution:
     runApplication reconstructPar -latestTime
-    mv log.reconstructPar log.reconstructPar.1
+    mv log.reconstructPar log.reconstructPar.$step
 
     # Remove decomposition files:
     rm -rf processor*
 
     # Backup before setFields for restart purposes:
-    mv $tend/ restart/
-fi
+    mv $tend/ restart.$step/
+}
 
-# Partial clean just to run again:
-rm -rf 0/ processor* log.*
+function restartFromStep() {
+    local step=$1
 
-# Restart case:
-cp -r restart/ 0/
+    # Partial clean just to run again:
+    rm -rf 0/ processor*/
 
-# Make spark for combustion:
-runApplication setFields -latestTime
+    # Restart case:
+    cp -r restart.$step/ 0/
+}
 
-# Extend time:
-file=system/controlDict
-foamDictionary $file -entry endTime -set 10000 > /dev/null
+function runFlowAlone() {
+    local tend=$1
 
-# Parameterize compatible with combustion:
-file=system/fvSolution
-foamDictionary $file -entry PIMPLE/maxCo     -set 0.2 > /dev/null
-foamDictionary $file -entry PIMPLE/alphaY    -set 0.1 > /dev/null
-foamDictionary $file -entry PIMPLE/alphaTemp -set 0.1 > /dev/null
-foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.1 > /dev/null
-foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.1 > /dev/null
+    if [ -d "restart.1" ]; then
+        echo "Run 1 already completed"
+    else
+        # Copy initial conditions:
+        cp -r 0.orig/ 0/
 
-# Decompose the domain:
-runApplication decomposePar -latestTime
-mv log.decomposePar log.decomposePar.2
+        # Ensure consistent end-time:
+        file=system/controlDict
+        foamDictionary $file -entry endTime -set $tend > /dev/null
 
-# Run the simulation:
-runParallel foamRun
-mv log.foamRun log.foamRun.2
+        runAndReconstructStep $tend "1"
+    fi
+}
+
+function runLowOrderOde() {
+    local tend=$1
+
+    if [ -d "restart.2" ]; then
+        echo "Run 2 already completed"
+    else
+        restartFromStep "1"
+
+        # Make spark for combustion:
+        runApplication setFields -latestTime
+
+        # Extend time:
+        file=system/controlDict
+        foamDictionary $file -entry endTime -set $tend > /dev/null
+
+        # Parameterize compatible with combustion:
+        file=system/fvSolution
+        foamDictionary $file -entry PIMPLE/maxCo     -set 0.50 > /dev/null
+        foamDictionary $file -entry PIMPLE/alphaY    -set 0.25 > /dev/null
+        foamDictionary $file -entry PIMPLE/alphaTemp -set 0.25 > /dev/null
+        foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.10 > /dev/null
+        foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.10 > /dev/null
+
+        runAndReconstructStep $tend "2"
+    fi
+}
+
+function runHighOrderOde() {
+    local tend=$1
+
+    if [ -d "restart.3" ]; then
+        echo "Run 3 already completed"
+    else
+        restartFromStep "2"
+
+        # Make spark for combustion:
+        runApplication setFields -latestTime
+
+        # Extend time:
+        file=system/controlDict
+        foamDictionary $file -entry endTime -set $tend > /dev/null
+
+        # Move to a higher order solver:
+        file=constant/chemistryProperties
+        foamDictionary $file -entry odeCoeffs/solver -set Rodas34 > /dev/null
+        foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
+
+        runAndReconstructStep $tend "3"
+    fi
+}
+#endregion
+
+runFlowAlone    "2000"
+runLowOrderOde  "3000"
+runHighOrderOde "10000"
 
 # Restore modified files
+git restore constant/chemistryProperties
 git restore system/controlDict
 git restore system/fvSolution
 
