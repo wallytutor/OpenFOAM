@@ -4,3 +4,12 @@ log.*
 
 # Generated pdf:
 report.pdf
+
+# Mechanism intermediates:
+chemkin/reactions.inp
+chemkin/thermo.dat
+chemkin/transport.dat
+chemkin/transport
+
+# Properties check:
+chemkin/media/*
