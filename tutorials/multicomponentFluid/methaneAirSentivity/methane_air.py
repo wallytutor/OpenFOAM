@@ -69,7 +69,7 @@ def get_equivalent_diameters(
         "len_inlet_ax": 3 * D_fuel,
         "len_inlet_an": 3 * D_fuel,
         "len_disperse": 1.00,
-        "len_flue_out": 2.00,
+        "len_flue_out": 3.00,
         "dia_inlet_ax": D_fuel,
         "thk_inlet_wl": e_wall,
         "thk_inlet_an": D_oxid / 2,

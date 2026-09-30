@@ -234,7 +234,7 @@ msh.set_transfinite_curve(19, ny4, "Progression", qy4)
 # ---------------------------------------------------------------------
 
 # - Flue outlet over x-axis
-nx = 150
+nx = 200
 qx = 1.0
 msh.set_transfinite_curve(20, nx, "Progression", qx)
 msh.set_transfinite_curve(22, nx, "Progression", qx)
@@ -333,6 +333,6 @@ mod.add_physical_group(
 msh.generate(dim=3)
 gmsh.write(fileName=str(path.with_suffix(".msh")))
 
-# gmsh.fltk.run()
+gmsh.fltk.run()
 gmsh.finalize()
 #endregion
