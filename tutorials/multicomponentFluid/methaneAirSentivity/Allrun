@@ -8,17 +8,33 @@ cd ${0%/*} || exit 1
 
 # Source tutorial run functions:
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
-
-# Make sure mesh exists:
-if [ ! -d "constant/polyMesh" ]; then
-    ./domain.sh
-fi
-
-# To open with ParaView:
-touch case.foam
 #endregion
 
 #region: workflow functions
+function prepareDomainMesh() {
+    if [ -d "constant/polyMesh" ]; then
+        echo "Mesh already exists, skipping..."
+    else
+        # Generate the base mesh:
+        uv run python domain.py > log.mesh
+
+        # Convert base Gmsh mesh to OpenFOAM:
+        runApplication gmshToFoam domain.msh
+
+        # Perform preliminary renumbering:
+        runApplication renumberMesh
+
+        # Fix patch types after splitting:
+        file=constant/polyMesh/boundary
+        foamDictionary $file -entry entry0/back/type  -set wedge > /dev/null
+        foamDictionary $file -entry entry0/front/type -set wedge > /dev/null
+        foamDictionary $file -entry entry0/walls/type -set wall  > /dev/null
+
+        # Check mesh:
+        runApplication checkMesh
+    fi
+}
+
 function runAndReconstructStep() {
     local tend=$1
     local step=$2
@@ -62,7 +78,7 @@ function runFlowAlone() {
         echo "Run 1 already completed"
     else
         # Copy initial conditions:
-        cp -r 0.orig/ 0/
+        # cp -r 0.orig/ 0/
 
         # Ensure consistent end-time:
         file=system/controlDict
@@ -119,15 +135,42 @@ function runHighOrderOde() {
         runAndReconstructStep $tend "3"
     fi
 }
+
+function mainWorkflow() {
+    local case=$1
+    local temp=$2
+
+    local target="solution.$case"
+
+    # Prepare _shared with current temperature:
+    uv run python initialize.py --temperature $temp
+
+    # Copy files:
+    mkdir -p "$target"
+    cp -r 0.orig   "$target/0"
+    cp -r system   "$target/system"
+    cp -r constant "$target/constant"
+
+    # Create case.foam:
+    touch "$target/case.foam"
+
+    # Run simulations:
+    pushd $target > /dev/null
+    runFlowAlone    "2000"
+    runLowOrderOde  "1000"
+    runHighOrderOde "12000"
+    cp -r restart.3/ 1/
+    popd > /dev/null
+}
 #endregion
 
-runFlowAlone    "2000"
-runLowOrderOde  "3000"
-runHighOrderOde "10000"
+prepareDomainMesh
+mainWorkflow 1 25
+mainWorkflow 2 300
 
 # Restore modified files
-git restore constant/chemistryProperties
-git restore system/controlDict
-git restore system/fvSolution
+# git restore constant/chemistryProperties
+# git restore system/controlDict
+# git restore system/fvSolution
 
 #------------------------------------------------------------------------------
