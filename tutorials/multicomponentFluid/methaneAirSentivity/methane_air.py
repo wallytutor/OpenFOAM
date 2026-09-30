@@ -245,15 +245,14 @@ def plot_slice(
     pl.view_xy(bounds=region_bounds)
     pl.zoom_camera(3.5)
 
-    # pl.show_bounds()
-    # pl.show_axes()
-    pl.show()
-
     if saveas is not None:
+        pl.show()
         pl.screenshot(saveas)
 
+    return pl
 
-@mj.plot(shape=(3, 1), size=(8, 9))
+
+@mj.plot(shape=(3, 1), size=(8, 9), sharex=True)
 def plot_reports(*, plot, root="."):
     fig, ax = plot.subplots()
     post = mj.FoamPostProcessingLoader(root=root)
