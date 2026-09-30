@@ -22,7 +22,7 @@ solverFreq              10;
 // radiationModel          fvDOM;
 radiationModel          P1;
 
-absorptionEmissionModel greyMeanCombustiont;
+absorptionEmissionModel greyMeanCombustion;
 
 scatterModel            none;
 
