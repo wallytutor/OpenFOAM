@@ -26,16 +26,17 @@ if [ ! -f "reactions.inp" ] || [ ! -f "thermo.dat" ]; then
 fi
 
 # For BFER use this:
-# chemkinToFoam             \
-#     reactions.inp         \
-#     thermo.dat            \
-#     transport             \
-#     ../constant/reactions \
-#     ../constant/thermo
-
 chemkinToFoam             \
-    WB_2step.inp          \
-    WB_2step.dat          \
+    reactions.inp         \
+    thermo.dat            \
     transport             \
     ../constant/reactions \
     ../constant/thermo
+
+# For Westbrook use this:
+# chemkinToFoam             \
+#     WB_2step.inp          \
+#     WB_2step.dat          \
+#     transport             \
+#     ../constant/reactions \
+#     ../constant/thermo
