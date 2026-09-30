@@ -1,4 +1,4 @@
-species         6 ( CH4 CO CO2 H2O N2 O2 );
+species         6 ( CH4 CO CO2 H2O O2 N2 );
 
 N2
 {
@@ -8,7 +8,7 @@ N2
     }
     thermodynamics
     {
-        Tlow            300;
+        Tlow            200;
         Thigh           5000;
         Tcommon         1000;
         highCpCoeffs    ( 2.92664 0.0014879768 -5.68476e-07 1.0097038e-10 -6.753351e-15 -922.7977 5.980528 );
