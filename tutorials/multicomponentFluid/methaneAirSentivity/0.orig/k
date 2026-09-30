@@ -18,6 +18,8 @@ dimensions     [0 2 -2 0 0 0 0];
 
 internalField  uniform 10;
 
+#include "_shared"
+
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
@@ -25,14 +27,14 @@ boundaryField
     inletAxial
     {
         type          turbulentIntensityKineticEnergyInlet;
-        intensity     5.000000e-02;
-        value         uniform 1.208000e+00;
+        intensity     $FUEL_I;
+        value         uniform $FUEL_K;
     }
     inletAnnular
     {
         type          turbulentIntensityKineticEnergyInlet;
-        intensity     5.000000e-02;
-        value         uniform 6.961000e+00;
+        intensity     $OXID_I;
+        value         uniform $OXID_K;
     }
     outlet
     {

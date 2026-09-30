@@ -18,6 +18,8 @@ dimensions     [0 1 -1 0 0 0 0];
 
 internalField  uniform (0 0 0);
 
+#include "_shared"
+
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
@@ -25,16 +27,16 @@ boundaryField
     inletAxial
     {
         type          flowRateInletVelocity;
-        massFlowRate  constant 1.639491e-02;
         profile       turbulentBL;
-        rhoInlet      1.802423e+00;
+        meanVelocity  $FUEL_U;
+        rhoInlet      $FUEL_RHO;
     }
     inletAnnular
     {
         type          flowRateInletVelocity;
-        massFlowRate  constant 1.427592e-02;
         profile       turbulentBL;
-        rhoInlet      1.307888e+00;
+        meanVelocity  $OXID_U;
+        rhoInlet      $OXID_RHO;
     }
     outlet
     {

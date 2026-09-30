@@ -18,6 +18,8 @@ dimensions     [0 2 -3 0 0 0 0];
 
 internalField  uniform 100;
 
+#include "_shared"
+
 boundaryField
 {
     #includeEtc "caseDicts/setConstraintTypes"
@@ -25,25 +27,25 @@ boundaryField
     inletAxial
     {
         type          turbulentMixingLengthDissipationRateInlet;
-        mixingLength  4.445000e-04;
-        value         uniform 4.910690e+02;
+        mixingLength  $FUEL_L;
+        value         uniform $FUEL_EPSILON;
     }
     inletAnnular
     {
         type          turbulentMixingLengthDissipationRateInlet;
-        mixingLength  4.445000e-04;
-        value         uniform 6.788532e+03;
+        mixingLength  $OXID_L;
+        value         uniform $OXID_EPSILON;
     }
     outlet
     {
         type          inletOutlet;
-        inletValue    uniform 1000;
-        value         uniform 1000;
+        inletValue    uniform 0;
+        value         uniform 0;
     }
     walls
     {
         type          epsilonWallFunction;
-        value         uniform 1000;
+        value         uniform 0;
     }
 }
 
