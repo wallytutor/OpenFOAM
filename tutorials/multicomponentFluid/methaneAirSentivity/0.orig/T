@@ -42,7 +42,13 @@ boundaryField
     }
     walls
     {
-        type            zeroGradient;
+        // type            zeroGradient;
+        type            externalTemperature;
+        Ta              constant 298.15;
+        h               uniform 10.0;
+        thicknessLayers ( 0.28 );
+        kappaLayers     ( 1.8 );
+        value           $internalField;
     }
 }
 
