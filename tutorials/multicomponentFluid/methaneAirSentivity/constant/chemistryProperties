@@ -14,12 +14,12 @@ FoamFile
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-chemistry               off;
+chemistry               on;
 initialChemicalTimeStep 1.0e-07;
 
 chemistryType
 {
-    solver         none;
+    solver         ode;
 }
 
 odeCoeffs
