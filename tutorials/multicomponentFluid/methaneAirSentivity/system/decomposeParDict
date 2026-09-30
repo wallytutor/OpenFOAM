@@ -7,30 +7,34 @@
 \*---------------------------------------------------------------------------*/
 FoamFile
 {
-    format      ascii;
-    class       dictionary;
-    location    "system";
-    object      setFieldsDict;
+    format          ascii;
+    class           dictionary;
+    location        "system";
+    object          decomposeParDict;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
-defaultValues
+numberOfSubdomains 4;
+method             hierarchical;
+
+simpleCoeffs
 {
-    T   298.15;
+    n               ( 4 1 1 );
 }
 
-zones
+hierarchicalCoeffs
 {
-    heat
-    {
-        type        box;
-        box         (0.04 0.00 -0.01) (0.06 0.03 0.01);
-
-        values
-        {
-            T     1500.0;
-        }
-    }
+    n               ( 4 1 1 );
+    order           xyz;
 }
+
+manualCoeffs
+{
+    dataFile        "";
+}
+
+distributed     no;
+
+roots           ( );
 
 // ************************************************************************* //
