@@ -111,7 +111,7 @@ function runHighOrderOde() {
 
         # Move to a higher order solver:
         file=constant/chemistryProperties
-        foamDictionary $file -entry odeCoeffs/solver -set Rodas34 > /dev/null
+        foamDictionary $file -entry odeCoeffs/solver -set rodas34 > /dev/null
         foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
 
         runAndReconstructStep $tend "3"

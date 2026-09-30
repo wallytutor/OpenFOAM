@@ -28,8 +28,8 @@ odeCoeffs
     // species with fractional reaction orders. OpenFOAM 13 provides
     // Rosenbrock-type stiff ODE solvers that handle ill-conditioned
     // Jacobians without underflow:
-    solver          Rodas23;
-    // solver          Rodas34;
+    solver          rodas23;
+    // solver          rodas34;
     // solver          Rosenbrock34;
     // solver          seulex;
 
