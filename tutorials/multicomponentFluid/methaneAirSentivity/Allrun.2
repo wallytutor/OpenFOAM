@@ -30,6 +30,7 @@ foamDictionary $file -entry endTime -set 10000 > /dev/null
 # Parameterize compatible with combustion:
 file=system/fvSolution
 foamDictionary $file -entry PIMPLE/maxCo    -set 0.2 > /dev/null
+# foamDictionary $file -entry PIMPLE/alphaY   -set 0.1 > /dev/null
 foamDictionary $file -entry PIMPLE/Yref/CH4 -set 0.1 > /dev/null
 foamDictionary $file -entry PIMPLE/Yref/O2  -set 0.1 > /dev/null
 
