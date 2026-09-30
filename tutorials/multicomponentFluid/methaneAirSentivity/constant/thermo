@@ -1,4 +1,4 @@
-species         6 ( CH4 CO CO2 H2O O2 N2 );
+species         6 ( CH4 O2 CO CO2 H2O N2 );
 
 N2
 {

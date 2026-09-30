@@ -25,9 +25,17 @@ if [ ! -f "reactions.inp" ] || [ ! -f "thermo.dat" ]; then
     sed -i 's|REACTIONS CAL/MOLE MOLE|REACTIONS CAL/MOLE MOLES|g' reactions.inp
 fi
 
+# For BFER use this:
+# chemkinToFoam             \
+#     reactions.inp         \
+#     thermo.dat            \
+#     transport             \
+#     ../constant/reactions \
+#     ../constant/thermo
+
 chemkinToFoam             \
-    reactions.inp         \
-    thermo.dat            \
+    WB_2step.inp          \
+    WB_2step.dat          \
     transport             \
     ../constant/reactions \
     ../constant/thermo
