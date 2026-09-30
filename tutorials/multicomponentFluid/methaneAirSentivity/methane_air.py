@@ -326,6 +326,41 @@ def plot_reports(*, plot, root="."):
     ax[2].set_ylabel(f"Probe temperature [K]")
 
 
+@mj.plot(shape=(3, 1), size=(6, 8), sharex=True)
+def plot_fields(mesh, *, plot, root="."):
+    x_points = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+
+    def plot_field(idx, name, scale=None):
+        scale = scale or (lambda x: x)
+
+        for x_coord in x_points:
+            line_data = mesh.sample_over_line(
+                [x_coord, 0.00, 0.0],
+                [x_coord, 0.40, 0.0],
+                resolution=100
+            )
+            x = line_data["Distance"] * 100
+            y = scale(line_data[name])
+            ax[idx].plot(x, y, label=f"{x_coord:.2f} m")
+
+    fig, ax = plot.subplots()
+
+    plot_field(0, "T")
+    ax[0].set_ylabel(f"Temperature [K]")
+
+    plot_field(1, "U-normed")
+    ax[1].set_ylabel(f"Velocity [m/s]")
+
+    plot_field(2, "CO", scale=lambda x: 1e6 * x)
+    ax[2].set_ylabel(f"Carbon monoxide [ppmm]")
+
+    for axis in ax:
+        axis.grid(False)
+        axis.set_xlim(0.0, 40.0)
+        axis.legend(loc=1, fontsize="xx-small", ncol=2)
+        axis.set_xlabel("Distance from axis [cm]")
+
+
 def load_case(name, decomposed, force_plot=False):
     case_file = f"{name}/case.foam"
     mesh = load_slice(case_file=case_file, decomposed=decomposed)
