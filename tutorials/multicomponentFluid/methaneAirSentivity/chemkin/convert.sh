@@ -21,6 +21,7 @@ if [ ! -f "reactions.inp" ] || [ ! -f "thermo.dat" ]; then
 
     # Patches for compatibility with chemkinToFoam:
     sed -i '/200.000   1000.000  5000.000/d' thermo.dat
+    sed -i 's|G300.000|G200.000|g' thermo.dat
     sed -i 's|REACTIONS CAL/MOLE MOLE|REACTIONS CAL/MOLE MOLES|g' reactions.inp
 fi
 
