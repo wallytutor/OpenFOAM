@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -e
+
 #region: general setup
 # Run from this directory:
 cd ${0%/*} || exit 1
