@@ -252,7 +252,7 @@ def plot_slice(
     return pl
 
 
-@mj.plot(shape=(3, 1), size=(8, 9), sharex=True)
+@mj.plot(shape=(3, 1), size=(6, 8), sharex=True)
 def plot_reports(*, plot, root="."):
     fig, ax = plot.subplots()
     post = mj.FoamPostProcessingLoader(root=root)
@@ -267,11 +267,11 @@ def plot_reports(*, plot, root="."):
 
     df = post.load_report("outletCO")
     x = df.iloc[:, 0].to_numpy()
-    y = df.iloc[:, 1].to_numpy()
+    y = df.iloc[:, 1].to_numpy() * 1e6
 
     ax[1].plot(x, y, color="k")
     ax[1].set_xlabel("Iteration counter")
-    ax[1].set_ylabel(f"Carbon monoxide [-]")
+    ax[1].set_ylabel(f"Carbon monoxide [ppmm]")
 
     df = post.load_report("probe", select=r"**/T")
     x = df.iloc[:, 0].to_numpy()
@@ -280,3 +280,46 @@ def plot_reports(*, plot, root="."):
     ax[2].plot(x, y, color="k")
     ax[2].set_xlabel("Iteration counter")
     ax[2].set_ylabel(f"Probe temperature [K]")
+
+
+def load_case(name, decomposed):
+    case_file = f"{name}/case.foam"
+    mesh = load_slice(case_file=case_file, decomposed=decomposed)
+
+    if decomposed:
+        plot_reports(root=name)
+
+    return mesh
+
+
+def handle_isosurfaces(pl, mesh, n_iso, scalar):
+    if n_iso > 1:
+        contour = mesh.contour(isosurfaces=n_iso, scalars=scalar)
+        pl.add_mesh(contour, color="white", show_scalar_bar=False)
+
+    pl.show()
+
+
+def plot_temperature(mesh, n_iso=4):
+    pl = plot_slice(mesh, scalars="T", cmap="hot")
+    handle_isosurfaces(pl, mesh, n_iso, "T")
+
+
+def plot_velocity(mesh):
+    pl = plot_slice(mesh, scalars="U", cmap="jet")
+    pl.show()
+
+
+def plot_absorption(mesh, n_iso=5):
+    pl = plot_slice(mesh, scalars="a", cmap="hot")
+    handle_isosurfaces(pl, mesh, n_iso, "a")
+
+
+def plot_oxygen(mesh, n_iso=5):
+    pl = plot_slice(mesh, scalars="O2", cmap="coolwarm")
+    handle_isosurfaces(pl, mesh, n_iso, "O2")
+
+
+def plot_carbon_monoxide(mesh, n_iso=5):
+    pl = plot_slice(mesh, scalars="CO", cmap="coolwarm")
+    handle_isosurfaces(pl, mesh, n_iso, "CO")

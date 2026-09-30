@@ -107,9 +107,6 @@ function runHighOrderOde() {
     else
         restartFromStep "2"
 
-        # Make spark for combustion:
-        runApplication setFields -latestTime
-
         # Extend time:
         file=system/controlDict
         foamDictionary $file -entry endTime -set $tend > /dev/null
