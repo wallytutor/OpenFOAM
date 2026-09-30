@@ -16,6 +16,12 @@ Before running anything for the first time consider syncing the environment:
 uv sync
 ```
 
+Generate the base mesh (in interactive mode, if required) by running:
+
+```bash
+uv run ipython -i domain.py
+```
+
 ## 📃 Generating the report
 
 After running the simulations, generate the report with the following:

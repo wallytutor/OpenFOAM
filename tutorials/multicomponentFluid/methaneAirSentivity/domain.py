@@ -4,22 +4,24 @@ import math
 import gmsh
 
 from pathlib import Path
+from ruamel.yaml import YAML
 
 #region: 0. Configuration
+with open("domain.yaml", encoding="utf-8") as f:
+    config = YAML().load(f)
+
 path = Path(__file__)
-wedge_angle = math.radians(2.0)
+wedge_angle  = math.radians(config["wedge_angle"])
+len_inlet_ax = config["len_inlet_ax"]
+len_inlet_an = config["len_inlet_an"]
+len_disperse = config["len_disperse"]
+len_flue_out = config["len_flue_out"]
+dia_inlet_ax = config["dia_inlet_ax"]
+thk_inlet_wl = config["thk_inlet_wl"]
+thk_inlet_an = config["thk_inlet_an"]
+thk_side_box = config["thk_side_box"]
 
-len_inlet_ax = 0.05
-len_inlet_an = 0.03
-len_disperse = 1.00
-len_flue_out = 0.50
-
-dia_inlet_ax = 0.025
-thk_inlet_wl = 0.003
-thk_inlet_an = 0.003
-thk_side_box = 0.100
-
-extended = False
+extended = True
 #endregion
 
 #region: 1. Initialize the model
@@ -35,7 +37,7 @@ msh = gmsh.model.mesh
 
 #region: 2. Configure gmsh options
 # Note: using 3 during concept design is helpful!
-opt.set_number("General.Axes", 0)
+opt.set_number("General.Axes", 3)
 
 opt.set_number("Geometry.Points", 0)
 opt.set_number("Geometry.Lines", 1)

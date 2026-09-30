@@ -7,7 +7,7 @@ cd ${0%/*} || exit 1
 touch case.foam
 
 # Convert base Gmsh mesh to OpenFOAM:
-gmshToFoam wedge-coaxial-nozzle.msh
+gmshToFoam domain.msh
 
 # Perform preliminary renumbering:
 renumberMesh

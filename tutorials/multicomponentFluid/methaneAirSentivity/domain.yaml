@@ -1,8 +1,8 @@
 wedge_angle: 2.0
 len_inlet_ax: 0.081
 len_inlet_an: 0.081
-len_disperse: 2.0
-len_flue_out: 1.0
+len_disperse: 1.0
+len_flue_out: 2.0
 dia_inlet_ax: 0.027
 thk_inlet_wl: 0.0025
 thk_inlet_an: 0.08336216168022516
