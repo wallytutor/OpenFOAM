@@ -88,31 +88,6 @@ def get_equivalent_diameters(
     return D_fuel, D_oxid
 
 
-def fit_transport(
-        mech: str,
-        phase: str,
-        T_space: tuple[float, float, int] = (400, 2300, 100)
-    ) -> mj.SutherlandFitting:
-    """ Fit Sutherland coefficients for a mechanism and phase. """
-    sutherland = mj.SutherlandFitting(mech, name=phase)
-    sutherland.fit(np.linspace(*T_space))
-
-    transport = Path(mech).parent / "transport"
-    transport.unlink(missing_ok=True)
-
-    _ = sutherland.as_openfoam_dict(transport)
-
-    # Use the following for inspection:
-    # figs = Path(mech).parent / "media"
-    # figs.mkdir(exist_ok=True)
-
-    # for s in coef["species"]:
-    #     p = sutherland.plot_species(s)
-    #     p.savefig(figs / f"{s}.png")
-
-    return sutherland
-
-
 def mean_velocity(mdot, rho, T, A):
     """ Temperature corrected mean flow velocity. """
     return mdot / (rho * A)
@@ -282,11 +257,11 @@ def plot_reports(*, plot, root="."):
     ax[2].set_ylabel(f"Probe temperature [K]")
 
 
-def load_case(name, decomposed):
+def load_case(name, decomposed, force_plot=False):
     case_file = f"{name}/case.foam"
     mesh = load_slice(case_file=case_file, decomposed=decomposed)
 
-    if decomposed:
+    if decomposed or force_plot:
         plot_reports(root=name)
 
     return mesh

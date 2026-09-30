@@ -25,6 +25,9 @@ if [ ! -f "reactions.inp" ] || [ ! -f "thermo.dat" ]; then
     sed -i 's|REACTIONS CAL/MOLE MOLE|REACTIONS CAL/MOLE MOLES|g' reactions.inp
 fi
 
+# Generate transport data:
+uv run python convert.py
+
 # For BFER use this:
 chemkinToFoam             \
     reactions.inp         \
