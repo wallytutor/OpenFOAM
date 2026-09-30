@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 import cantera as ct
 import majordome as mj
 import numpy as np
@@ -9,8 +10,6 @@ from pathlib import Path
 from numpy.typing import NDArray
 from ruamel.yaml import YAML
 from tabulate import tabulate
-
-
 
 pv.set_jupyter_backend("static")
 
@@ -252,3 +251,33 @@ def plot_slice(
 
     if saveas is not None:
         pl.screenshot(saveas)
+
+
+@mj.plot(shape=(3, 1), size=(8, 9))
+def plot_reports(*, plot, root="."):
+    fig, ax = plot.subplots()
+    post = mj.FoamPostProcessingLoader(root=root)
+
+    df = post.load_report("outletT")
+    x = df.iloc[:, 0].to_numpy()
+    y = df.iloc[:, 1].to_numpy()
+
+    ax[0].plot(x, y, color="k")
+    ax[0].set_xlabel("Iteration counter")
+    ax[0].set_ylabel(f"Temperature [K]")
+
+    df = post.load_report("outletCO")
+    x = df.iloc[:, 0].to_numpy()
+    y = df.iloc[:, 1].to_numpy()
+
+    ax[1].plot(x, y, color="k")
+    ax[1].set_xlabel("Iteration counter")
+    ax[1].set_ylabel(f"Carbon monoxide [-]")
+
+    df = post.load_report("probe", select=r"**/T")
+    x = df.iloc[:, 0].to_numpy()
+    y = df.iloc[:, 1].to_numpy()
+
+    ax[2].plot(x, y, color="k")
+    ax[2].set_xlabel("Iteration counter")
+    ax[2].set_ylabel(f"Probe temperature [K]")
