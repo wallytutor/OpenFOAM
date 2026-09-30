@@ -1,0 +1,6 @@
+# Any log:
+log.*
+*.log
+
+# Generated pdf:
+report.pdf

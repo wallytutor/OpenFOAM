@@ -4,14 +4,6 @@
 
 .vscode/
 
-# Ignore all tutorials
-# tutorials/*
-
-# Unignore tutorials that where studied
-!tutorials/multicomponentFluid/
-tutorials/multicomponentFluid/*
-!tutorials/multicomponentFluid/mod/
-
 # Any sandbox
 *sandbox*
 
