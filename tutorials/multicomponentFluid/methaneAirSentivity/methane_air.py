@@ -52,6 +52,49 @@ def get_power_supply(
     return supply
 
 
+def load_setup_shared(
+        air_temp: float = 0.0,
+        fname: str | Path = "initialize.yaml",
+        save: bool = False,
+    ):
+    """ Load simulation setup for the shared files. """
+    conf = load_yaml(fname)
+
+    supply = get_power_supply(
+        conf["mech"],
+        conf["qdot_fuel"],
+        conf["X_fuel"],
+        conf["X_oxid"],
+        conf["phase"],
+    )
+
+    D_fuel, D_oxid, e_wall = get_equivalent_diameters(
+        conf["diam_fuel"],
+        conf["diam_oxid_ext"],
+        conf["diam_oxid_int"],
+        conf["thick_wall"],
+    )
+
+    table_fuel = flow_workflow(
+        name = "FUEL",
+        mdot = supply.fuel_mass,
+        rho0 = supply.fuel_normal_density,
+        T    = 298.15,
+        A    = np.pi * (D_fuel / 2)**2,
+        save = save,
+    )
+    table_oxid = flow_workflow(
+        name = "OXID",
+        mdot = supply.oxidizer_mass,
+        rho0 = supply.oxidizer_normal_density,
+        T    = 273.15 + air_temp,
+        A    = np.pi * (D_oxid / 2)**2,
+        save = save,
+    )
+
+    return supply, table_fuel, table_oxid
+
+
 def get_equivalent_diameters(
         diam_fuel: float,
         diam_oxid_ext: float,
