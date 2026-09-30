@@ -333,6 +333,6 @@ mod.add_physical_group(
 msh.generate(dim=3)
 gmsh.write(fileName=str(path.with_suffix(".msh")))
 
-gmsh.fltk.run()
+# gmsh.fltk.run()
 gmsh.finalize()
 #endregion
