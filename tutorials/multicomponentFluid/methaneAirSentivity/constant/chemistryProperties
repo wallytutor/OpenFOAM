@@ -24,8 +24,16 @@ chemistryType
 
 odeCoeffs
 {
-    solver          seulex;
-    absTol          1.0e-06;
+    // Extrapolation solvers (seulex) are fragile when handling near-zero
+    // species with fractional reaction orders. OpenFOAM 13 provides
+    // Rosenbrock-type stiff ODE solvers that handle ill-conditioned
+    // Jacobians without underflow:
+    solver          Rosenbrock34;
+    // solver          Rodas34;
+    // solver          Rodas23;
+    // solver          seulex;
+
+    absTol          1.0e-08;
     relTol          1.0e-02;
     maxSteps        50000;
 }
