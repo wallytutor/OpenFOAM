@@ -15,4 +15,4 @@ chemkin/transport
 chemkin/media/*
 
 # Solution restart:
-restart/
+restart*/
