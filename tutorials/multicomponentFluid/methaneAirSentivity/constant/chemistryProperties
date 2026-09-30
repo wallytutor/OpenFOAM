@@ -15,7 +15,7 @@ FoamFile
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 chemistry               on;
-initialChemicalTimeStep 1.0e-08;
+initialChemicalTimeStep 1.0e-7;
 
 chemistryType
 {
@@ -26,7 +26,7 @@ odeCoeffs
 {
     solver          seulex;
     absTol          1.0e-08;
-    relTol          1.0e-02;
+    relTol          1.0e-03;
     maxSteps        50000;
 }
 
