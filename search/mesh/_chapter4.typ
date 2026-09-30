@@ -105,6 +105,26 @@ Users must specify *exactly two* of the following four geometric progression par
 
 === Extrusion topology and features
 
+/*
+* **`featureAngle`**: The maximum allowable normal turning angle across adjacent surface faces that permits continuous layer growth.
+
+* *Note:* This represents the turning angle between surface normals ($0^\circ = \text{flat surface}$, $90^\circ = \text{perpendicular corner}$), **not** the internal included angle.
+
+* *Example:* If two boundary faces meet at a $90^\circ$ sharp corner, their normals diverge by $90^\circ$. If `featureAngle` is set to `80`, extrusion terminates on that edge to prevent colliding or self-intersecting outward normal vectors. If set to `130`, extrusion wraps continuously around the $90^\circ$ corner.
+
+* **`slipFeatureAngle`**: Governs whether prism extrusion vectors are allowed to slide along non-extruded intersecting boundary patches (such as symmetry planes, slip walls, or inlets).
+
+* *Example:* When growing boundary layers on a flat plate intersecting a lateral `symmetry` patch at $90^\circ$, `slipFeatureAngle 30` allows the layer vertices to glide tangentially along the symmetry plane rather than pinching or collapsing.
+
+* **`nGrow`**: The number of additional face rings around unextruded points where layer extrusion is intentionally blocked.
+
+* *Example:* If layer generation fails on a single acute trailing-edge point, `nGrow 0` stops layers immediately at that point, leaving a sharp step. Setting `nGrow 2` expands that termination zone outward across two rings of connected faces, providing a wider buffer for surrounding volume cells to relax without severe aspect-ratio distortion.
+
+* **`nBufferCellsNoExtrude`**: Governs how many transition cells are used to step down the layer stack when approaching an edge where extrusion ceases.
+
+* *Example:* If a surface patch requires `nSurfaceLayers 5;` adjacent to a non-extruded wall patch, `nBufferCellsNoExtrude 0` ends the 5-layer stack abruptly against the wall. Setting `nBufferCellsNoExtrude 2` creates a stepped transition ramp: 2 cells wide at 4 layers, 2 cells at 3 layers, down to 1 layer and 0 layers, preventing sharp topological cliff-faces in the flow domain.
+*/
+
 - `featureAngle`: The maximum allowable angle between adjacent surface face normals across which layers can continuously extrude. In OpenFOAM, 0° corresponds to a flat plane and 90° represents perpendicular faces. If the normal turning angle across an edge exceeds 100°, layer extrusion terminates across that edge to prevent self-intersecting displacement vectors.
 
 - `slipFeatureAngle`: Controls sliding at intersecting, non-extruded boundary patches (such as symmetry planes, inlets, or slip walls). If the angle between the layer extrusion direction and the intersecting patch normal is greater than `slipFeatureAngle` (typically defaulting to $0.5 times "featureAngle"$), the mesh displacement is permitted to slip along that patch instead of sticking or collapsing rigidly.
@@ -115,11 +135,35 @@ Users must specify *exactly two* of the following four geometric progression par
 
 === Iteration and Convergence Controls
 
+/*
+* **`nLayerIter`**: The maximum overall iteration cycles allowed for displacement projection, interior cell morphing, and validation.
+
+* *Example:* Setting `nLayerIter 50;` gives the mesh mover up to 50 iterations to push the volume mesh back and insert all valid prisms.
+
+* **`nRelaxedIter`**: The threshold iteration at which `snappyHexMesh` abandons strict quality criteria and activates the relaxed quality metrics specified under `meshQualityControls/relaxed`.
+
+* *Example:* In `nLayerIter 50;` with `nRelaxedIter 20;`, if mesh skewness or non-orthogonality prevents valid prism insertion within the first 20 iterations, the mesher relaxes constraints (e.g., allowing higher non-orthogonality or skewness) from iteration 21 to 50 to maximize boundary layer coverage.
+*/
+
 - `nLayerIter`: The maximum overall iterations allowed for the layer addition process. snappyHexMesh will attempt up to this value in number of cycles of projecting the boundary vertices outward, smoothing internal displacements, and validating mesh quality.
 
 - `nRelaxedIter`: The iteration threshold beyond which the mesh mover switches from the strict quality criteria to the relaxed criteria defined in the `relaxed` sub-dictionary of `meshQualityControls`. If layer insertion struggles to converge within 20 iterations under standard metrics (e.g., non-orthogonality limits), relaxed settings are applied to encourage completion.
 
 === Smoothing controls
+
+/*
+* **`nSmoothSurfaceNormals`**: Iterative smoothing sweeps applied to patch normal vectors prior to computing extrusion trajectories.
+
+* *Example:* Setting `nSmoothSurfaceNormals 2;` smooths out faceted CAD approximations along curved cylinder or airfoil surfaces, preventing jagged layer heights.
+
+* **`nSmoothNormals`**: Smoothing sweeps applied to displacement direction vectors as they extend into internal volume cells.
+
+* *Example:* Setting `nSmoothNormals 3;` smears local inward displacements across adjacent interior cell vertices, reducing face skewness as the interior volume compresses.
+
+* **`nSmoothThickness`**: Smoothing iterations applied across the lateral thickness field over adjoining boundary patch faces.
+
+* *Example:* When transitioning from a fine surface-refinement zone to a coarser patch, `nSmoothThickness 10;` prevents a sudden step-change in layer thickness between neighboring faces.
+*/
 
 - `nSmoothSurfaceNormals`: The number of smoothing sweeps applied directly to the surface normal vectors along the boundary patches before computing initial layer extrusion paths.
 
@@ -128,6 +172,24 @@ Users must specify *exactly two* of the following four geometric progression par
 - `nSmoothThickness`: The number of smoothing iterations applied to the layer thickness field across patch faces. This produces a continuous, gradual variation in layer thickness across adjoining faces and patches.
 
 === Medial axis and quality limiting
+
+/*
+* **`maxFaceThicknessRatio`**: The ratio of total extrusion stack thickness to the face's characteristic planar size.
+
+* *Example:* Setting `maxFaceThicknessRatio 0.5;` instructs `snappyHexMesh` to terminate extrusion on any boundary face whose requested layer height exceeds $50\%$ of that face's edge length, preventing inverted or degenerate cells on warped or highly refined surface elements.
+
+* **`maxThicknessToMedialRatio`**: Prevents opposing boundary layers from colliding across tight clearances, acute angles, or narrow internal channels.
+
+* *Example:* In an internal cooling channel $2\text{ mm}$ wide, the topological centerline (medial axis) is $1\text{ mm}$ from either wall. If `maxThicknessToMedialRatio 0.6;`, the maximum allowable layer stack thickness on either wall is capped at $0.6 \times 1\text{ mm} = 0.6\text{ mm}$. If the unconstrained stack would have reached $0.8\text{ mm}$, it is automatically compressed down to $0.6\text{ mm}$ to maintain positive clearance.
+
+* **`minMedialAxisAngle`**: *(Fixed typo from `minMedianAxisAngle`)* The angle threshold used to identify the medial axis / geometric centerline between opposing surfaces.
+
+* *Example:* A standard setting of `minMedialAxisAngle 90;` treats convergence points where projection vectors from opposing walls differ by $90^\circ$ or sharper as medial axis nodes.
+
+* **`nMedialAxisIter`**: The number of diffusion/wave iterations used to propagate and calculate the distance field from the medial axis across the domain.
+
+* *Example:* In complex internal geometries with winding passages, increasing `nMedialAxisIter` from `10` to `20` ensures the medial distance field fully diffuses into tight corners.
+*/
 
 - `maxFaceThicknessRatio`: Terminates layer growth on boundary faces where the total extrusion thickness exceeds 50% of the face's characteristic size (or where faces are excessively warped). This prevents inverted or high-aspect-ratio degenerate cells along severely stretched boundary elements.
 
