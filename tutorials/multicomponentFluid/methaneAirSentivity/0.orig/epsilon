@@ -39,13 +39,13 @@ boundaryField
     outlet
     {
         type          inletOutlet;
-        inletValue    uniform 0;
-        value         uniform 0;
+        inletValue    uniform $OXID_EPSILON;
+        value         uniform $OXID_EPSILON;
     }
     walls
     {
         type          epsilonWallFunction;
-        value         uniform 0;
+        value         uniform $OXID_EPSILON;
     }
 }
 
