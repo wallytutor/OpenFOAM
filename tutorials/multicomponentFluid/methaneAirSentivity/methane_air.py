@@ -308,6 +308,72 @@ def plot_slice(
     return pl
 
 
+def add_subplot(pl, mesh, **kwargs):
+    kwargs.setdefault("show_edges", False)
+    kwargs.setdefault("scalar_bar_args", {
+        "vertical": False,
+        "height": 0.1,
+        "width": 0.8,
+        "position_x": 0.1,
+        "title_font_size": 12,
+        "label_font_size": 10,
+        "title": "",
+    })
+
+    xlim = kwargs.pop("xlim", (-0.1, 4.0))
+    ylim = kwargs.pop("ylim", ( 0.0, 0.3))
+
+    pl.add_mesh(mesh, show_scalar_bar=True, **kwargs)
+
+    # TODO add this to the lessons learned.
+    pl.scalar_bars.clear()
+
+    pl.camera_position = "xy"
+    pl.enable_parallel_projection()
+    pl.enable_2d_style()
+    pl.enable_zoom_style()
+
+    pl.add_ruler(
+        pointa=[0.000, -0.02, 0.0],
+        pointb=[4.001, -0.02, 0.0],
+        title="Coordinate [m]"
+    )
+
+    pl.view_xy(bounds=[*xlim, *ylim, -0.01, 0.01])
+    pl.zoom_camera(2.85)
+
+
+def add_suptitle(pl, title):
+    pl.add_text(title, position="upper_left", font_size=12, color="black")
+    # pl.add_text(title, position=(0.05, 0.96), font_size=12, color="black",
+    #             viewport=True)
+
+
+def plot_comparison(mesh1, mesh2, *, scalar, **kwargs):
+    field_labels = {
+        "T": "Temperature [K]",
+        "U": "Mean velocity [m/s]",
+        "O2": "Oxygen mass fraction [-]"
+    }
+
+    label = field_labels.get(scalar, scalar)
+    kwargs.pop("scalars", None)
+    kwargs.setdefault("scalars", scalar)
+
+    pl = pv.Plotter(shape=(2, 1), off_screen=True)
+    pl.window_size = (900, 600)
+
+    pl.subplot(0, 0)
+    add_subplot(pl, mesh1, **kwargs)
+    add_suptitle(pl, f"Cold air inlet - {label}")
+
+    pl.subplot(1, 0)
+    add_subplot(pl, mesh2, **kwargs)
+    add_suptitle(pl, f"Pre-heated air inlet - {label}")
+
+    pl.show()
+
+
 @mj.plot(shape=(3, 1), size=(6, 8), sharex=True)
 def plot_reports(*, plot, root="."):
     fig, ax = plot.subplots()
