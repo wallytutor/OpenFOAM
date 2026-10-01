@@ -136,7 +136,6 @@ function mainWorkflow() {
     runFlowAlone    "2000"
     runLowOrderOde  "7000"
     runHighOrderOde "20000"
-    cp -r restart.3/ 1/
     popd > /dev/null
 }
 #endregion
@@ -144,10 +143,5 @@ function mainWorkflow() {
 prepareDomainMesh
 mainWorkflow 1 25
 mainWorkflow 2 300
-
-# Restore modified files
-# git restore constant/chemistryProperties
-# git restore system/controlDict
-# git restore system/fvSolution
 
 #------------------------------------------------------------------------------
