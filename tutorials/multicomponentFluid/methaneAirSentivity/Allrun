@@ -6,6 +6,12 @@ set -e
 # Run from this directory:
 cd ${0%/*} || exit 1
 
+# Set local OpenFOAM extensions path:
+export FOAM_USER_RC=$(realpath "../../../etc/bashrc")
+
+# Source local OpenFOAM extensions:
+. "${FOAM_USER_RC}"
+
 # Source tutorial run functions:
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 #endregion

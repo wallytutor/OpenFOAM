@@ -2,29 +2,17 @@
 
 In this study we compare the effect of air temperature over the flame structure for stoichiometric methane-air mixture.
 
-## 🔨 Requirements
-
-- Python managed by uv
-- Quarto with Typst support
-- OpenFOAM v13
-
-## 🤷‍♂️ Usage
-
 Before running anything for the first time consider syncing the environment:
 
 ```bash
 uv sync
 ```
 
-Generate the base mesh (in interactive mode, if required) by running:
+The full simulation workflow is orchestrated by the `Allrun` script. It covers meshing (if needed), setting up the simulation, and running it.
 
-```bash
-uv run ipython -i domain.py
-```
+> Generate the base mesh (in interactive mode, if modifying the case) by running `uv run ipython -i domain.py`.
 
-## 📃 Generating the report
-
-After running the simulations, generate the report with the following:
+After running the simulations, and only after that, generate the report with the following:
 
 ```bash
 uv run majordome-build-qmd --file report.ipynb

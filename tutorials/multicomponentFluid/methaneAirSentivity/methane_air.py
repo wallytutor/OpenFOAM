@@ -251,14 +251,14 @@ def load_slice(*args, **kwargs) -> pv.PolyData | None:
 def plot_slice(
         mesh,
         saveas: str | Path | None = None,
-        off_screen: bool = False,
+        off_screen: bool = True,
         window_size: tuple[int, int] = (900, 250),
         **kwargs
     ) -> None:
     """ Custom display of slice results. """
-    if off_screen and not saveas:
-        print("Running headless without `saveas` has no effect, exit.")
-        return
+    # if off_screen and not saveas:
+    #     print("Running headless without `saveas` has no effect, exit.")
+    #     return
 
     kwargs.setdefault("cmap", "jet")
     kwargs.setdefault("scalar_bar_args", {
