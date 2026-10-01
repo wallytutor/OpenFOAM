@@ -91,8 +91,8 @@ function runLowOrderOde() {
         # Parameterize compatible with combustion:
         file=system/fvSolution
         foamDictionary $file -entry PIMPLE/maxCo     -set 0.50 > /dev/null
-        foamDictionary $file -entry PIMPLE/alphaY    -set 0.25 > /dev/null
-        foamDictionary $file -entry PIMPLE/alphaTemp -set 0.25 > /dev/null
+        foamDictionary $file -entry PIMPLE/alphaY    -set 0.20 > /dev/null
+        foamDictionary $file -entry PIMPLE/alphaTemp -set 0.20 > /dev/null
         foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.10 > /dev/null
         foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.10 > /dev/null
 
@@ -109,6 +109,10 @@ function runHighOrderOde() {
         # Extend time:
         file=system/controlDict
         foamDictionary $file -entry endTime -set $tend > /dev/null
+
+        # Parameterize compatible with combustion:
+        file=system/fvSolution
+        foamDictionary $file -entry PIMPLE/maxCo     -set 1.0 > /dev/null
 
         # Move to a higher order solver:
         file=constant/chemistryProperties
@@ -139,15 +143,17 @@ function mainWorkflow() {
 
     # Run simulations:
     pushd $target > /dev/null
-    runFlowAlone    "2000"
-    runLowOrderOde  "7000"
-    runHighOrderOde "20000"
+    runFlowAlone    "$3"
+    runLowOrderOde  "$4"
+    runHighOrderOde "$5"
     popd > /dev/null
 }
 #endregion
 
 prepareDomainMesh
-mainWorkflow 1 25
-mainWorkflow 2 300
+
+#  ......... case  T    iter_1 iter_2 iter_3
+mainWorkflow 1     25   5000   15000  30000
+mainWorkflow 2     300  5000   10000  20000
 
 #------------------------------------------------------------------------------

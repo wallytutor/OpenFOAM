@@ -353,7 +353,9 @@ def plot_comparison(mesh1, mesh2, *, scalar, **kwargs):
     field_labels = {
         "T": "Temperature [K]",
         "U": "Mean velocity [m/s]",
-        "O2": "Oxygen mass fraction [-]"
+        "O2": "Oxygen mass fraction [-]",
+        "CO": "Carbon monoxide mass fraction [-]",
+        "a": "Net absorption coefficient [1/m]"
     }
 
     label = field_labels.get(scalar, scalar)
