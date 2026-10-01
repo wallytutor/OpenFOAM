@@ -165,6 +165,28 @@ def prepare_dimensions(save=False):
     return geometry_data
 
 
+def tabulate_dimensions():
+    dims = prepare_dimensions()
+
+    D_fuel     = 1000 * dims["dia_inlet_ax"]
+    D_oxid_int = D_fuel + 2000 * dims["thk_inlet_wl"]
+    D_oxid_ext = D_oxid_int + 2000 * dims["thk_inlet_an"]
+    D_domain   = D_oxid_ext + 2000 * dims["thk_side_box"]
+    L_domain   = dims["len_disperse"] + dims["len_flue_out"]
+
+    return tabulate(
+        [
+            ("Fuel inlet diameter",           "mm", f"{D_fuel:.0f}"),
+            ("Oxidizer inlet inner diameter", "mm", f"{D_oxid_int:.0f}"),
+            ("Oxidizer inlet outer diameter", "mm", f"{D_oxid_ext:.0f}"),
+            ("Domain diameter",               "mm", f"{D_domain:.0f}"),
+            ("Domain length",                 "m",  L_domain),
+        ],
+        headers  = ["Quantity", "Unit", "Value"],
+        tablefmt = "github"
+    )
+
+
 def mean_velocity(mdot, rho, T, A):
     """ Temperature corrected mean flow velocity. """
     return mdot / (rho * A)
@@ -220,7 +242,8 @@ def flow_workflow(name, mdot, rho0, T, A, I=0.05, save=False):
 def read_data(
         case_file: str | Path = "case.foam",
         decomposed: bool = True,
-        time_index: int = -1
+        time_index: int = -1,
+        verbose: bool = True,
     ) -> pv.DataObject | None:
     """ Read case data for post-processing. """
     case_file = Path(case_file)
@@ -238,7 +261,9 @@ def read_data(
 
     try:
         case_time = reader.time_values[time_index]
-        print(f"Loading results for iter. {case_time}")
+
+        if verbose:
+            print(f"Loading results for iter. {case_time}")
 
         reader.set_active_time_value(case_time)
         return reader.read()
@@ -351,11 +376,13 @@ def add_suptitle(pl, title):
 
 def plot_comparison(mesh1, mesh2, *, scalar, **kwargs):
     field_labels = {
-        "T": "Temperature [K]",
-        "U": "Mean velocity [m/s]",
-        "O2": "Oxygen mass fraction [-]",
-        "CO": "Carbon monoxide mass fraction [-]",
-        "a": "Net absorption coefficient [1/m]"
+        "T":   "Temperature [K]",
+        "U":   "Mean velocity [m/s]",
+        "O2":  "Oxygen mass fraction [-]",
+        "CO":  "Carbon monoxide mass fraction [-]",
+        "CO2": "Carbon dioxide mass fraction [-]",
+        "H2O": "Water vapor mass fraction [-]",
+        "a":   "Net absorption coefficient [1/m]"
     }
 
     label = field_labels.get(scalar, scalar)
@@ -407,9 +434,9 @@ def plot_reports(*, plot, root="."):
         axis.set_xlabel("Iteration counter")
 
 
-@mj.plot(shape=(3, 1), size=(6, 8), sharex=True)
+@mj.plot(shape=(3, 1), size=(12, 12), sharex=True)
 def plot_fields(mesh, *, plot, **kwargs):
-    x_points = [0.5, 1.0, 1.5, 2.0, 3.0, 4.0]
+    x_points = [0.5, 1.0, 1.5, 2.0, 3.0, 3.5]
     resolution = kwargs.get("resolution", 200)
 
     def plot_field(idx, name, scale=None):
@@ -439,15 +466,24 @@ def plot_fields(mesh, *, plot, **kwargs):
     for axis in ax:
         axis.grid(False)
         axis.set_xlim(0.0, 40.0)
-        axis.legend(loc=1, fontsize="xx-small", ncol=2)
+        axis.legend(loc=1, fontsize="small", ncol=2)
         axis.set_xlabel("Distance from axis [cm]")
 
 
-def load_case(name, decomposed, force_plot=False):
-    case_file = f"{name}/case.foam"
-    mesh = load_slice(case_file=case_file, decomposed=decomposed)
+def load_case(
+        name,
+        decomposed,
+        show_plot = True,
+        force_plot = False,
+        **kwargs
+    ):
+    mesh = load_slice(
+        case_file  = f"{name}/case.foam",
+        decomposed = decomposed,
+        **kwargs
+    )
 
-    if decomposed or force_plot:
+    if (decomposed and show_plot) or force_plot:
         plot_reports(root=name)
 
     return mesh
