@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+
+function log_step_counter() {
+    local app=$1
+
+    shopt -s nullglob
+    local files=(log."$app"*)
+    shopt -u nullglob
+    local step=$((${#files[@]} + 1))
+
+    echo "$step"
+}
+
+function copyOrigToCase() {
+    local target=$1
+    cp "$target.orig" "$target"
+}
+
+function runApplicationRename() {
+    local app=$1
+    local step=$(log_step_counter $app)
+
+    runApplication $@
+    mv "log.$app" "log.$app.$step"
+}
+
+function runParallelRename() {
+    local app=$1
+    local step=$(log_step_counter $app)
+
+    runParallel $@
+    mv "log.$app" "log.$app.$step"
+}
+
+function runAndReconstructStep() {
+    # Decompose the domain:
+    runApplicationRename decomposePar -latestTime
+
+    # Run the simulation:
+    runParallelRename foamRun -parallel
+
+    # Reconstruct the solution:
+    runApplicationRename reconstructPar -latestTime
+
+    # Remove decomposition files:
+    rm -rf processor*
+}
