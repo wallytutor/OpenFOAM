@@ -3,6 +3,8 @@
 function log_step_counter() {
     local app=$1
 
+    # By setting nullglob, unmatched patterns safely expand to nothing
+    # instead of raising an error or returning a literal glob string.
     shopt -s nullglob
     local files=(log."$app"*)
     shopt -u nullglob
