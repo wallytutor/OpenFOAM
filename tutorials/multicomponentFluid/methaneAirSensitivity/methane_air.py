@@ -28,7 +28,7 @@ pv.set_jupyter_backend("static")
 # TODO automate reloading if required:
 _MESH = None
 
-_SETUP = mj.FoamDictFile(path="0.orig/_shared")
+_SETUP = mj.FoamDictFile(path="model/0/_shared")
 
 
 def load_yaml(fname: str | Path) -> dict:
