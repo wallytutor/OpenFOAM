@@ -5,10 +5,10 @@
 ##############################################################################
 
 # Source this file again:
-alias src="source ${FOAM_KOMPANION_ETC}/bashrc"
+alias fsrc="source ${FOAM_KOMPANION_ETC}/bashrc"
 
 # Re-source the main user bashrc:
-alias rsc="source ${HOME}/.bashrc"
+alias rsrc="source ${HOME}/.bashrc"
 
 # Disk usage inspection:
 alias df="df -HT"
