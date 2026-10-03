@@ -5,7 +5,7 @@
 ##############################################################################
 
 # Source this file again:
-alias src="source ${FOAM_KOMPANION_DIR}/bashrc"
+alias src="source ${FOAM_KOMPANION_ETC}/bashrc"
 
 # Re-source the main user bashrc:
 alias rsc="source ${HOME}/.bashrc"
@@ -47,6 +47,56 @@ function aps() {
     local name=${1}
     apptainer shell "instance://$name"
 }
+
+DEFAULT_NAME="foam-$(whoami)"
+DEFAULT_BIND="/home/ubuntu"
+DEFAULT_IMAGE="$FOAM_KOMPANION_DIR/$DEFAULT_NAME.sif"
+
+function foam_instance_running() {
+    local running=$(
+        apptainer instance list | awk \
+        -v n="${DEFAULT_NAME}" \
+        -v i="$(realpath -m "${DEFAULT_IMAGE}")" \
+        '$1 == n && $NF == i {print "yes"}'
+    )
+
+    echo "$running"
+}
+
+function foam_instance_ensure() {
+    if [ "$(foam_instance_running)" != "yes" ]; then
+        echo "No matching instance ${DEFAULT_NAME} found, starting..."
+        foam_instance_start
+    fi
+}
+
+function foam_instance_start() {
+    apptainer instance start --writable-tmpfs \
+        --bind "$(realpath $PWD):${DEFAULT_BIND}" \
+        "${DEFAULT_IMAGE}" "${DEFAULT_NAME}"
+}
+
+function foam_instance_stop() {
+    if [ "$(foam_instance_running)" = "yes" ]; then
+        apptainer instance stop "${DEFAULT_NAME}"
+    else
+        echo "No matching instance found: ${DEFAULT_NAME}"
+    fi
+}
+
+function foam_instance_shell() {
+    foam_instance_ensure
+    apptainer exec "instance://${DEFAULT_NAME}" bash --rcfile ~/.bashrc -i
+}
+
+function foam_instance_exec() {
+    foam_instance_ensure
+    apptainer exec "instance://${DEFAULT_NAME}" "$@"
+}
+
+alias fs='foam_instance_shell'
+alias fk='foam_instance_stop'
+alias fx='foam_instance_exec'
 
 ##############################################################################
 # Container aliases
