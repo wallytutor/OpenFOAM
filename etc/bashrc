@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
 # Path to this script:
-FOAM_KOMPANION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+FOAM_KOMPANION_ETC="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
 
 # Get repository root directory (parent of etc/):
-PROJECT_DIR="$(dirname "${FOAM_KOMPANION_DIR}")"
+FOAM_KOMPANION_DIR="$(dirname "${FOAM_KOMPANION_ETC}")"
 
 function foam_source_append() {
-    FOAM_BASHRC="${FOAM_KOMPANION_DIR}/bashrc"
+    FOAM_BASHRC="${FOAM_KOMPANION_ETC}/bashrc"
 
     FOAM_SOURCE="
     if [ -f \"$FOAM_BASHRC\" ]; then
@@ -42,10 +42,10 @@ fi
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
 # Tweak OpenFOAM environment variables:
-export WM_PROJECT_USER_DIR="${PROJECT_DIR}"
-export FOAM_RUN="${PROJECT_DIR}/run"
-export FOAM_USER_APPBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/bin"
-export FOAM_USER_LIBBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/lib"
+export WM_PROJECT_USER_DIR="${FOAM_KOMPANION_DIR}"
+export FOAM_RUN="${FOAM_KOMPANION_DIR}/run"
+export FOAM_USER_APPBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/bin"
+export FOAM_USER_LIBBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/lib"
 
 # Add user directories to path:
 export PATH="${FOAM_USER_APPBIN}:${PATH}"
@@ -57,11 +57,11 @@ export LD_LIBRARY_PATH="${FOAM_USER_LIBBIN}:${LD_LIBRARY_PATH}"
 
 # Source all *rc files in the script directory:
 # XXX prefer manual sourcing as order matters!
-. "${FOAM_KOMPANION_DIR}/rc/utilsrc"
-. "${FOAM_KOMPANION_DIR}/rc/coresrc"
-. "${FOAM_KOMPANION_DIR}/rc/meshingrc"
-. "${FOAM_KOMPANION_DIR}/rc/flowrc"
-. "${FOAM_KOMPANION_DIR}/rc/aliasrc"
+. "${FOAM_KOMPANION_ETC}/rc/utilsrc"
+. "${FOAM_KOMPANION_ETC}/rc/coresrc"
+. "${FOAM_KOMPANION_ETC}/rc/meshingrc"
+. "${FOAM_KOMPANION_ETC}/rc/flowrc"
+. "${FOAM_KOMPANION_ETC}/rc/aliasrc"
 
 ##############################################################################
 # Configuration
@@ -71,7 +71,7 @@ NVIM_VER=$(nvim --version | head -n1 | sed 's/^NVIM v//')
 
 # check if >= 0.10
 if printf '%s\n' "$NVIM_VER" "0.10" | sort -V | head -n1 | grep -q "0.10"; then
-    export XDG_CONFIG_HOME="${PROJECT_DIR}/etc/nvim"
+    export XDG_CONFIG_HOME="${FOAM_KOMPANION_DIR}/etc/nvim"
 fi
 
 if command -v nvim >/dev/null 2>&1; then
@@ -79,7 +79,7 @@ if command -v nvim >/dev/null 2>&1; then
     alias vim="nvim"
 fi
 
-export IPYTHONDIR="${FOAM_KOMPANION_DIR}/.ipython"
+export IPYTHONDIR="${FOAM_KOMPANION_ETC}/.ipython"
 # export JUPYTER_DATA_DIR="${SCRIPT_DIR}/../.jupyter"
 # export JUPYTER_PATH="${SCRIPT_DIR}/../.jupyter"
 # export VSCODE_EXTENSIONS="${SCRIPT_DIR}/../.vscode/extensions"
