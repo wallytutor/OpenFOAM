@@ -50,6 +50,24 @@ RUN apt-get install -y \
     libssl-dev \
     pkg-config
 
+# Often useful to have these:
+RUN apt-get install -y \
+    pandoc \
+    inkscape \
+    poppler-utils \
+    tesseract-ocr \
+    imagemagick
+
+# Linux libraries needed for PyVista/VTK:
+RUN apt-get install -y \
+    libxrender1 \
+    libvtk9-dev \
+    libosmesa6 \
+    libgl1 \
+    libegl1 \
+    libgomp1 \
+    libtbb12
+
 # Install OpenFOAM:
 RUN sh -c "wget -O - https://dl.openfoam.org/gpg.key > /etc/apt/trusted.gpg.d/openfoam.asc"
 RUN add-apt-repository http://dl.openfoam.org/ubuntu
@@ -81,6 +99,10 @@ ENV PATH="/opt/cargo/bin:$PATH"
 RUN cargo install maturin
 RUN cargo install --locked typst-cli
 
+# ----------------------------------------------------------------------------
+# For Quarto
+# ----------------------------------------------------------------------------
+
 ARG QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download
 ARG QUARTO_VERSION=1.10.18
 ARG QUARTO_DEB=quarto-${QUARTO_VERSION}-linux-amd64.deb
@@ -89,15 +111,26 @@ RUN wget ${QUARTO_URL}/v${QUARTO_VERSION}/${QUARTO_DEB} \
     && dpkg -i ${QUARTO_DEB} \
     && rm ${QUARTO_DEB}
 
+RUN quarto install tinytex
+
 # ----------------------------------------------------------------------------
 # FINAL STEPS
 # ----------------------------------------------------------------------------
 
+ARG EXTRA_PACKAGES=""
+RUN if [ -n "$EXTRA_PACKAGES" ]; then \
+        apt-get install -y $EXTRA_PACKAGES; \
+    fi
+
 # Clean up and make image smaller:
 RUN apt-get clean  && rm -rf /var/lib/apt/lists/* && rm -rf /var/tmp/build*
 
+# ----------------------------------------------------------------------------
+# HOME
+# ----------------------------------------------------------------------------
+
 WORKDIR /home/ubuntu
 
-############################################################################
+##############################################################################
 # EOF
-############################################################################
+##############################################################################
