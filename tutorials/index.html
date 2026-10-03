@@ -6,10 +6,8 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="author" content="Walter Dal’Maz Silva">
-<meta name="dcterms.date" content="2026-10-03">
 
-<title>OpenFOAM Extensions</title>
+<title>9&nbsp; Tutorials – OpenFOAM Extensions</title>
 <style>
 /* Default styles provided by pandoc.
 ** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
@@ -25,62 +23,27 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-html { -webkit-text-size-adjust: 100%; }
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<link href="./CONTRIBUTING.html" rel="next">
-<script src="site_libs/quarto-html/quarto.js" type="module"></script>
-<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-2c9ba985a3a63a82574ca9f51b823d26.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../sample/silicaParticleMelting/README.html" rel="prev">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-2c9ba985a3a63a82574ca9f51b823d26.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -121,7 +84,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
         <i class="bi bi-layout-text-sidebar-reverse"></i>
       </button>
-        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./index.html"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">OpenFOAM Extensions</span></a></li></ol></nav>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Tutorials</span></a></li></ol></nav>
         <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
         </a>
       <button type="button" class="btn quarto-search-button" aria-label="Search" onclick="window.quartoOpenSearch();">
@@ -136,7 +99,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
     <div class="pt-lg-2 mt-2 text-left sidebar-header">
     <div class="sidebar-title mb-0 py-0">
-      <a href="./">OpenFOAM Extensions</a> 
+      <a href="../">OpenFOAM Extensions</a> 
     </div>
       </div>
         <div class="mt-2 flex-shrink-0 align-items-center">
@@ -148,19 +111,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <ul class="list-unstyled mt-1">
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./index.html" class="sidebar-item-text sidebar-link active">
+  <a href="../index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">1</span>&nbsp; <span class="chapter-title">OpenFOAM Extensions</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./CONTRIBUTING.html" class="sidebar-item-text sidebar-link">
+  <a href="../CONTRIBUTING.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Contributing</span></span></a>
   </div>
 </li>
         <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./CHANGELOG.html" class="sidebar-item-text sidebar-link">
+  <a href="../CHANGELOG.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">3</span>&nbsp; <span class="chapter-title">Changelog</span></span></a>
   </div>
 </li>
@@ -175,7 +138,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./applications/jmakLaplacianFoam/README.html" class="sidebar-item-text sidebar-link">
+  <a href="../applications/jmakLaplacianFoam/README.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">4</span>&nbsp; <span class="chapter-title">jmakLaplacianFoam</span></span></a>
   </div>
 </li>
@@ -192,13 +155,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-2" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./src/lagrangian/index.html" class="sidebar-item-text sidebar-link">
+  <a href="../src/lagrangian/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">5</span>&nbsp; <span class="chapter-title">Lagrangian</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./src/thermophysicalModels/index.html" class="sidebar-item-text sidebar-link">
+  <a href="../src/thermophysicalModels/index.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">6</span>&nbsp; <span class="chapter-title">Thermophysical Models</span></span></a>
   </div>
 </li>
@@ -215,13 +178,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-3" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./sample/solidReactionCylinder/README.html" class="sidebar-item-text sidebar-link">
+  <a href="../sample/solidReactionCylinder/README.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">7</span>&nbsp; <span class="chapter-title">JMAK Solid Kinetics</span></span></a>
   </div>
 </li>
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./sample/silicaParticleMelting/README.html" class="sidebar-item-text sidebar-link">
+  <a href="../sample/silicaParticleMelting/README.html" class="sidebar-item-text sidebar-link">
  <span class="menu-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Silica Particle Melting</span></span></a>
   </div>
 </li>
@@ -238,7 +201,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
       <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
-  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
+  <a href="../tutorials/index.html" class="sidebar-item-text sidebar-link active">
  <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Tutorials</span></span></a>
   </div>
 </li>
@@ -254,42 +217,24 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#openfoam-extensions" id="toc-openfoam-extensions" class="nav-link active" data-scroll-target="#openfoam-extensions"><span class="header-section-number">1</span> OpenFOAM Extensions</a>
-  <ul class="collapse">
-  <li><a href="#prerequisites" id="toc-prerequisites" class="nav-link" data-scroll-target="#prerequisites"><span class="header-section-number">1.1</span> Prerequisites</a></li>
-  <li><a href="#before-starting" id="toc-before-starting" class="nav-link" data-scroll-target="#before-starting"><span class="header-section-number">1.2</span> Before starting</a></li>
-  <li><a href="#compilation-methods" id="toc-compilation-methods" class="nav-link" data-scroll-target="#compilation-methods"><span class="header-section-number">1.3</span> Compilation methods</a></li>
-  <li><a href="#running-tests" id="toc-running-tests" class="nav-link" data-scroll-target="#running-tests"><span class="header-section-number">1.4</span> Running tests</a></li>
-  <li><a href="#running-cases" id="toc-running-cases" class="nav-link" data-scroll-target="#running-cases"><span class="header-section-number">1.5</span> Running cases</a></li>
-  </ul></li>
+  <li><a href="#general" id="toc-general" class="nav-link active" data-scroll-target="#general"><span class="header-section-number">9.1</span> General</a></li>
+  <li><a href="#multicomponentfluid" id="toc-multicomponentfluid" class="nav-link" data-scroll-target="#multicomponentfluid"><span class="header-section-number">9.2</span> multicomponentFluid</a></li>
   </ul>
 </nav>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
 
-<header id="title-block-header" class="quarto-title-block default">
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../tutorials/index.html">Tutorials</a></li><li class="breadcrumb-item"><a href="../tutorials/index.html"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Tutorials</span></a></li></ol></nav>
 <div class="quarto-title">
-<h1 class="title">OpenFOAM Extensions</h1>
+<h1 class="title"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Tutorials</span></h1>
 </div>
 
 
 
 <div class="quarto-title-meta">
 
-    <div>
-    <div class="quarto-title-meta-heading">Author</div>
-    <div class="quarto-title-meta-contents">
-             <p>Walter Dal’Maz Silva </p>
-          </div>
-  </div>
     
-    <div>
-    <div class="quarto-title-meta-heading">Published</div>
-    <div class="quarto-title-meta-contents">
-      <p class="date">October 3, 2026</p>
-    </div>
-  </div>
   
     
   </div>
@@ -299,103 +244,18 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<section id="openfoam-extensions" class="level1" data-number="1">
-<h1 data-number="1"><span class="header-section-number">1</span> OpenFOAM Extensions</h1>
-<p>Curated OpenFOAM 13 directory with additional workflow tools.</p>
-<section id="prerequisites" class="level2" data-number="1.1">
-<h2 data-number="1.1" class="anchored" data-anchor-id="prerequisites"><span class="header-section-number">1.1</span> Prerequisites</h2>
-<p>This respository aims at being homogeneous in the sense it tries to keep a consistent toolset across all cases. Shell automation is done solely with bash and indirectly through Python in some cases. Unless otherwise specified, the following tools are used:</p>
-<ul>
-<li>OpenFOAM v13</li>
-<li>Python managed by uv</li>
-<li>Quarto with Typst support</li>
-<li>Apptainer with Docker/Podman</li>
-</ul>
+<p>Unlike the sample cases, which are intended to be minimal working examples of the extensions provided here, the tutorials are full fledged case studies that may or may not include the extensions provided here. These illustrate the authors main skills and document complex workflows that go beyond the scope of tutorials provided with OpenFOAM.</p>
+<section id="general" class="level2" data-number="9.1">
+<h2 data-number="9.1" class="anchored" data-anchor-id="general"><span class="header-section-number">9.1</span> General</h2>
+<p><em>WiP</em></p>
 </section>
-<section id="before-starting" class="level2" data-number="1.2">
-<h2 data-number="1.2" class="anchored" data-anchor-id="before-starting"><span class="header-section-number">1.2</span> Before starting</h2>
-<p>Many features available in this repository rely on the environment configuration provided by <code>etc/bashrc</code>. In general the scripts will source that file for you, but environment configuration will not remain in CLI after the script finishes. To experience a smooth experience, it is recommended to source that file in your current shell from this directory:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">source</span> <span class="va">$PWD</span>/etc/bashrc</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>If you want this to be done automatically for every new bash session, you can append that to your <code>~/.bashrc</code> by calling <code>foam_source_append</code>. This function only appends the configuration if not already present and tests for the existence of the configuration file so that your shell will not raise error messages if you delete this repository later.</p>
-</section>
-<section id="compilation-methods" class="level2" data-number="1.3">
-<h2 data-number="1.3" class="anchored" data-anchor-id="compilation-methods"><span class="header-section-number">1.3</span> Compilation methods</h2>
-<p>It is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:</p>
+<section id="multicomponentfluid" class="level2" data-number="9.2">
+<h2 data-number="9.2" class="anchored" data-anchor-id="multicomponentfluid"><span class="header-section-number">9.2</span> multicomponentFluid</h2>
 <ul>
-<li><p>If a directory provides an <code>Allwmake</code> file, it allows to compile the whole tree below it; this is the case for the root directory, for instance.</p></li>
-<li><p>If a directory of <code>src/</code> provides a subdirectory called <code>Make/</code>, then it supports the individual library build which is done by running <code>wmake libso</code> from that directory.</p></li>
+<li><a href="multicomponentFluid/methaneAirSensitivity/report.pdf">methaneAirSensitivity</a>: illustrates the simulation of methane combustion in a co-axial burner under different operating conditions. The main goals are to provide a robust setup for combustion simulations.</li>
 </ul>
-<p>All builds are written to <code>$FOAM_USER_APPBIN</code> and <code>$FOAM_USER_LIBBIN</code>.</p>
-<p>The simplest way it to build everything from the repository root:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb2"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./Allwmake</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<blockquote class="blockquote">
-<p>If you encounter failures when loading a library, please consider running <code>./Allwclean</code> first to clear the build cache. Sometimes previous build artifacts may cause unexpected behavior.</p>
-</blockquote>
-</section>
-<section id="running-tests" class="level2" data-number="1.4">
-<h2 data-number="1.4" class="anchored" data-anchor-id="running-tests"><span class="header-section-number">1.4</span> Running tests</h2>
-<p>Some libraries may provide test programs under a <code>test/</code> sub-directory, and all of them are structured in the same way. The following instructions indicate how to build, run, and clean those directories.</p>
-<p>To build and run the test suite:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> test</span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./Allrun</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<p>To clean test build artifacts:</p>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb4"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> test</span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="ex">./Allclean</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-</section>
-<section id="running-cases" class="level2" data-number="1.5">
-<h2 data-number="1.5" class="anchored" data-anchor-id="running-cases"><span class="header-section-number">1.5</span> Running cases</h2>
-<p>Whenever possible, cases are meant to be run from within an Apptainer instance. The SIF file can be generated from the root of this repository by running <code>make image</code> It can be later transferred to any HPC environment where Apptainer is supported, ensuring a consisten environment. Assuming you are connected to the target compute node, the following elements indicate how to instantiate an environment, run the simulation, and inspect partial results on demand. Notice that we will make use of the <code>screen</code> utility to keep services alive even if one disconnects from the node.</p>
-<ul>
-<li>Connecting to a session:</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb5"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Declare variables to set the case to be run:</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="va">APP_NAME</span><span class="op">=</span><span class="st">"methaneAirSensitivity"</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="va">APP_PATH</span><span class="op">=</span><span class="st">"tutorials/multicomponentFluid/</span><span class="va">$APP_NAME</span><span class="st">"</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="co"># A SIF generated by `make image` should be named like this:</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="va">SIF_FILE</span><span class="op">=</span><span class="st">"</span><span class="va">${name}</span><span class="st">-</span><span class="va">$(</span><span class="fu">whoami</span><span class="va">)</span><span class="st">.sif"</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Start a named screen session:</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="ex">screen</span> <span class="at">-S</span> <span class="va">$APP_NAME</span></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Start apptainer instance on the background:</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> instance start <span class="at">-B</span> <span class="va">$PWD</span> <span class="at">--writable-tmpfs</span> <span class="va">$SIF_FILE</span> <span class="va">$APP_NAME</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Enter running instance in shell mode:</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> shell instance://<span class="va">$APP_NAME</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>From within a session, setup the base environment and run the case(s):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb6"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Instantiate the environment from instance:</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="bu">cd</span> <span class="va">$APP_PATH</span> <span class="kw">&amp;&amp;</span> <span class="ex">uv</span> sync<span class="kw">)</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Move into the simulation directory and run:</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">(</span><span class="bu">cd</span> <span class="va">$APP_PATH</span> <span class="kw">&amp;&amp;</span> <span class="ex">./Allrun</span> <span class="kw">&amp;)</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Ctrl + A, D to detach screen</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>Inspecting a running simulation (from the same node as above):</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb7"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Attach to the running screen session</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="ex">screen</span> <span class="at">-r</span> <span class="va">$APP_NAME</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Enter running instance in shell mode:</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> shell instance://<span class="va">$APP_NAME</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Move into the simulation directory and check status:</span></span>
-<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> <span class="va">$APP_PATH</span></span>
-<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Start Jupyter server to connect from case notebook:</span></span>
-<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="ex">uv</span> run jupyter-notebook <span class="at">--no-browser</span> <span class="at">--ip</span><span class="op">=</span>0.0.0.0 <span class="dt">\</span></span>
-<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">--ServerApp.token</span><span class="op">=</span><span class="st">''</span> <span class="at">--ServerApp.password</span><span class="op">=</span><span class="st">''</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
-<ul>
-<li>Stop instance after working:</li>
-</ul>
-<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb8"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Stop instance after working:</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="ex">apptainer</span> instance stop <span class="va">$APP_NAME</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 
 
-</section>
 </section>
 
 </main> <!-- /main -->
@@ -801,11 +661,11 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   </script>
 <nav class="page-navigation">
   <div class="nav-page nav-page-previous">
+      <a href="../sample/silicaParticleMelting/README.html" class="pagination-link" aria-label="Silica Particle Melting">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-number">8</span>&nbsp; <span class="chapter-title">Silica Particle Melting</span></span>
+      </a>          
   </div>
   <div class="nav-page nav-page-next">
-      <a href="./CONTRIBUTING.html" class="pagination-link" aria-label="Contributing">
-        <span class="nav-page-text"><span class="chapter-number">2</span>&nbsp; <span class="chapter-title">Contributing</span></span> <i class="bi bi-arrow-right-short"></i>
-      </a>
   </div>
 </nav>
 </div> <!-- /content -->

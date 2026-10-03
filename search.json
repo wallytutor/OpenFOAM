@@ -10,11 +10,31 @@
     ]
   },
   {
+    "objectID": "index.html#prerequisites",
+    "href": "index.html#prerequisites",
+    "title": "OpenFOAM Extensions",
+    "section": "1.1 Prerequisites",
+    "text": "1.1 Prerequisites\nThis respository aims at being homogeneous in the sense it tries to keep a consistent toolset across all cases. Shell automation is done solely with bash and indirectly through Python in some cases. Unless otherwise specified, the following tools are used:\n\nOpenFOAM v13\nPython managed by uv\nQuarto with Typst support\nApptainer with Docker/Podman",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#before-starting",
+    "href": "index.html#before-starting",
+    "title": "OpenFOAM Extensions",
+    "section": "1.2 Before starting",
+    "text": "1.2 Before starting\nMany features available in this repository rely on the environment configuration provided by etc/bashrc. In general the scripts will source that file for you, but environment configuration will not remain in CLI after the script finishes. To experience a smooth experience, it is recommended to source that file in your current shell from this directory:\nsource $PWD/etc/bashrc\nIf you want this to be done automatically for every new bash session, you can append that to your ~/.bashrc by calling foam_source_append. This function only appends the configuration if not already present and tests for the existence of the configuration file so that your shell will not raise error messages if you delete this repository later.",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
+    ]
+  },
+  {
     "objectID": "index.html#compilation-methods",
     "href": "index.html#compilation-methods",
     "title": "OpenFOAM Extensions",
-    "section": "1.1 Compilation methods",
-    "text": "1.1 Compilation methods\nIt is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:\n\nIf a directory provides an Allwmake file, it allows to compile the whole tree below it; this is the case for the root directory, for instance.\nIf a directory of src/ provides a subdirectory called Make/, then it supports the individual library build which is done by running wmake libso from that directory.\n\nAll builds are written to $FOAM_USER_LIBBIN.",
+    "section": "1.3 Compilation methods",
+    "text": "1.3 Compilation methods\nIt is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:\n\nIf a directory provides an Allwmake file, it allows to compile the whole tree below it; this is the case for the root directory, for instance.\nIf a directory of src/ provides a subdirectory called Make/, then it supports the individual library build which is done by running wmake libso from that directory.\n\nAll builds are written to $FOAM_USER_APPBIN and $FOAM_USER_LIBBIN.\nThe simplest way it to build everything from the repository root:\n./Allwmake\n\nIf you encounter failures when loading a library, please consider running ./Allwclean first to clear the build cache. Sometimes previous build artifacts may cause unexpected behavior.",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
     ]
@@ -23,8 +43,18 @@
     "objectID": "index.html#running-tests",
     "href": "index.html#running-tests",
     "title": "OpenFOAM Extensions",
-    "section": "1.2 Running tests",
-    "text": "1.2 Running tests\nSome libraries may provide test programs under a test/ sub-directory, and all of them are structured in the same way. The following instructions indicate how to build, run, and clean those directories.\nTo build and run the test suite:\ncd test\n./Allrun\nTo clean test build artifacts:\ncd test\n./Allclean",
+    "section": "1.4 Running tests",
+    "text": "1.4 Running tests\nSome libraries may provide test programs under a test/ sub-directory, and all of them are structured in the same way. The following instructions indicate how to build, run, and clean those directories.\nTo build and run the test suite:\ncd test\n./Allrun\nTo clean test build artifacts:\ncd test\n./Allclean",
+    "crumbs": [
+      "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
+    ]
+  },
+  {
+    "objectID": "index.html#running-cases",
+    "href": "index.html#running-cases",
+    "title": "OpenFOAM Extensions",
+    "section": "1.5 Running cases",
+    "text": "1.5 Running cases\nWhenever possible, cases are meant to be run from within an Apptainer instance. The SIF file can be generated from the root of this repository by running make image It can be later transferred to any HPC environment where Apptainer is supported, ensuring a consisten environment. Assuming you are connected to the target compute node, the following elements indicate how to instantiate an environment, run the simulation, and inspect partial results on demand. Notice that we will make use of the screen utility to keep services alive even if one disconnects from the node.\n\nConnecting to a session:\n\n# Declare variables to set the case to be run:\nAPP_NAME=\"methaneAirSensitivity\"\nAPP_PATH=\"tutorials/multicomponentFluid/$APP_NAME\"\n\n# A SIF generated by `make image` should be named like this:\nSIF_FILE=\"${name}-$(whoami).sif\"\n\n# Start a named screen session:\nscreen -S $APP_NAME\n\n# Start apptainer instance on the background:\napptainer instance start -B $PWD --writable-tmpfs $SIF_FILE $APP_NAME\n\n# Enter running instance in shell mode:\napptainer shell instance://$APP_NAME\n\nFrom within a session, setup the base environment and run the case(s):\n\n# Instantiate the environment from instance:\n(cd $APP_PATH && uv sync)\n\n# Move into the simulation directory and run:\n(cd $APP_PATH && ./Allrun &)\n\n# Ctrl + A, D to detach screen\n\nInspecting a running simulation (from the same node as above):\n\n# Attach to the running screen session\nscreen -r $APP_NAME\n\n# Enter running instance in shell mode:\napptainer shell instance://$APP_NAME\n\n# Move into the simulation directory and check status:\ncd $APP_PATH\n\n# Start Jupyter server to connect from case notebook:\nuv run jupyter-notebook --no-browser --ip=0.0.0.0 \\\n    --ServerApp.token='' --ServerApp.password=''\n\nStop instance after working:\n\n# Stop instance after working:\napptainer instance stop $APP_NAME",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>OpenFOAM Extensions</span>"
     ]
@@ -74,7 +104,7 @@
     "href": "CHANGELOG.html",
     "title": "3  Changelog",
     "section": "",
-    "text": "3.1 2026-09-16",
+    "text": "3.1 2026-09-24",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Changelog</span>"
     ]
@@ -84,7 +114,17 @@
     "href": "CHANGELOG.html#section",
     "title": "3  Changelog",
     "section": "",
-    "text": "Adapted extendedThermoCloud to upcast the solid object to a tabulatedSolid as a prototype for temperature dependent properties. Currently this supports a single species and need to be generalized in the future.\nUnified the build of all libraries under a single Allwmake at the sources root, following the full library standard. Added compilation instructions at multiple levels to README.md\nAdded extendedThermoCloud support by extending thermoCloud; this extension if fact only needed working with thermoParcel as the physics was found to be at the parcel level. Added related library sources under lagrangian/parcel/{cloud,parcels}.",
+    "text": "Added an exhaustive, readable, and well-commented test suite in etc/test.sh covering all shell functions under etc/rc/ (utilsrc, coresrc, meshingrc) with strict 80-character line wrapping, deterministic mocking, and comprehensive edge-case assertions.\nEnhanced safe_run_ncores in etc/rc/coresrc to accept an arbitrary sequence of fallback core counts. If the primary requested core count exceeds physical cores, fallback values are evaluated in order; if none are feasible or provided, execution falls back to half of the available physical cores. Also changed display of messages by sourcin utilsrc from corerc and improved re-sourcing time by testing for WM_PROJECT in bashrc.",
+    "crumbs": [
+      "<span class='chapter-number'>3</span>  <span class='chapter-title'>Changelog</span>"
+    ]
+  },
+  {
+    "objectID": "CHANGELOG.html#section-1",
+    "href": "CHANGELOG.html#section-1",
+    "title": "3  Changelog",
+    "section": "3.2 2026-09-16",
+    "text": "3.2 2026-09-16\n\nAdapted extendedThermoCloud to upcast the solid object to a tabulatedSolid as a prototype for temperature dependent properties. Currently this supports a single species and need to be generalized in the future.\nUnified the build of all libraries under a single Allwmake at the sources root, following the full library standard. Added compilation instructions at multiple levels to README.md\nAdded extendedThermoCloud support by extending thermoCloud; this extension if fact only needed working with thermoParcel as the physics was found to be at the parcel level. Added related library sources under lagrangian/parcel/{cloud,parcels}.",
     "crumbs": [
       "<span class='chapter-number'>3</span>  <span class='chapter-title'>Changelog</span>"
     ]
@@ -160,10 +200,32 @@
     "href": "sample/silicaParticleMelting/README.html",
     "title": "8  Silica Particle Melting",
     "section": "",
-    "text": "NoteAbout\n\n\n\nSample case can be found here. It intends to illustrate the proper capture of a solid particle melting, as supported by the following libraries provided in this repository:\n\nlibextendedThermophysicalProperties: provides tabulatedSolid, used for representation of piecewise-linear silica properties, allowing the incorporation of the lumped reaction enthalpies in specific heat.\nlibextendedLagrangianParcel: provides extendedThermoCloud allowing the simulation of non-constant properties lagrangian particles.\n\n\n\nSimulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable.\nFigure 8.1 displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between \\(23-32\\text{ms}\\) associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.\n\n\n\n\n\n\n\n\nFigure 8.1: Verification of single particle heating thermal history.",
+    "text": "NoteAbout\n\n\n\nSample case can be found here. It intends to illustrate the proper capture of a solid particle melting, as supported by the following libraries provided in this repository:\n\nlibextendedThermophysicalProperties: provides tabulatedSolid, used for representation of piecewise-linear silica properties, allowing the incorporation of the lumped reaction enthalpies in specific heat.\nlibextendedLagrangianParcel: provides extendedThermoCloud allowing the simulation of non-constant properties lagrangian particles.\n\n\n\nSimulates the heating of a single silica particle immersed in the flue gases from propane-oxygen combustion. Fluid properties were processed with Cantera and fit to polynomials to match the temperature dependence of adiabatic combustion flue gases (equilibrium computed under constant enthalpy and pressure). Solid specific heat capacity was modified to include smeared latent heat of phase transitions where applicable.\nFigure 8.1 displays the thermal history of a single particle under the above conditions. Phase changes produce flat regions, notably the large plateau observed in between \\(23-32\\text{ms}\\) associated to the melting of the particle, thus representing the intended goal of capturing the expected silica latent heat of fusion. Since the domain has been intentionally oversized with respect to the required energy to melt the particle, we observe a temperature increase beyond melting point, as expected.\n\n\n\n\n\n\n\n\nFigure 8.1: Verification of single particle heating thermal history.\n\n\n\n\n\n\n\n\n\n\n\nNoteTo-do\n\n\n\n\nSimulate the same case with the base thermoCloud to illustrate the uncontrolled heating the particle would undergo without latent heat incorporation.",
     "crumbs": [
       "Samples",
       "<span class='chapter-number'>8</span>  <span class='chapter-title'>Silica Particle Melting</span>"
+    ]
+  },
+  {
+    "objectID": "tutorials/index.html",
+    "href": "tutorials/index.html",
+    "title": "9  Tutorials",
+    "section": "",
+    "text": "9.1 General\nUnlike the sample cases, which are intended to be minimal working examples of the extensions provided here, the tutorials are full fledged case studies that may or may not include the extensions provided here. These illustrate the authors main skills and document complex workflows that go beyond the scope of tutorials provided with OpenFOAM.\nWiP",
+    "crumbs": [
+      "Tutorials",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Tutorials</span>"
+    ]
+  },
+  {
+    "objectID": "tutorials/index.html#multicomponentfluid",
+    "href": "tutorials/index.html#multicomponentfluid",
+    "title": "9  Tutorials",
+    "section": "9.2 multicomponentFluid",
+    "text": "9.2 multicomponentFluid\n\nmethaneAirSensitivity: illustrates the simulation of methane combustion in a co-axial burner under different operating conditions. The main goals are to provide a robust setup for combustion simulations.",
+    "crumbs": [
+      "Tutorials",
+      "<span class='chapter-number'>9</span>  <span class='chapter-title'>Tutorials</span>"
     ]
   }
 ]

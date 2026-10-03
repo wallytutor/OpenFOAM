@@ -44,7 +44,7 @@ ul.task-list li input[type="checkbox"] {
 <link href="site_libs/quarto-html/quarto-syntax-highlighting-acf12a64177840b8d86f2d4f01b2e9fb.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="site_libs/bootstrap/bootstrap.min.js"></script>
 <link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap-e418a599a5b6f8245b0e2d88cd6b2162.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="site_libs/bootstrap/bootstrap-2c9ba985a3a63a82574ca9f51b823d26.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 <script id="quarto-search-options" type="application/json">{
   "location": "sidebar",
   "copy-button": false,
@@ -191,6 +191,23 @@ ul.task-list li input[type="checkbox"] {
 </li>
       </ul>
   </li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true">
+ <span class="menu-text">Tutorials</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-4" role="navigation" aria-expanded="true" aria-label="Toggle section">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-4" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./tutorials/index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text"><span class="chapter-number">9</span>&nbsp; <span class="chapter-title">Tutorials</span></span></a>
+  </div>
+</li>
+      </ul>
+  </li>
     </ul>
     </div>
 </nav>
@@ -201,7 +218,8 @@ ul.task-list li input[type="checkbox"] {
     <h2 id="toc-title">Table of contents</h2>
    
   <ul>
-  <li><a href="#section" id="toc-section" class="nav-link active" data-scroll-target="#section"><span class="header-section-number">3.1</span> 2026-09-16</a></li>
+  <li><a href="#section" id="toc-section" class="nav-link active" data-scroll-target="#section"><span class="header-section-number">3.1</span> 2026-09-24</a></li>
+  <li><a href="#section-1" id="toc-section-1" class="nav-link" data-scroll-target="#section-1"><span class="header-section-number">3.2</span> 2026-09-16</a></li>
   </ul>
 </nav>
     </div>
@@ -228,7 +246,14 @@ ul.task-list li input[type="checkbox"] {
 
 
 <section id="section" class="level2" data-number="3.1">
-<h2 data-number="3.1" class="anchored" data-anchor-id="section"><span class="header-section-number">3.1</span> 2026-09-16</h2>
+<h2 data-number="3.1" class="anchored" data-anchor-id="section"><span class="header-section-number">3.1</span> 2026-09-24</h2>
+<ul>
+<li><p>Added an exhaustive, readable, and well-commented test suite in <code>etc/test.sh</code> covering all shell functions under <code>etc/rc/</code> (<code>utilsrc</code>, <code>coresrc</code>, <code>meshingrc</code>) with strict 80-character line wrapping, deterministic mocking, and comprehensive edge-case assertions.</p></li>
+<li><p>Enhanced <code>safe_run_ncores</code> in <code>etc/rc/coresrc</code> to accept an arbitrary sequence of fallback core counts. If the primary requested core count exceeds physical cores, fallback values are evaluated in order; if none are feasible or provided, execution falls back to half of the available physical cores. Also changed display of messages by sourcin <code>utilsrc</code> from <code>corerc</code> and improved re-sourcing time by testing for <code>WM_PROJECT</code> in <code>bashrc</code>.</p></li>
+</ul>
+</section>
+<section id="section-1" class="level2" data-number="3.2">
+<h2 data-number="3.2" class="anchored" data-anchor-id="section-1"><span class="header-section-number">3.2</span> 2026-09-16</h2>
 <ul>
 <li><p>Adapted <code>extendedThermoCloud</code> to upcast the solid object to a <code>tabulatedSolid</code> as a prototype for temperature dependent properties. Currently this supports a single species and need to be generalized in the future.</p></li>
 <li><p>Unified the build of all libraries under a single <code>Allwmake</code> at the sources root, following the full library standard. Added compilation instructions at multiple levels to <code>README.md</code></p></li>
