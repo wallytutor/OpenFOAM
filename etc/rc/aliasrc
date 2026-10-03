@@ -4,6 +4,9 @@
 # Common aliases
 ##############################################################################
 
+# Move to the main directory:
+alias fd='cd $FOAM_KOMPANION_DIR'
+
 # Source this file again:
 alias fsrc="source ${FOAM_KOMPANION_ETC}/bashrc"
 
@@ -49,7 +52,7 @@ function aps() {
 }
 
 DEFAULT_NAME="foam-$(whoami)"
-DEFAULT_BIND="/home/ubuntu"
+DEFAULT_BIND="/home/$(whoami)/foam-$(whoami)"
 DEFAULT_IMAGE="$FOAM_KOMPANION_DIR/$DEFAULT_NAME.sif"
 
 function foam_instance_running() {
@@ -72,7 +75,7 @@ function foam_instance_ensure() {
 
 function foam_instance_start() {
     apptainer instance start --writable-tmpfs \
-        --bind "$(realpath $PWD):${DEFAULT_BIND}" \
+        --bind "${FOAM_KOMPANION_DIR}:${DEFAULT_BIND}" \
         "${DEFAULT_IMAGE}" "${DEFAULT_NAME}"
 }
 
