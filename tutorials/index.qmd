@@ -1,0 +1,11 @@
+# Tutorials
+
+Unlike the sample cases, which are intended to be minimal working examples of the extensions provided here, the tutorials are full fledged case studies that may or may not include the extensions provided here. These illustrate the authors main skills and document complex workflows that go beyond the scope of tutorials provided with OpenFOAM.
+
+## General
+
+*WiP*
+
+## multicomponentFluid
+
+- [methaneAirSensitivity](multicomponentFluid/methaneAirSensitivity/report.pdf): illustrates the simulation of methane combustion in a co-axial burner under different operating conditions. The main goals are to provide a robust setup for combustion simulations.

@@ -34,6 +34,10 @@ book:
         - sample/solidReactionCylinder/README.qmd
         - sample/silicaParticleMelting/README.qmd
 
+    - part: Tutorials
+      chapters:
+        - tutorials/index.qmd
+
 format:
   html:
     reference-location: document

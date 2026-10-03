@@ -1,4 +1,4 @@
-export QUARTO_PYTHON="$(PWD)/.venv/bin/python"
+export QUARTO_PYTHON := .venv/bin/python
 
 # _name_ of Containerfile._name_:
 name := foam
