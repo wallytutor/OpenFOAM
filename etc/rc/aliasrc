@@ -1,0 +1,83 @@
+#!/usr/bin/env bash
+
+##############################################################################
+# Common aliases
+##############################################################################
+
+# Source this file again:
+alias src="source ${FOAM_KOMPANION_DIR}/bashrc"
+
+# Re-source the main user bashrc:
+alias rsc="source ${HOME}/.bashrc"
+
+# Disk usage inspection:
+alias df="df -HT"
+
+# Disk usage per directory/folder:
+alias du="du -h --max-depth=1"
+
+# Alias for listing directory contents:
+alias ll='ls -Alh --group-directories-first | sort -k9 -V -r'
+alias ls='ls -lh --group-directories-first'
+
+# Aliases for screen (a CFD must-have):
+alias scl="screen -ls"
+alias scx="screen -x"
+alias scs="screen -S"
+alias scr="screen -r"
+
+##############################################################################
+# Apptainer aliases
+##############################################################################
+
+alias api="apptainer instance"
+alias apl="apptainer instance list"
+alias apx="apptainer instance stop"
+
+function apu() {
+    local image=$1
+    local bind="${2:-/opt/app}"
+    local name="${image%.sif}"
+
+    apptainer instance start --writable-tmpfs \
+        --bind "$(realpath $PWD):${bind}" "${image}" "${name}"
+}
+
+function aps() {
+    local name=${1}
+    apptainer shell "instance://$name"
+}
+
+##############################################################################
+# Container aliases
+##############################################################################
+
+alias pi="podman image"
+alias pc="podman container"
+
+alias pil="podman images -a"
+alias pcl="podman container ls"
+alias pcp="podman container prune"
+
+function pfresh() {
+    podman builder prune -a
+    podman system prune -a --volumes
+}
+
+function pexec() {
+    local label=$1
+
+    if [ -z "${label}" ]; then
+        echo "Usage: pexec <container-id|container-name>" >&2
+        podman container ls
+        return 1
+    fi
+
+    podman exec -it "${1}" /bin/bash
+}
+
+# drun() {
+#     docker run -it --rm --gpus all \
+#         --mount type=bind,source="$(realpath $PWD)",target=/opt/app \
+#         "${1}" "${2:-/bin/bash}"
+# }

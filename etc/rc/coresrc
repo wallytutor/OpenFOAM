@@ -1,9 +1,5 @@
 #!/usr/bin/env bash
 
-# Path to this script:
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-. "${SCRIPT_DIR}/utilsrc"
-
 get_physical_cores() {
     # Get the number of physical CPU cores.
     #

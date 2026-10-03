@@ -11,6 +11,16 @@ This respository aims at being homogeneous in the sense it tries to keep a consi
 - Quarto with Typst support
 - Apptainer with Docker/Podman
 
+## Before starting
+
+Many features available in this repository rely on the environment configuration provided by `etc/bashrc`. In general the scripts will source that file for you, but environment configuration will not remain in CLI after the script finishes. To experience a smooth experience, it is recommended to source that file in your current shell from this directory:
+
+```bash
+source $PWD/etc/bashrc
+```
+
+If you want this to be done automatically for every new bash session, you can append that to your `~/.bashrc` by calling `foam_source_append`. This function only appends the configuration if not already present and tests for the existence of the configuration file so that your shell will not raise error messages if you delete this repository later.
+
 ## Compilation methods
 
 It is possible to build the whole extensions library or isolated features, depending on your needs. The following logic is applied throughout this sources directory:

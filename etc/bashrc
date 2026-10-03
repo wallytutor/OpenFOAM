@@ -1,5 +1,31 @@
 #!/usr/bin/env bash
 
+# Path to this script:
+FOAM_KOMPANION_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+
+# Get repository root directory (parent of etc/):
+PROJECT_DIR="$(dirname "${FOAM_KOMPANION_DIR}")"
+
+function foam_source_append() {
+    FOAM_BASHRC="${FOAM_KOMPANION_DIR}/bashrc"
+
+    FOAM_SOURCE="
+    if [ -f \"$FOAM_BASHRC\" ]; then
+        source \"$FOAM_BASHRC\"
+    fi
+    "
+
+    if ! grep -F -q "${FOAM_BASHRC}" "$HOME/.bashrc"; then
+        echo "$FOAM_SOURCE" >> ~/.bashrc
+    else
+        echo "OpenFOAM already sourced in ~/.bashrc"
+    fi
+}
+
+##############################################################################
+# OpenFOAM
+##############################################################################
+
 # Handle OpenFOAM environment sourcing and tweaks:
 if [ ! -f "/opt/openfoam13/etc/bashrc" ]; then
     echo "OpenFOAM environment not found."
@@ -15,15 +41,6 @@ fi
 . $WM_PROJECT_DIR/bin/tools/CleanFunctions
 . $WM_PROJECT_DIR/bin/tools/RunFunctions
 
-# Path to this script:
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-
-# Get repository root directory (parent of etc/):
-PROJECT_DIR="$(dirname "${SCRIPT_DIR}")"
-
-# Path to scripts directory:
-PROJECT_RCS="${SCRIPT_DIR}/rc"
-
 # Tweak OpenFOAM environment variables:
 export WM_PROJECT_USER_DIR="${PROJECT_DIR}"
 export FOAM_RUN="${PROJECT_DIR}/run"
@@ -34,25 +51,57 @@ export FOAM_USER_LIBBIN="${PROJECT_DIR}/platforms/${WM_OPTIONS}/lib"
 export PATH="${FOAM_USER_APPBIN}:${PATH}"
 export LD_LIBRARY_PATH="${FOAM_USER_LIBBIN}:${LD_LIBRARY_PATH}"
 
+##############################################################################
+# User scripts
+##############################################################################
+
 # Source all *rc files in the script directory:
-if [ -d "${PROJECT_RCS}" ]; then
-    for rc_file in "${PROJECT_RCS}"/*rc; do
-        if [ -f "${rc_file}" ]; then
-            # echo "Sourcing ${rc_file}"
-            source "${rc_file}"
-        fi
-    done
+# XXX prefer manual sourcing as order matters!
+. "${FOAM_KOMPANION_DIR}/rc/utilsrc"
+. "${FOAM_KOMPANION_DIR}/rc/coresrc"
+. "${FOAM_KOMPANION_DIR}/rc/meshingrc"
+. "${FOAM_KOMPANION_DIR}/rc/flowrc"
+. "${FOAM_KOMPANION_DIR}/rc/aliasrc"
+
+##############################################################################
+# Configuration
+##############################################################################
+
+NVIM_VER=$(nvim --version | head -n1 | sed 's/^NVIM v//')
+
+# check if >= 0.10
+if printf '%s\n' "$NVIM_VER" "0.10" | sort -V | head -n1 | grep -q "0.10"; then
+    export XDG_CONFIG_HOME="${PROJECT_DIR}/etc/nvim"
 fi
 
-# Source this file again:
-alias src="source ${SCRIPT_DIR}/bashrc"
+if command -v nvim >/dev/null 2>&1; then
+    alias vi="nvim"
+    alias vim="nvim"
+fi
 
-# Alias for listing directory contents:
-alias ll='ls -Alh --group-directories-first | sort -k9 -V -r'
-alias ls='ls -lh --group-directories-first'
+export IPYTHONDIR="${FOAM_KOMPANION_DIR}/.ipython"
+# export JUPYTER_DATA_DIR="${SCRIPT_DIR}/../.jupyter"
+# export JUPYTER_PATH="${SCRIPT_DIR}/../.jupyter"
+# export VSCODE_EXTENSIONS="${SCRIPT_DIR}/../.vscode/extensions"
+# export VSCODE_SETTINGS="${SCRIPT_DIR}/../.vscode/user-data"
 
-# Aliases for screen (a CFD must-have):
-alias scl="screen -ls"
-alias scx="screen -x"
-alias scs="screen -S"
-alias scr="screen -r"
+# Source Rust
+if [ -f "${HOME}/.cargo/env" ]; then
+    source "${HOME}/.cargo/env"
+fi
+
+if [ -f "${HOME}/.local/bin/env" ]; then
+    source "${HOME}/.local/bin/env"
+fi
+
+# Color codes
+CYAN="\[\e[36m\]"
+GREY="\[\e[90m\]"
+RESET="\[\e[0m\]"
+
+# Prompt: "<folder> > "
+PS1="${CYAN}\W${GREY} > ${RESET}"
+
+##############################################################################
+# EOF
+##############################################################################
