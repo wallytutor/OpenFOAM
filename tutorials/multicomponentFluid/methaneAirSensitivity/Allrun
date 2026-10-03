@@ -11,33 +11,34 @@ export FOAM_USER_RC=$(realpath "../../../etc/bashrc")
 
 # Source local OpenFOAM extensions:
 . "${FOAM_USER_RC}"
-
-# Source tutorial run functions:
-. $WM_PROJECT_DIR/bin/tools/RunFunctions
 #endregion
 
 #region: workflow functions
 function prepareDomainMesh() {
-    if [ -d "constant/polyMesh" ]; then
+    if [ -d "model/constant/polyMesh" ]; then
         echo "Mesh already exists, skipping..."
     else
         # Generate the base mesh:
         uv run python domain.py > log.mesh
 
-        # Convert base Gmsh mesh to OpenFOAM:
-        runApplication gmshToFoam domain.msh
+        ( # Meshing inside model/
+            cd model/
 
-        # Perform preliminary renumbering:
-        runApplication renumberMesh
+            # Convert base Gmsh mesh to OpenFOAM:
+            runApplication gmshToFoam ../domain.msh
 
-        # Fix patch types after splitting:
-        file=constant/polyMesh/boundary
-        foamDictionary $file -entry entry0/back/type  -set wedge > /dev/null
-        foamDictionary $file -entry entry0/front/type -set wedge > /dev/null
-        foamDictionary $file -entry entry0/walls/type -set wall  > /dev/null
+            # Perform preliminary renumbering:
+            runApplication renumberMesh
 
-        # Check mesh:
-        runApplication checkMesh
+            # Fix patch types after splitting:
+            file=constant/polyMesh/boundary
+            foamDictionary $file -entry entry0/back/type  -set wedge > /dev/null
+            foamDictionary $file -entry entry0/front/type -set wedge > /dev/null
+            foamDictionary $file -entry entry0/walls/type -set wall  > /dev/null
+
+            # Check mesh:
+            runApplication checkMesh
+        )
     fi
 }
 
@@ -90,11 +91,11 @@ function runLowOrderOde() {
 
         # Parameterize compatible with combustion:
         file=system/fvSolution
-        foamDictionary $file -entry PIMPLE/maxCo     -set 0.50 > /dev/null
+        foamDictionary $file -entry PIMPLE/maxCo     -set 3.00 > /dev/null
         foamDictionary $file -entry PIMPLE/alphaY    -set 0.20 > /dev/null
         foamDictionary $file -entry PIMPLE/alphaTemp -set 0.20 > /dev/null
-        foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.10 > /dev/null
-        foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.10 > /dev/null
+        foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.20 > /dev/null
+        foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.20 > /dev/null
 
         runAndReconstructStep $tend "2"
     fi
@@ -116,7 +117,7 @@ function runHighOrderOde() {
 
         # Move to a higher order solver:
         file=constant/chemistryProperties
-        foamDictionary $file -entry odeCoeffs/solver -set rodas34 > /dev/null
+        # foamDictionary $file -entry odeCoeffs/solver -set rodas34 > /dev/null
         foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
 
         runAndReconstructStep $tend "3"
@@ -133,10 +134,11 @@ function mainWorkflow() {
     uv run python initialize.py --temperature $temp
 
     # Copy files:
-    mkdir -p "$target"
-    cp -r 0.orig   "$target/0"
-    cp -r system   "$target/system"
-    cp -r constant "$target/constant"
+    cp -r model/ "$target/"
+    # mkdir -p "$target"
+    # cp -r 0.orig   "$target/0"
+    # cp -r system   "$target/system"
+    # cp -r constant "$target/constant"
 
     # Create case.foam:
     touch "$target/case.foam"
@@ -154,6 +156,6 @@ prepareDomainMesh
 
 #  ......... case  T    iter_1 iter_2 iter_3
 mainWorkflow 1     25   5000   15000  30000
-mainWorkflow 2     300  5000   10000  20000
+# mainWorkflow 2     300  5000   10000  20000
 
 #------------------------------------------------------------------------------

@@ -28,18 +28,20 @@ fi
 # Generate transport data:
 uv run python convert.py
 
+MODEL="../model/constant"
+
 # For BFER use this:
-chemkinToFoam             \
-    reactions.inp         \
-    thermo.dat            \
-    transport             \
-    ../constant/reactions \
-    ../constant/thermo
+chemkinToFoam          \
+    reactions.inp      \
+    thermo.dat         \
+    transport          \
+    ${MODEL}/reactions \
+    ${MODEL}/thermo
 
 # For Westbrook use this:
-# chemkinToFoam             \
-#     WB_2step.inp          \
-#     WB_2step.dat          \
-#     transport             \
-#     ../constant/reactions \
-#     ../constant/thermo
+# chemkinToFoam          \
+#     WB_2step.inp       \
+#     WB_2step.dat       \
+#     transport          \
+#     ${MODEL}/reactions \
+#     ${MODEL}/thermo

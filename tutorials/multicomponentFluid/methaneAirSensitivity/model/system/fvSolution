@@ -72,18 +72,18 @@ solvers
 
 PIMPLE
 {
-    nCorrectors              2;
-    nOuterCorrectors         1;
-    nNonOrthogonalCorrectors 0;
-    momentumPredictor        no;
-    transonic                no;
-    consistent               yes;
-    maxCo                    10.0;
-    maxDeltaT                0.1;
-    rDeltaTSmoothingCoeff    0.05;
-    rDeltaTDampingCoeff      1.0;
-    alphaTemp                0.2;
-    alphaY                   1.0;
+    nCorrectors               2;
+    nOuterCorrectors          1;
+    nNonOrthogonalCorrectors  0;
+    momentumPredictor         no;
+    transonic                 no;
+    consistent                yes;
+    maxCo                     10.0;
+    maxDeltaT                 0.1;
+    rDeltaTSmoothingCoeff     0.3;
+    rDeltaTDampingCoeff       1.0;
+    alphaTemp                 0.2;
+    alphaY                    1.0;
 
     Yref
     {
