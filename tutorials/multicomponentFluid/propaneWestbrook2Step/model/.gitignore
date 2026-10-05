@@ -1,0 +1,5 @@
+# Keep initial conditions:
+!0/
+
+# Ignore computed intial conditions:
+constant/initialConditions
