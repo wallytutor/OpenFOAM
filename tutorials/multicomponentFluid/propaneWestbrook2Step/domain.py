@@ -7,17 +7,20 @@ import gmsh
 from pathlib import Path
 
 #region: 0. Configuration
+import project
+
 path = Path(__file__)
 
 wedge_angle  = math.radians(2.0)
 len_inlet_ax = 0.09
 len_inlet_an = 0.09
 len_disperse = 1.0
-len_flue_out = 3.0
-dia_inlet_ax = 0.027
-thk_inlet_wl = 0.0025
-thk_inlet_an = 0.085
-thk_side_box = 0.399
+
+len_flue_out = project._LEN_DOMAIN - len_disperse
+dia_inlet_ax = project._DIAM_FUEL
+thk_inlet_wl = (project._DIAM_OXID_INT - project._DIAM_FUEL) / 2.0
+thk_inlet_an = (project._DIAM_OXID_EXT - project._DIAM_OXID_INT) / 2.0
+thk_side_box = (project._DIAM_DOMAIN - project._DIAM_OXID_EXT) / 2.0
 #endregion
 
 #region: 1. Initialize the model

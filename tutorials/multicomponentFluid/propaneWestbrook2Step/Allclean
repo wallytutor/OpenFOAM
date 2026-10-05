@@ -5,6 +5,8 @@ cd ${0%/*} || exit 1
 
 # Generated data:
 rm -rf chemkin/media/
+rm -rf chemkin/reactions
+rm -rf chemkin/thermo
 rm -rf chemkin/thermo.dat
 rm -rf chemkin/transport
 

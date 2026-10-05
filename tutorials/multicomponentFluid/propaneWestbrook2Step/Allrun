@@ -71,10 +71,15 @@ function runSmoothConvergence() {
 
 function mainWorkflow() {
     local case=$1
+    local power=$2
+    local temperature=$3
     local target="solution.$case"
 
     # Make sure there is a mesh to copy:
     prepareDomainMesh
+
+    # Prepare case conditions:
+    uv run python project.py --power $power --temperature $temperature
 
     # Copy case if not already started:
     if [ ! -d "$target/" ]; then
@@ -86,15 +91,14 @@ function mainWorkflow() {
 
     # Run simulations:
     pushd $target > /dev/null
-    runDevelopFlow       "$2"
-    runFlameIgnition     "$3"
-    runSmoothConvergence "$4"
+    runDevelopFlow       "$4"
+    runFlameIgnition     "$5"
+    runSmoothConvergence "$6"
     popd > /dev/null
 }
 #endregion
 
-
-# .......... case  end1  end2  end3
-mainWorkflow 1     1000  2000  5000
+# .......... case  power  T   end1  end2  end3
+mainWorkflow 1     1000   25  1000  2000  5000
 
 #------------------------------------------------------------------------------
