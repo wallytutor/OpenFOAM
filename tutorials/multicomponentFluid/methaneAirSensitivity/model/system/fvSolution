@@ -80,6 +80,11 @@ PIMPLE
     consistent                yes;
     maxCo                     10.0;
     maxDeltaT                 0.1;
+
+    // Increase as much as possible: this parameters tries to
+    // smooth rDeltaT (the local inverse time-step) and a lower
+    // value will drag everything down to the lower chemical
+    // time-step, making the simulation stable but slow.
     rDeltaTSmoothingCoeff     0.3;
     rDeltaTDampingCoeff       1.0;
     alphaTemp                 0.2;
@@ -92,16 +97,32 @@ PIMPLE
     }
 }
 
+// relaxationFactors
+// {
+//     fields
+//     {
+//         p               0.3;
+//         rho             1.0;
+//     }
+//     equations
+//     {
+//         ".*"            1.0;
+//     }
+// }
 relaxationFactors
 {
     fields
     {
-        p               0.3;
-        rho             1.0;
+        p       0.3;
+        rho     1.0;
     }
     equations
     {
-        ".*"            1.0;
+        U       0.7;
+        h       0.7;
+        "Yi.*"  0.7;
+        k       0.5;
+        epsilon 0.5;
     }
 }
 

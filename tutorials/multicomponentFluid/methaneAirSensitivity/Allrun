@@ -1,16 +1,14 @@
 #!/usr/bin/env bash
 
+#region: general setup
+# Exit on error:
 set -e
 
-#region: general setup
 # Run from this directory:
 cd ${0%/*} || exit 1
 
-# Set local OpenFOAM extensions path:
-export FOAM_USER_RC=$(realpath "../../../etc/bashrc")
-
 # Source local OpenFOAM extensions:
-. "${FOAM_USER_RC}"
+. "$(realpath "../../../etc/bashrc")"
 #endregion
 
 #region: workflow functions
@@ -42,26 +40,6 @@ function prepareDomainMesh() {
     fi
 }
 
-function runAndReconstructStep() {
-    local tend=$1
-    local step=$2
-
-    # Decompose the domain:
-    runApplication decomposePar
-    mv log.decomposePar log.decomposePar.$step
-
-    # Run the simulation:
-    runParallel foamRun
-    mv log.foamRun log.foamRun.$step
-
-    # Reconstruct the solution:
-    runApplication reconstructPar -latestTime
-    mv log.reconstructPar log.reconstructPar.$step
-
-    # Remove decomposition files:
-    rm -rf processor*
-}
-
 function runFlowAlone() {
     local tend=$1
 
@@ -72,7 +50,7 @@ function runFlowAlone() {
         file=system/controlDict
         foamDictionary $file -entry endTime -set $tend > /dev/null
 
-        runAndReconstructStep $tend "1"
+        runAndReconstructStep
     fi
 }
 
@@ -97,7 +75,7 @@ function runLowOrderOde() {
         foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.20 > /dev/null
         foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.20 > /dev/null
 
-        runAndReconstructStep $tend "2"
+        runAndReconstructStep
     fi
 }
 
@@ -120,7 +98,7 @@ function runHighOrderOde() {
         # foamDictionary $file -entry odeCoeffs/solver -set rodas34 > /dev/null
         foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
 
-        runAndReconstructStep $tend "3"
+        runAndReconstructStep
     fi
 }
 
@@ -133,12 +111,10 @@ function mainWorkflow() {
     # Prepare _shared with current temperature:
     uv run python initialize.py --temperature $temp
 
-    # Copy files:
-    cp -r model/ "$target/"
-    # mkdir -p "$target"
-    # cp -r 0.orig   "$target/0"
-    # cp -r system   "$target/system"
-    # cp -r constant "$target/constant"
+    # Copy case if not already started:
+    if [ ! -d "$target/" ]; then
+        cp -r model/ "$target/"
+    fi
 
     # Create case.foam:
     touch "$target/case.foam"
@@ -155,7 +131,7 @@ function mainWorkflow() {
 prepareDomainMesh
 
 #  ......... case  T    iter_1 iter_2 iter_3
-mainWorkflow 1     25   5000   15000  30000
+mainWorkflow 1     25   1000   5000  10000
 # mainWorkflow 2     300  5000   10000  20000
 
 #------------------------------------------------------------------------------
