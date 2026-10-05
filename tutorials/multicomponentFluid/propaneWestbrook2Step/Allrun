@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+#region: general setup
+# Exit on error:
+set -e
+
+# Run from this directory:
+cd ${0%/*} || exit 1
+
+# Source local OpenFOAM extensions:
+. "$(realpath "../../../etc/bashrc")"
+#endregion
+
+#region: workflow functions
+function prepareDomainMesh() {
+    if [ -d "model/constant/polyMesh" ]; then
+        echo "Mesh already exists, skipping..."
+        return 0
+    fi
+
+    # Generate the base mesh:
+    uv run python domain.py > log.mesh
+
+    ( # Meshing inside model/
+        cd model/
+
+        # Convert base Gmsh mesh to OpenFOAM:
+        runApplication gmshToFoam ../domain.msh
+
+        # Perform preliminary renumbering:
+        runApplication renumberMesh
+
+        # Fix patch types after splitting:
+        file=constant/polyMesh/boundary
+        foamDictionary $file -entry entry0/back/type  -set wedge > /dev/null
+        foamDictionary $file -entry entry0/front/type -set wedge > /dev/null
+        foamDictionary $file -entry entry0/walls/type -set wall  > /dev/null
+
+        # Check mesh:
+        runApplication checkMesh
+    )
+
+}
+#endregion
+
+prepareDomainMesh
+
+#------------------------------------------------------------------------------

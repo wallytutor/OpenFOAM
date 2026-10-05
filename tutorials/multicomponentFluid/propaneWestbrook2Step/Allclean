@@ -9,7 +9,11 @@ rm -rf chemkin/thermo.dat
 rm -rf chemkin/transport
 
 # Logs and mesh at root:
-rm -rf *.log
+rm -rf log.*
 rm -rf *.msh
+
+# Logs and mesh under model:
+rm -rf model/log.*
+rm -rf model/constant/polyMesh
 
 #------------------------------------------------------------------------------
