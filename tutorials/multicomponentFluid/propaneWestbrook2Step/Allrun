@@ -27,22 +27,74 @@ function prepareDomainMesh() {
         # Convert base Gmsh mesh to OpenFOAM:
         runApplication gmshToFoam ../domain.msh
 
-        # Perform preliminary renumbering:
-        runApplication renumberMesh
-
-        # Fix patch types after splitting:
+        # Fix patch types before going forward:
         file=constant/polyMesh/boundary
         foamDictionary $file -entry entry0/back/type  -set wedge > /dev/null
         foamDictionary $file -entry entry0/front/type -set wedge > /dev/null
         foamDictionary $file -entry entry0/walls/type -set wall  > /dev/null
+
+        # Perform preliminary renumbering (skipping 0/ directory fields):
+        runApplication renumberMesh -noZero
 
         # Check mesh:
         runApplication checkMesh
     )
 
 }
+
+function runDevelopFlow() {
+    local tend=$1
+
+    if [ -d "$tend" ]; then
+        echo "Run already completed up to $tend"
+        return 0
+    fi
+}
+
+function runFlameIgnition() {
+    local tend=$1
+
+    if [ -d "$tend" ]; then
+        echo "Run already completed up to $tend"
+        return 0
+    fi
+}
+
+function runSmoothConvergence() {
+    local tend=$1
+
+    if [ -d "$tend" ]; then
+        echo "Run already completed up to $tend"
+        return 0
+    fi
+}
+
+function mainWorkflow() {
+    local case=$1
+    local target="solution.$case"
+
+    # Make sure there is a mesh to copy:
+    prepareDomainMesh
+
+    # Copy case if not already started:
+    if [ ! -d "$target/" ]; then
+        cp -r model/ "$target/"
+    fi
+
+    # Create case.foam:
+    touch "$target/case.foam"
+
+    # Run simulations:
+    pushd $target > /dev/null
+    runDevelopFlow       "$2"
+    runFlameIgnition     "$3"
+    runSmoothConvergence "$4"
+    popd > /dev/null
+}
 #endregion
 
-prepareDomainMesh
+
+# .......... case  end1  end2  end3
+mainWorkflow 1     1000  2000  5000
 
 #------------------------------------------------------------------------------
