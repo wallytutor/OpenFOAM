@@ -45,28 +45,67 @@ function prepareDomainMesh() {
 function runDevelopFlow() {
     local tend=$1
 
-    if [ -d "$tend" ]; then
+    if [ -d "$tend.orig" ]; then
         echo "Run already completed up to $tend"
         return 0
     fi
+
+    file=system/controlDict
+    foamDictionary $file -entry endTime -set $tend > /dev/null
+
+    runAndReconstructStep
+
+    # Backup before modifying solver settings:
+    cp -r "$tend" "$tend.orig"
 }
 
 function runFlameIgnition() {
     local tend=$1
 
-    if [ -d "$tend" ]; then
+    if [ -d "$tend.orig" ]; then
         echo "Run already completed up to $tend"
         return 0
     fi
+
+    runApplication setFields -latestTime
+
+    file=system/controlDict
+    foamDictionary $file -entry endTime -set $tend > /dev/null
+
+    file=system/fvSolution
+    foamDictionary $file -entry PIMPLE/maxCo     -set 3.00 > /dev/null
+    foamDictionary $file -entry PIMPLE/alphaY    -set 0.20 > /dev/null
+    foamDictionary $file -entry PIMPLE/alphaTemp -set 0.20 > /dev/null
+    foamDictionary $file -entry PIMPLE/Yref/CH4  -set 0.20 > /dev/null
+    foamDictionary $file -entry PIMPLE/Yref/O2   -set 0.20 > /dev/null
+
+    runAndReconstructStep
+
+    # Backup before modifying solver settings:
+    cp -r "$tend" "$tend.orig"
 }
 
 function runSmoothConvergence() {
     local tend=$1
 
-    if [ -d "$tend" ]; then
+    if [ -d "$tend.orig" ]; then
         echo "Run already completed up to $tend"
         return 0
     fi
+
+    file=system/controlDict
+    foamDictionary $file -entry endTime -set $tend > /dev/null
+
+    file=system/fvSolution
+    foamDictionary $file -entry PIMPLE/maxCo -set 1.0 > /dev/null
+
+    file=constant/chemistryProperties
+    foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
+
+    runAndReconstructStep
+
+    # Backup before modifying solver settings:
+    cp -r "$tend" "$tend.orig"
 }
 
 function mainWorkflow() {

@@ -33,7 +33,7 @@ divSchemes
     turbulence                           bounded Gauss upwind;
     species                              Gauss multivariateSelection
     {
-        CH4             limitedLinear01 1;
+        C3H8            limitedLinear01 1;
         CO              limitedLinear01 1;
         CO2             limitedLinear01 1;
         H2O             limitedLinear01 1;
