@@ -2,3 +2,5 @@ media/*
 unused/*
 thermo.dat
 transport
+thermo
+reactions
