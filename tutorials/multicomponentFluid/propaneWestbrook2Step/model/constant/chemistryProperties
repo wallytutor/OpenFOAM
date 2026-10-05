@@ -1,0 +1,43 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+  =========                 |
+  \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox
+   \\    /   O peration     | Website:  https://openfoam.org
+    \\  /    A nd           | Version:  13
+     \\/     M anipulation  |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      chemistryProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+chemistry               on;
+initialChemicalTimeStep 1.0e-08;
+
+chemistryType
+{
+    solver         ode;
+}
+
+odeCoeffs
+{
+    // Extrapolation solvers (seulex) are fragile when handling near-zero
+    // species with fractional reaction orders. OpenFOAM 13 provides
+    // Rosenbrock-type stiff ODE solvers that handle ill-conditioned
+    // Jacobians without underflow:
+    solver          Rosenbrock34;
+    // solver          rodas23;
+    // solver          rodas34;
+    // solver          seulex;
+
+    absTol          1.0e-08;
+    relTol          1.0e-02;
+    maxSteps        30000;
+}
+
+#include "reactions"
+
+// ************************************************************************* //
