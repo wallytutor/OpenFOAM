@@ -228,21 +228,24 @@ def plot_reports(*, plot, root="."):
     y = df.iloc[:, 1].to_numpy()
 
     ax[0].plot(x, y, color="k")
-    ax[0].set_ylabel(f"Temperature [K]")
+    ax[0].set_ylabel(f"Outlet temperature [K]")
 
     df = post.load_report("outletCO")
     x = df.iloc[:, 0].to_numpy()
     y = df.iloc[:, 1].to_numpy() * 1e6
 
     ax[1].plot(x, y, color="k")
-    ax[1].set_ylabel(f"Carbon monoxide [ppmm]")
+    ax[1].set_ylabel(f"Outlet CO [ppmm]")
 
     df = post.load_report("probe", select=r"**/T")
     x = df.iloc[:, 0].to_numpy()
-    y = df.iloc[:, 1].to_numpy()
 
-    ax[2].plot(x, y, color="k")
+    for col_name in df.columns[1:]:
+        y = df[col_name].to_numpy()
+        ax[2].plot(x, y, label=col_name)
+
     ax[2].set_ylabel(f"Probe temperature [K]")
+    ax[2].legend(loc=2, fontsize="x-small")
 
     for axis in ax:
         axis.grid(False)
