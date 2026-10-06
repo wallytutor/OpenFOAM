@@ -289,9 +289,49 @@ def plot_fields(mesh, *, plot, **kwargs):
         axis.set_xlabel("Distance from axis [cm]")
 
 
+def evaluate_arrows(mesh, nx: int, ny: int, factor: float, padding: float):
+    # (xmin, xmax, ymin, ymax, zmin, zmax)
+    bounds = mesh.bounds
+
+    # Define a small inward margin
+    margin_x = (bounds[1] - bounds[0]) * padding
+    margin_y = (bounds[3] - bounds[2]) * padding
+
+    # Create a slightly shrunken uniform grid
+    grid = pv.ImageData(
+        dimensions=(nx, ny, 1),
+        spacing=(
+            (bounds[1] - bounds[0] - 2 * margin_x) / (nx - 1),
+            (bounds[3] - bounds[2] - 2 * margin_y) / (ny - 1),
+            1.0
+        ),
+        origin=(bounds[0] + margin_x, bounds[2] + margin_y, bounds[4])
+    )
+
+    # Resample and generate fixed-size arrows
+    resampled_grid = grid.sample(mesh)
+    resampled_grid.set_active_vectors("U")
+    arrows = resampled_grid.glyph(scale=False, orient="U", factor=factor)
+
+    # mesh.set_active_vectors("U")
+    # arrows = mesh.glyph(
+    #     scale     = False,
+    #     orient    = "U",
+    #     factor    = vector_factor,
+    #     tolerance = vector_tolerance
+    # )
+
+    return arrows
+
+
 def plot_slice(
         mesh,
         window_size: tuple[int, int] = (900, 250),
+        show_vectors: bool = True,
+        factor: float = 0.05,
+        padding: float = 0.03,
+        nx: int = 40,
+        ny: int = 8,
         **kwargs
     ) -> None:
     """ Custom display of slice results. """
@@ -307,6 +347,10 @@ def plot_slice(
 
     pl = pv.Plotter(off_screen=True)
     pl.add_mesh(mesh, **kwargs, show_edges=False)
+
+    if show_vectors:
+        arrows = evaluate_arrows(mesh, nx, ny, factor, padding)
+        pl.add_mesh(arrows, color="black")
 
     pl.camera_position = "xy"
     pl.window_size = window_size
