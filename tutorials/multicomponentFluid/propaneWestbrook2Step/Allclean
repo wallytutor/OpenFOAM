@@ -18,4 +18,7 @@ rm -rf *.msh
 rm -rf model/log.*
 rm -rf model/constant/polyMesh
 
+# Solutions:
+rm -rf solution.*/
+
 #------------------------------------------------------------------------------
