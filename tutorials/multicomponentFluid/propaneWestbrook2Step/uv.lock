@@ -1203,7 +1203,7 @@ wheels = [
 
 [[package]]
 name = "hyperspy"
-version = "2.4.0"
+version = "2.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cloudpickle" },
@@ -1223,9 +1223,9 @@ dependencies = [
     { name = "tqdm" },
     { name = "traits" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/af/19/c5765ecd3ae3583a7e7cca4b5af8f5747ae34bb65464a50592fbac130bac/hyperspy-2.4.0.tar.gz", hash = "sha256:0c7a3b2136f690ebf7b9c0bcd8a81f89871722b732cf201f257ac07b9845d077", size = 25568017, upload-time = "2026-01-26T17:40:56.245Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1c/b4/2168a281fa1ace72003b9ab54bdea6c861a6ded89a07be79dfb7e3f5a67a/hyperspy-2.5.0.tar.gz", hash = "sha256:eafc7fb1c616bd571b757839fc9f69ef6ca09c7e6def89878f87a27afcb39756", size = 25888372, upload-time = "2026-10-06T13:19:35.41Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ef/18/8faed13beb02a122d04105879452ad1c912b799340f83f3b839a4f07f733/hyperspy-2.4.0-py3-none-any.whl", hash = "sha256:cf0c1f9605a7d0e1179d22e14e0bdc4ed6ffba4617fb505fd8b07de7b1dfdd12", size = 1064804, upload-time = "2026-01-26T17:40:53.723Z" },
+    { url = "https://files.pythonhosted.org/packages/dd/a4/b84c994a11585d7917144ad718a51ce9b67fde36ae63c89c9157109cf6f9/hyperspy-2.5.0-py3-none-any.whl", hash = "sha256:f83ca0298e1f3fd91a2233838021841e8f946748768ad3ecb29fa2b80734de27", size = 1142729, upload-time = "2026-10-06T13:19:33.343Z" },
 ]
 
 [[package]]
@@ -1802,7 +1802,7 @@ wheels = [
 [[package]]
 name = "majordome"
 version = "1.5.0"
-source = { git = "https://github.com/wallytutor/python-majordome.git?branch=main#2f51348cf387567150fb0a2988f19d272caedad4" }
+source = { git = "https://github.com/wallytutor/python-majordome.git?branch=main#8f7033ac63e978547b705d51ab72aa1676e90d4b" }
 dependencies = [
     { name = "branca" },
     { name = "cantera" },
