@@ -9,3 +9,5 @@ Unlike the sample cases, which are intended to be minimal working examples of th
 ## multicomponentFluid
 
 - [methaneAirSensitivity](multicomponentFluid/methaneAirSensitivity/report.pdf): illustrates the simulation of methane combustion in a co-axial burner under different operating conditions. The main goals are to provide a robust setup for combustion simulations.
+
+- [propaneWestbrook2Step](multicomponentFluid/propaneWestbrook2Step/report.pdf): illustrates the simulation of propane combustion in a co-axial burner using the Westbrook two-step reaction mechanism. It explores a similar strategy to the one in `methaneAirSensitivity`.
