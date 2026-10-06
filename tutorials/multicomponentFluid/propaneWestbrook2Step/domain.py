@@ -11,7 +11,7 @@ import project
 
 path = Path(__file__)
 
-wedge_angle  = math.radians(2.0)
+wedge_angle  = math.radians(0.005)
 len_inlet_ax = 0.09
 len_inlet_an = 0.09
 len_disperse = 1.0
@@ -229,10 +229,10 @@ msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
 # ---------------------------------------------------------------------
 
 ny4 = 40
-qy4 = 0.15
-msh.set_transfinite_curve(17, ny4, "Bump", qy4)
-msh.set_transfinite_curve(19, ny4, "Bump", qy4)
-msh.set_transfinite_curve(27, ny4, "Bump", qy4)
+qy4 = 0.93
+msh.set_transfinite_curve(17, ny4, "Progression", 1/qy4)
+msh.set_transfinite_curve(19, ny4, "Progression", qy4)
+msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
 
 # ---------------------------------------------------------------------
 # OTHER
