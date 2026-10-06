@@ -179,11 +179,12 @@ msh.set_transfinite_curve(1, nx1, "Progression", qx1)
 msh.set_transfinite_curve(3, nx1, "Progression", qx1)
 
 # - Axial inlet zone over y-axis
-ny1 = 6
+ny1 = 7
 qy1 = 0.9
 msh.set_transfinite_curve(2,  ny1, "Progression", qy1)
 msh.set_transfinite_curve(4,  ny1, "Progression", 1/qy1)
 msh.set_transfinite_curve(6,  ny1, "Progression", qy1)
+msh.set_transfinite_curve(21, ny1, "Progression", qy1)
 
 # ---------------------------------------------------------------------
 # ANNULAR INLET ZONE
@@ -196,11 +197,12 @@ msh.set_transfinite_curve(11, nx2, "Progression", qx2)
 msh.set_transfinite_curve(13, nx2, "Progression", qx2)
 
 # - Annular inlet zone over y-axis
-ny2 = 15
+ny2 = 18
 qy2 = 0.4
 msh.set_transfinite_curve(12, ny2, "Bump", qy2)
 msh.set_transfinite_curve(14, ny2, "Bump", qy2)
 msh.set_transfinite_curve(15, ny2, "Bump", qy2)
+msh.set_transfinite_curve(25, ny2, "Bump", qy2)
 
 # ---------------------------------------------------------------------
 # DISPERSION ZONE
@@ -220,40 +222,30 @@ ny3 = 2
 qy3 = 0.9
 msh.set_transfinite_curve(8,  ny3, "Progression", qy3)
 msh.set_transfinite_curve(10, ny3, "Progression", 1/qy3)
+msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
 
 # ---------------------------------------------------------------------
 # SIDE EXPANSION ZONE
 # ---------------------------------------------------------------------
 
-ny4 = 25
-qy4 = 0.9
-msh.set_transfinite_curve(17, ny4, "Progression", 1/qy4)
-msh.set_transfinite_curve(19, ny4, "Progression", qy4)
+ny4 = 40
+qy4 = 0.15
+msh.set_transfinite_curve(17, ny4, "Bump", qy4)
+msh.set_transfinite_curve(19, ny4, "Bump", qy4)
+msh.set_transfinite_curve(27, ny4, "Bump", qy4)
 
 # ---------------------------------------------------------------------
 # OTHER
 # ---------------------------------------------------------------------
 
 # - Flue outlet over x-axis
-nx = 200
+nx = 250
 qx = 1.0
 msh.set_transfinite_curve(20, nx, "Progression", qx)
 msh.set_transfinite_curve(22, nx, "Progression", qx)
 msh.set_transfinite_curve(24, nx, "Progression", qx)
 msh.set_transfinite_curve(26, nx, "Progression", qx)
 msh.set_transfinite_curve(28, nx, "Progression", qx)
-
-# Axial inlet zone
-msh.set_transfinite_curve(21, ny1, "Progression", qy1)
-
-# Annular inlet zone
-msh.set_transfinite_curve(25, ny2, "Bump", qy2)
-
-# Inlet wall thickness
-msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
-
-# Side expansion
-msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
 
 for _, tag in all_surf:
     msh.set_transfinite_surface(tag=tag)
