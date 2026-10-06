@@ -35,8 +35,8 @@ boundaryField
     outlet
     {
         type            inletOutlet;
-        inletValue      uniform 0.173;
-        value           uniform 0.173;
+        inletValue      uniform 0; // 0.173;
+        value           uniform 0; // 0.173;
     }
     walls
     {
