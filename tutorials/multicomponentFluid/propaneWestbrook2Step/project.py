@@ -441,6 +441,11 @@ def plot_absorption(mesh, n_iso=5):
     handle_isosurfaces(pl, mesh, n_iso, "a")
 
 
+def plot_propane(mesh, n_iso=5):
+    pl = plot_slice(mesh, scalars="C3H8", cmap="coolwarm", clim=[0.0, 0.01])
+    handle_isosurfaces(pl, mesh, n_iso, "C3H8")
+
+
 def plot_oxygen(mesh, n_iso=5):
     pl = plot_slice(mesh, scalars="O2", cmap="coolwarm")
     handle_isosurfaces(pl, mesh, n_iso, "O2")
