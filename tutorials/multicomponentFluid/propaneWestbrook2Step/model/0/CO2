@@ -10,13 +10,13 @@ FoamFile
     format      ascii;
     class       volScalarField;
     location    "0";
-    object      O2;
+    object      CO2;
 }
 // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
 
 dimensions      [];
 
-internalField   uniform 0.24;
+internalField   uniform 0;
 
 boundaryField
 {
@@ -30,13 +30,13 @@ boundaryField
     inletAnnular
     {
         type            fixedValue;
-        value           uniform 0.24;
+        value           uniform 0;
     }
     outlet
     {
         type            inletOutlet;
-        inletValue      uniform 0.0;
-        value           uniform 0.0;
+        inletValue      uniform 0.173;
+        value           uniform 0.173;
     }
     walls
     {
