@@ -97,7 +97,7 @@ function runSmoothConvergence() {
     foamDictionary $file -entry endTime -set $tend > /dev/null
 
     file=system/fvSolution
-    foamDictionary $file -entry PIMPLE/maxCo -set 1.0 > /dev/null
+    foamDictionary $file -entry PIMPLE/maxCo -set 0.75 > /dev/null
 
     file=constant/chemistryProperties
     foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
@@ -138,7 +138,7 @@ function mainWorkflow() {
 #endregion
 
 # .......... case  power  T   end1  end2  end3
-mainWorkflow 1     1000   25  1000  3000  5000
-mainWorkflow 2     1000   300 1000  3000  5000
+mainWorkflow 1     1000   25  1000  5000  15000
+# mainWorkflow 2     1000   300 2000  4000  5000
 
 #------------------------------------------------------------------------------
