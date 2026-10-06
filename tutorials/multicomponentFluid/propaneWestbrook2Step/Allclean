@@ -17,6 +17,7 @@ rm -rf *.msh
 # Logs and mesh under model:
 rm -rf model/log.*
 rm -rf model/constant/polyMesh
+rm -rf model/constant/initialConditions
 
 # Solutions:
 rm -rf solution.*/

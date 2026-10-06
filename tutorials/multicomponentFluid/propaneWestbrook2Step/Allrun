@@ -9,6 +9,8 @@ cd ${0%/*} || exit 1
 
 # Source local OpenFOAM extensions:
 . "$(realpath "../../../etc/bashrc")"
+
+RUN_PARALLEL=0
 #endregion
 
 #region: workflow functions
@@ -53,10 +55,7 @@ function runDevelopFlow() {
     file=system/controlDict
     foamDictionary $file -entry endTime -set $tend > /dev/null
 
-    runAndReconstructStep
-
-    # Backup before modifying solver settings:
-    cp -r "$tend" "$tend.orig"
+    foamStepRunner "$tend" "$RUN_PARALLEL"
 }
 
 function runFlameIgnition() {
@@ -102,10 +101,7 @@ function runFlameIgnition() {
         -entry PIMPLE/Yref/O2 \
         -set 0.20 > /dev/null
 
-    runAndReconstructStep
-
-    # Backup before modifying solver settings:
-    cp -r "$tend" "$tend.orig"
+    foamStepRunner "$tend" "$RUN_PARALLEL"
 }
 
 function runSmoothConvergence() {
@@ -123,12 +119,9 @@ function runSmoothConvergence() {
     foamDictionary $file -entry PIMPLE/maxCo -set 0.25 > /dev/null
 
     file=constant/chemistryProperties
-    foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-03 > /dev/null
+    foamDictionary $file -entry odeCoeffs/relTol -set 1.0e-04 > /dev/null
 
-    runAndReconstructStep
-
-    # Backup before modifying solver settings:
-    cp -r "$tend" "$tend.orig"
+    foamStepRunner "$tend" "$RUN_PARALLEL"
 }
 
 function mainWorkflow() {
@@ -155,13 +148,13 @@ function mainWorkflow() {
     pushd $target > /dev/null
     runDevelopFlow       "$4"
     runFlameIgnition     "$5"
-    # runSmoothConvergence "$6"
+    runSmoothConvergence "$6"
     popd > /dev/null
 }
 #endregion
 
-# .......... case  power  T   end1   end2   end3
-mainWorkflow 1     1000   25  10000  15000  20000
-# mainWorkflow 2     1000   300 2000  4000  5000
+# .......... case  power  T    end1   end2   end3
+mainWorkflow 1     1000   25   5000  10000  20000
+mainWorkflow 2     1000   300  5000  10000  20000
 
 #------------------------------------------------------------------------------

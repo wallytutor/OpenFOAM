@@ -34,7 +34,7 @@ odeCoeffs
     // solver          seulex;
 
     absTol          1.0e-08;
-    relTol          1.0e-02;
+    relTol          1.0e-03;
     maxSteps        30000;
 }
 

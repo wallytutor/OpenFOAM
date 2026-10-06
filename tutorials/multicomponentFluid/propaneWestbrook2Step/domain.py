@@ -12,8 +12,8 @@ import project
 path = Path(__file__)
 
 wedge_angle  = math.radians(0.005)
-len_inlet_ax = 0.09
-len_inlet_an = 0.09
+len_inlet_ax = 0.02
+len_inlet_an = 0.02
 len_disperse = 1.0
 
 len_flue_out = project._LEN_DOMAIN - len_disperse
@@ -173,13 +173,13 @@ occ.synchronize()
 # ---------------------------------------------------------------------
 
 # - Axial inlet zone over x-axis
-nx1 = 10
+nx1 = 2
 qx1 = 1.0
 msh.set_transfinite_curve(1, nx1, "Progression", qx1)
 msh.set_transfinite_curve(3, nx1, "Progression", qx1)
 
 # - Axial inlet zone over y-axis
-ny1 = 7
+ny1 = 6
 qy1 = 0.9
 msh.set_transfinite_curve(2,  ny1, "Progression", qy1)
 msh.set_transfinite_curve(4,  ny1, "Progression", 1/qy1)
@@ -191,13 +191,13 @@ msh.set_transfinite_curve(21, ny1, "Progression", qy1)
 # ---------------------------------------------------------------------
 
 # - Annular inlet zone over x-axis
-nx2 = 10
+nx2 = 2
 qx2 = 1.0
 msh.set_transfinite_curve(11, nx2, "Progression", qx2)
 msh.set_transfinite_curve(13, nx2, "Progression", qx2)
 
 # - Annular inlet zone over y-axis
-ny2 = 18
+ny2 = 13
 qy2 = 0.4
 msh.set_transfinite_curve(12, ny2, "Bump", qy2)
 msh.set_transfinite_curve(14, ny2, "Bump", qy2)
@@ -209,7 +209,7 @@ msh.set_transfinite_curve(25, ny2, "Bump", qy2)
 # ---------------------------------------------------------------------
 
 # - Dispersion zone over x-axis
-nx3 = 100
+nx3 = 50
 qx3 = 1.0
 msh.set_transfinite_curve(5,  nx3, "Progression", qx3)
 msh.set_transfinite_curve(7,  nx3, "Progression", qx3)
@@ -228,7 +228,7 @@ msh.set_transfinite_curve(23, ny3, "Progression", 1/qy3)
 # SIDE EXPANSION ZONE
 # ---------------------------------------------------------------------
 
-ny4 = 40
+ny4 = 30
 qy4 = 0.93
 msh.set_transfinite_curve(17, ny4, "Progression", 1/qy4)
 msh.set_transfinite_curve(19, ny4, "Progression", qy4)
@@ -239,7 +239,7 @@ msh.set_transfinite_curve(27, ny4, "Progression", 1/qy4)
 # ---------------------------------------------------------------------
 
 # - Flue outlet over x-axis
-nx = 250
+nx = 150
 qx = 1.0
 msh.set_transfinite_curve(20, nx, "Progression", qx)
 msh.set_transfinite_curve(22, nx, "Progression", qx)
