@@ -307,10 +307,10 @@ def plot_slice(
         mesh,
         window_size: tuple[int, int] = (900, 250),
         show_vectors: bool = True,
-        factor: float = 0.05,
-        padding: float = 0.03,
-        nx: int = 40,
-        ny: int = 8,
+        factor: float = 0.04,
+        padding: float = 0.025,
+        nx: int = 45,
+        ny: int = 10,
         **kwargs
     ) -> None:
     """ Custom display of slice results. """
@@ -449,6 +449,11 @@ def plot_oxygen(mesh, n_iso=5):
 def plot_carbon_monoxide(mesh, n_iso=5):
     pl = plot_slice(mesh, scalars="CO", cmap="coolwarm")
     handle_isosurfaces(pl, mesh, n_iso, "CO")
+
+
+def plot_reciprocal_time_step(mesh):
+    pl = plot_slice(mesh, scalars="rDeltaT", cmap="jet", show_vectors=False)
+    pl.show()
 #endregion
 
 def main():

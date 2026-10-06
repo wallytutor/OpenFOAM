@@ -78,16 +78,17 @@ PIMPLE
     momentumPredictor         no;
     transonic                 no;
     consistent                yes;
-    maxCo                     10.0;
-    maxDeltaT                 0.1;
+    maxCo                     50.0;
+    minDeltaT                 1.0e-05;
+    maxDeltaT                 1.0e-01;
 
     // Increase as much as possible: this parameters tries to
     // smooth rDeltaT (the local inverse time-step) and a lower
     // value will drag everything down to the lower chemical
     // time-step, making the simulation stable but slow.
-    rDeltaTSmoothingCoeff     0.3;
+    rDeltaTSmoothingCoeff     1.0;
     rDeltaTDampingCoeff       1.0;
-    alphaTemp                 0.2;
+    alphaTemp                 1.0;
     alphaY                    1.0;
 
     Yref
