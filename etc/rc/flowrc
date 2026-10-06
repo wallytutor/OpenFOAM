@@ -47,3 +47,17 @@ function runAndReconstructStep() {
     # Remove decomposition files:
     rm -rf processor*
 }
+
+function foamStepRunner() {
+    local tend=$1
+    local parallel=${2:-1}
+
+    if [ $parallel -eq 1 ]; then
+        runAndReconstructStep
+    else
+        runApplicationRename foamRun
+    fi
+
+    # Backup before modifying solver settings:
+    cp -r "$tend" "$tend.orig"
+}
