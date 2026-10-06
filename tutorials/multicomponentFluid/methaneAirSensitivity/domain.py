@@ -5,10 +5,10 @@ import gmsh
 
 from pathlib import Path
 
-import methane_air as ma
+import project
 
 #region: 0. Configuration
-config = ma.prepare_dimensions(save=False)
+config = project.prepare_dimensions(save=False)
 
 path = Path(__file__)
 wedge_angle  = math.radians(config["wedge_angle"])

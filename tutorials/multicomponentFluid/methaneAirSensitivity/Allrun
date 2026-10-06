@@ -109,7 +109,7 @@ function mainWorkflow() {
     local target="solution.$case"
 
     # Prepare _shared with current temperature:
-    uv run python initialize.py --temperature $temp
+    uv run python project.py --temperature $temp
 
     # Copy case if not already started:
     if [ ! -d "$target/" ]; then
