@@ -256,6 +256,7 @@ def plot_reports(*, plot, root="."):
 def plot_fields(mesh, *, plot, **kwargs):
     x_points = [0.5, 1.0, 1.5, 2.0, 3.0, 3.5]
     resolution = kwargs.get("resolution", 200)
+    x_max = _DIAM_DOMAIN / 2
 
     def plot_field(idx, name, scale=None):
         scale = scale or (lambda x: x)
@@ -263,7 +264,7 @@ def plot_fields(mesh, *, plot, **kwargs):
         for x_coord in x_points:
             line_data = mesh.sample_over_line(
                 [x_coord, 0.00, 0.0],
-                [x_coord, 0.40, 0.0],
+                [x_coord, 0.999 * x_max, 0.0],
                 resolution=resolution
             )
             x = line_data["Distance"] * 100
@@ -283,7 +284,7 @@ def plot_fields(mesh, *, plot, **kwargs):
 
     for axis in ax:
         axis.grid(False)
-        axis.set_xlim(0.0, 40.0)
+        axis.set_xlim(0.0, 100 * x_max)
         axis.legend(loc=1, fontsize="small", ncol=2)
         axis.set_xlabel("Distance from axis [cm]")
 
