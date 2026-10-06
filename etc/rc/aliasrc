@@ -29,6 +29,10 @@ alias scx="screen -x"
 alias scs="screen -S"
 alias scr="screen -r"
 
+# Make Python/IPython use uv:
+alias py='uv run python'
+alias ipy='uv run ipython'
+
 ##############################################################################
 # Apptainer aliases
 ##############################################################################
