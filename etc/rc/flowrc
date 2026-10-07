@@ -48,6 +48,30 @@ function runAndReconstructStep() {
     rm -rf processor*
 }
 
+function runSnappyHexMeshBasicWorkflow() {
+    local parallel=${1:-1}
+
+    # Pre-meshing:
+    runApplicationRename blockMesh
+    runApplicationRename surfaceFeatures
+
+    # Main meshing:
+    if [ $parallel -eq 1 ]; then
+        runApplicationRename snappyHexMesh
+    else
+        runApplicationRename decomposePar -noZero -constant
+        runParallelRename snappyHexMesh
+    fi
+
+    # Post-meshing:
+    runApplicationRename reconstructPar -noZero -constant
+    runApplicationRename renumberMesh
+    runApplicationRename checkMesh
+
+    # Remove decomposition files:
+    rm -rf processor*
+}
+
 function foamStepRunner() {
     local tend=$1
     local parallel=${2:-1}
