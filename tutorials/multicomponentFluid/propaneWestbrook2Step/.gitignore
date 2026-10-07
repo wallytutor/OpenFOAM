@@ -1,3 +1,7 @@
+# Any log
+*.log
+log.*
+
 # Simulation variants:
 solution.*/
 

@@ -13,6 +13,10 @@ case "$1" in
         # Just start a local server for interactive use
         uv run jupyter notebook --no-browser --ServerApp.token='' --ServerApp.password=''
         ;;
+    -report)
+        uv run jupyter nbconvert --execute --inplace report.ipynb
+        uv run majordome-build-qmd --file report.ipynb
+        ;;
     *)
         echo "Error: unknown option '$1'" >&2
         exit 1
