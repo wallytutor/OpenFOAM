@@ -78,9 +78,11 @@ PIMPLE
     momentumPredictor         no;
     transonic                 no;
     consistent                yes;
+
+    // Primary time scale controls; minDeltaT is probably a bad idea!
     maxCo                     50.0;
-    minDeltaT                 1.0e-05;
     maxDeltaT                 1.0e-01;
+    // minDeltaT                 1.0e-07;
 
     // Increase as much as possible: this parameters tries to
     // smooth rDeltaT (the local inverse time-step) and a lower
@@ -107,12 +109,13 @@ relaxationFactors
     }
     equations
     {
-        U       0.7;
-        h       0.7;
-        "Yi.*"  0.7;
-        k       0.5;
-        epsilon 0.5;
-        // ".*"            1.0;
+        // This makes no sense in LTS!
+        // U       0.7;
+        // h       0.7;
+        // "Yi.*"  0.7;
+        // k       0.5;
+        // epsilon 0.5;
+        ".*"            1.0;
     }
 }
 
