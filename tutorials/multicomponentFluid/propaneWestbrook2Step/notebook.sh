@@ -17,7 +17,10 @@ EOF
 }
 
 function clear_output() {
-    uv run jupyter nbconvert --clear-output --inplace watcher.ipynb
+    uv run jupyter nbconvert \
+        --ClearMetadataPreprocessor.enabled=True \
+        --ClearMetadataPreprocessor.clear_cell_metadata=True \
+        --clear-output --inplace watcher.ipynb
 }
 
 function start_server() {
