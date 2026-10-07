@@ -79,7 +79,7 @@ if command -v nvim >/dev/null 2>&1; then
     alias vim="nvim"
 fi
 
-export IPYTHONDIR="${FOAM_KOMPANION_ETC}/.ipython"
+export IPYTHONDIR="${FOAM_KOMPANION_ETC}/ipython"
 # export JUPYTER_DATA_DIR="${SCRIPT_DIR}/../.jupyter"
 # export JUPYTER_PATH="${SCRIPT_DIR}/../.jupyter"
 # export VSCODE_EXTENSIONS="${SCRIPT_DIR}/../.vscode/extensions"
