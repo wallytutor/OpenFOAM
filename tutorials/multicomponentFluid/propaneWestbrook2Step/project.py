@@ -32,7 +32,7 @@ _PHASE     = "gas"
 _DIAM_FUEL     = 0.027
 _DIAM_OXID_INT = 0.032
 _DIAM_OXID_EXT = 0.140
-_DIAM_DOMAIN   = 1.000
+_DIAM_DOMAIN   = 0.800
 _LEN_DOMAIN    = 4.000
 
 # Shared handle to create initialConditions file.
