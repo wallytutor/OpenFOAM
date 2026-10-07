@@ -65,7 +65,7 @@ function runSnappyHexMeshBasicWorkflow() {
 
     # Post-meshing:
     runApplicationRename reconstructPar -noZero -constant
-    runApplicationRename renumberMesh
+    runApplicationRename renumberMesh -noZero -constant
     runApplicationRename checkMesh
 
     # Remove decomposition files:
