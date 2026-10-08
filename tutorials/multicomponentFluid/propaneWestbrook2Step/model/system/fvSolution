@@ -23,8 +23,15 @@ solvers
 
     p
     {
-        solver           GAMG;
-        smoother         GaussSeidel;
+
+        // Larger meshes:
+        // solver           GAMG;
+        // smoother         GaussSeidel;
+
+        // Simple orthogonal 2D cases
+        solver           PCG;
+        preconditioner   DIC;
+
         tolerance        1e-6;
         relTol           0.05;
     }
@@ -80,7 +87,7 @@ PIMPLE
     consistent                yes;
 
     // Primary time scale controls; minDeltaT is probably a bad idea!
-    maxCo                     50.0;
+    maxCo                     10.0;
     maxDeltaT                 1.0e-01;
     // minDeltaT                 1.0e-07;
 
