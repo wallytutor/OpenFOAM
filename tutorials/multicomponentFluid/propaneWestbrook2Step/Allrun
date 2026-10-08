@@ -153,8 +153,8 @@ function mainWorkflow() {
 }
 #endregion
 
-# .......... case  power  T    end1   end2   end3
-mainWorkflow 1     1000   25   5000  10000  20000
-mainWorkflow 2     1000   300  5000  10000  20000
+# .......... case  power  T    end1  end2  end3
+mainWorkflow 1     1000   25   1000  5000  15000
+mainWorkflow 2     1000   300  1000  5000  15000
 
 #------------------------------------------------------------------------------
