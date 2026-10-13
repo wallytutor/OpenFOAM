@@ -1,11 +1,11 @@
-#import "../book.typ": bookstyle, preamble
+#import "@local/book:0.1.0": bookstyle, preamble
 
 #show: bookstyle.with(
   book-title: "Notes on Computational Fluid Dynamics",
   book-subtitle: "General Principles Refactored",
   authors: "Christopher Greenshields and Henry Weller",
   book-comment: "With notes by Walter Dal'Maz Silva",
-  references: "book.bib",
+  references: bibliography("book.bib", style: "ieee", title: "References"),
   margins: 2.5cm,
 )
 

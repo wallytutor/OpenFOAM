@@ -1,11 +1,10 @@
 // typst watch --root .. main.typ
-#import "../book.typ": *
+#import "@local/book:0.1.0": *
 
 #show: bookstyle.with(
   book-title: "Meshing for OpenFOAM",
   book-subtitle: "A guide for snappyHexMesh",
   authors: "Walter Dal'Maz Silva",
-  references: "book.bib",
   margins: 1.75cm,
 )
 

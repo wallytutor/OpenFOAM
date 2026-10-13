@@ -7,10 +7,10 @@
 all: render
 
 render:
-	typst compile --root .. main.typ
+	typst compile main.typ
 
 watch:
-	typst watch --root .. main.typ
+	typst watch main.typ
 
 clean:
 	rm -f *.pdf

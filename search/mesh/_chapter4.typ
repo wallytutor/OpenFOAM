@@ -1,4 +1,4 @@
-#import "../book.typ": *
+#import "@local/book:0.1.0": *
 
 = Inflation layers <chapter-4>
 
@@ -44,7 +44,7 @@ To diagnose and resolve these issues efficiently, users should adopt a modular w
 Layer sizing controls determine prism height and expansion outward from the boundary surface. The interpretation of these values is governed by `relativeSizes`, which is a boolean switch (`true` or `false`). If active, thicknesses are specified as fractions of the local undistorted background cell height directly adjacent to the patch. Setting it to `false`, thicknesses are defined as absolute physical dimensions in domain units (typically meters).
 
 #exampleblock(title: "the relative size of a cell")[
-If setting `relativeSizes true`, then if an adjacent background volume cell has an edge height $Delta x = 2.0 "mm"$, setting a thickness of `0.5` equates to an absolute thickness of $1.0 "mm"$.
+  If setting `relativeSizes true`, then if an adjacent background volume cell has an edge height $Delta x = 2.0 "mm"$, setting a thickness of `0.5` equates to an absolute thickness of $1.0 "mm"$.
 ]
 
 #exampleblock(title: "the absolute size of a cell")[
