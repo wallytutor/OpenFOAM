@@ -1,0 +1,16 @@
+solid "material-bed"
+   facet normal 0 -1 0
+      outer loop
+         vertex 1991.00005626678 -1065.00005722046 0
+         vertex 1991.00005626678 -1065.00005722046 2746.99997901917
+         vertex -1508.99994373322 -1065.00005722046 0
+      endloop
+   endfacet
+   facet normal 0 -1 0
+      outer loop
+         vertex 1991.00005626678 -1065.00005722046 2746.99997901917
+         vertex -1508.99994373322 -1065.00005722046 2746.99997901917
+         vertex -1508.99994373322 -1065.00005722046 0
+      endloop
+   endfacet
+endsolid
