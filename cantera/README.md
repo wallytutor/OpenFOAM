@@ -21,9 +21,10 @@ This generates `cantera-$(whoami).sif`.
 You can start the image as a background instance and connect to it. To start the background instance with writable *tmpfs* and current directory bound:
 
 ```bash
+# Assuming you are one level above the repository directory:
 apptainer instance start     \
     -B "$(realpath $PWD)" --writable-tmpfs \
-    "cantera-$(whoami).sif"  \
+    "OpenFOAM/cantera/cantera-$(whoami).sif"  \
     "cantera"
 ```
 
