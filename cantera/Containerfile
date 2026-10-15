@@ -141,42 +141,6 @@ ENV VIRTUAL_ENV=/opt/python/.venv
 ENV PATH="/opt/python/.venv/bin:/opt/cargo/bin:$PATH"
 
 # ----------------------------------------------------------------------------
-# Build & Install Cantera (3.2.0) with bundled Sundials & system Eigen
-# ----------------------------------------------------------------------------
-
-# Ensure Eigen headers (3.4.0) are discoverable in standard include paths
-RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen && \
-    ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
-
-WORKDIR /opt/cantera
-
-# Clone Cantera and fetch GitHub-hosted submodules (bypassing GitLab rate-limiting on ext/eigen)
-RUN git clone --depth 1 --branch v3.2.0 https://github.com/Cantera/cantera.git /opt/cantera && \
-    cd /opt/cantera && \
-    git submodule update --init --recursive ext/sundials data/example_data ext/HighFive ext/yaml-cpp ext/fmt
-
-# Configure, compile, and install Cantera using SCons with maximum optimizations
-RUN scons build -j"$(nproc)" \
-        prefix=/usr/local \
-        python_cmd=/opt/python/.venv/bin/python \
-        python_package=y \
-        python_prefix=/opt/python/.venv \
-        system_sundials=n \
-        system_eigen=y \
-        extra_inc_dirs="/usr/include/eigen3" \
-        blas_lapack_libs="openblas,lapack" \
-        optimize=y \
-        optimize_flags="-O3 -fPIC" \
-        cc_flags="-fPIC" \
-        thread_flags="-pthread" \
-        doxygen_docs=n && \
-    scons install && \
-    ldconfig
-
-# Ensure python environment recognizes cantera
-RUN python -c "import cantera; print(f'Cantera {cantera.__version__} successfully installed in {cantera.__file__}')"
-
-# ----------------------------------------------------------------------------
 # Quarto CLI & TinyTeX
 # ----------------------------------------------------------------------------
 
@@ -189,6 +153,85 @@ RUN wget ${QUARTO_URL}/v${QUARTO_VERSION}/${QUARTO_DEB} \
     && rm ${QUARTO_DEB}
 
 RUN quarto install tinytex
+
+# ----------------------------------------------------------------------------
+# Build & Install Cantera (3.2.0) with bundled Sundials & system Eigen
+# ----------------------------------------------------------------------------
+
+# Ensure Eigen headers (3.4.0) are discoverable in standard include paths
+RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen && \
+    ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
+
+# Ensure OpenMPI headers and libraries are discoverable in standard paths
+RUN ln -sf /usr/lib/x86_64-linux-gnu/openmpi/include/mpi*.h /usr/include/ && \
+    ln -sf /usr/lib/x86_64-linux-gnu/openmpi/include/openmpi /usr/include/ && \
+    echo "/usr/lib/x86_64-linux-gnu/openmpi/lib" > /etc/ld.so.conf.d/openmpi.conf && \
+    ldconfig
+
+# ----------------------------------------------------------------------------
+# Build SUNDIALS from source (v7.2.0) with MPI & Multithreading
+# ----------------------------------------------------------------------------
+
+ARG SUNDIALS_VERSION=v7.2.0
+RUN git clone --depth 1 --branch ${SUNDIALS_VERSION} https://github.com/LLNL/sundials.git /tmp/sundials-src && \
+    cmake -B /tmp/sundials-build -S /tmp/sundials-src \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr/local \
+        -DCMAKE_C_FLAGS="-O3 -fPIC" \
+        -DCMAKE_CXX_FLAGS="-O3 -fPIC" \
+        -DENABLE_MPI=ON \
+        -DENABLE_OPENMP=ON \
+        -DENABLE_PTHREAD=ON \
+        -DBUILD_SHARED_LIBS=ON \
+        -DBUILD_STATIC_LIBS=ON \
+        -DEXAMPLES_ENABLE_C=OFF \
+        -DEXAMPLES_ENABLE_CXX=OFF \
+        -DEXAMPLES_INSTALL=OFF && \
+    cmake --build /tmp/sundials-build -j"$(nproc)" && \
+    cmake --install /tmp/sundials-build && \
+    ldconfig && \
+    rm -rf /tmp/sundials-src /tmp/sundials-build
+
+# ----------------------------------------------------------------------------
+# Build & Install Cantera (3.2.0)
+# ----------------------------------------------------------------------------
+
+ENV OMPI_ALLOW_RUN_AS_ROOT=1 \
+    OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+WORKDIR /opt/cantera
+
+# Clone Cantera and fetch GitHub-hosted submodules (bypassing GitLab rate-limiting on ext/eigen)
+RUN git clone --depth 1 --branch v3.2.0 https://github.com/Cantera/cantera.git /opt/cantera && \
+    cd /opt/cantera && \
+    git submodule update --init --recursive data/example_data ext/HighFive ext/yaml-cpp ext/fmt
+
+# Configure, compile, and install Cantera using SCons with maximum optimizations
+RUN scons build -j"$(nproc)" \
+        prefix=/usr/local \
+        CC=mpicc \
+        CXX=mpicxx \
+        FORTRAN=mpifort \
+        python_cmd=/opt/python/.venv/bin/python \
+        python_package=y \
+        python_prefix=/opt/python/.venv \
+        system_sundials=y \
+        sundials_include=/usr/local/include \
+        sundials_libdir=/usr/local/lib \
+        system_eigen=y \
+        extra_inc_dirs="/usr/include/eigen3:/usr/lib/x86_64-linux-gnu/openmpi/include" \
+        extra_lib_dirs="/usr/local/lib:/usr/lib/x86_64-linux-gnu/openmpi/lib" \
+        blas_lapack_libs="openblas,lapack" \
+        optimize=y \
+        optimize_flags="-O3 -fPIC" \
+        cc_flags="-fPIC" \
+        thread_flags="-pthread" \
+        doxygen_docs=n && \
+    scons install && \
+    ldconfig
+
+# Ensure python environment recognizes cantera
+RUN python -c "import cantera; print(f'Cantera {cantera.__version__} successfully installed in {cantera.__file__}')"
 
 # ----------------------------------------------------------------------------
 # Final cleanup and user workspace setup
