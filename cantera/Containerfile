@@ -120,6 +120,8 @@ RUN uv init --no-package --name pythonenv --python 3.12 && \
     uv add \
         pip \
         packaging \
+        jinja2 \
+        pyyaml \
         scons \
         cython \
         numpy \
