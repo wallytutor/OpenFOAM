@@ -1,0 +1,209 @@
+# ############################################################################
+#  Containerfile (Cantera 3.2.0 + Sundials + Eigen + Python / PyO3 / Rust)
+# ############################################################################
+
+FROM ubuntu:24.04
+
+# ----------------------------------------------------------------------------
+# Basics and avoid locale issues
+# ----------------------------------------------------------------------------
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get upgrade -y && \
+    apt-get install -y locales && \
+    locale-gen en_US.UTF-8
+
+ENV LANG=en_US.UTF-8     \
+    LANGUAGE=en_US:en    \
+    LC_CTYPE=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8
+
+RUN update-locale LANG=en_US.UTF-8
+
+# ----------------------------------------------------------------------------
+# APT installed build dependencies & tools
+# ----------------------------------------------------------------------------
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    git \
+    gcc \
+    g++ \
+    gfortran \
+    make \
+    cmake \
+    ninja-build \
+    pkg-config \
+    software-properties-common \
+    wget \
+    curl \
+    neovim \
+    ca-certificates \
+    libssl-dev
+
+# Linear algebra & Eigen:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    liblapack-dev \
+    libopenblas-dev \
+    libeigen3-dev
+
+# MPI and multithreading:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libopenmpi-dev \
+    openmpi-bin \
+    libomp-dev \
+    libtbb-dev \
+    libpthread-stubs0-dev
+
+# Boost:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libboost-dev \
+    libboost-all-dev
+
+# HDF5 & YAML & serialization support:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libhdf5-dev \
+    hdf5-tools \
+    libyaml-cpp-dev \
+    libfmt-dev
+
+# Graph / docs / formatting / visualization tools:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    doxygen \
+    graphviz \
+    pandoc \
+    inkscape \
+    poppler-utils \
+    tesseract-ocr \
+    imagemagick
+
+# PyVista / VTK runtime dependencies:
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libxrender1 \
+    libvtk9-dev \
+    libosmesa6 \
+    libgl1 \
+    libegl1 \
+    libgomp1 \
+    libtbb12
+
+# ----------------------------------------------------------------------------
+# Rust & Cargo setup (for PyO3 / Maturin environment)
+# ----------------------------------------------------------------------------
+
+ENV CARGO_HOME=/opt/cargo
+ENV RUSTUP_HOME=/opt/rustup
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --no-modify-path \
+    --default-toolchain stable \
+    --profile minimal \
+    --default-host x86_64-unknown-linux-gnu
+
+ENV PATH="/opt/cargo/bin:$PATH"
+
+RUN cargo install maturin
+RUN cargo install --locked typst-cli
+
+# ----------------------------------------------------------------------------
+# Python environment via uv (/opt/python)
+# ----------------------------------------------------------------------------
+
+# Install uv & uvx from the official image
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Create /opt/python and initialize a non-package pyproject
+WORKDIR /opt/python
+
+RUN uv init --no-package --name pythonenv --python 3.12 && \
+    uv add \
+        pip \
+        packaging \
+        scons \
+        cython \
+        numpy \
+        setuptools \
+        wheel \
+        ruamel.yaml \
+        scipy \
+        matplotlib \
+        pandas \
+        sympy \
+        h5py \
+        mpi4py \
+        pytest
+
+# Override system PATH so the uv virtualenv python is the default system Python
+ENV VIRTUAL_ENV=/opt/python/.venv
+ENV PATH="/opt/python/.venv/bin:/opt/cargo/bin:$PATH"
+
+# ----------------------------------------------------------------------------
+# Build & Install Cantera (3.2.0) with bundled Sundials & system Eigen
+# ----------------------------------------------------------------------------
+
+# Ensure Eigen headers (3.4.0) are discoverable in standard include paths
+RUN ln -sf /usr/include/eigen3/Eigen /usr/include/Eigen && \
+    ln -sf /usr/include/eigen3/unsupported /usr/include/unsupported
+
+WORKDIR /opt/cantera
+
+# Clone Cantera and fetch GitHub-hosted submodules (bypassing GitLab rate-limiting on ext/eigen)
+RUN git clone --depth 1 --branch v3.2.0 https://github.com/Cantera/cantera.git /opt/cantera && \
+    cd /opt/cantera && \
+    git submodule update --init --recursive ext/sundials data/example_data ext/HighFive ext/yaml-cpp ext/fmt
+
+# Configure, compile, and install Cantera using SCons with maximum optimizations
+RUN scons build -j"$(nproc)" \
+        prefix=/usr/local \
+        python_cmd=/opt/python/.venv/bin/python \
+        python_package=y \
+        python_prefix=/opt/python/.venv \
+        system_sundials=n \
+        system_eigen=y \
+        extra_inc_dirs="/usr/include/eigen3" \
+        blas_lapack_libs="openblas,lapack" \
+        optimize=y \
+        optimize_flags="-O3 -fPIC" \
+        cc_flags="-fPIC" \
+        thread_flags="-pthread" \
+        doxygen_docs=n && \
+    scons install && \
+    ldconfig
+
+# Ensure python environment recognizes cantera
+RUN python -c "import cantera; print(f'Cantera {cantera.__version__} successfully installed in {cantera.__file__}')"
+
+# ----------------------------------------------------------------------------
+# Quarto CLI & TinyTeX
+# ----------------------------------------------------------------------------
+
+ARG QUARTO_URL=https://github.com/quarto-dev/quarto-cli/releases/download
+ARG QUARTO_VERSION=1.10.18
+ARG QUARTO_DEB=quarto-${QUARTO_VERSION}-linux-amd64.deb
+
+RUN wget ${QUARTO_URL}/v${QUARTO_VERSION}/${QUARTO_DEB} \
+    && dpkg -i ${QUARTO_DEB} \
+    && rm ${QUARTO_DEB}
+
+RUN quarto install tinytex
+
+# ----------------------------------------------------------------------------
+# Final cleanup and user workspace setup
+# ----------------------------------------------------------------------------
+
+ARG EXTRA_PACKAGES=""
+RUN if [ -n "$EXTRA_PACKAGES" ]; then \
+        apt-get update && apt-get install -y $EXTRA_PACKAGES; \
+    fi
+
+# Clean apt cache and temporary build directories:
+RUN apt-get clean && \
+    rm -rf /var/lib/apt/lists/* && \
+    rm -rf /var/tmp/* /tmp/*
+
+WORKDIR /home/ubuntu
+
+# ----------------------------------------------------------------------------
+# EOF
+# ----------------------------------------------------------------------------
