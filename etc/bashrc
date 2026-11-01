@@ -67,14 +67,14 @@ fi
 # Configuration
 ##############################################################################
 
-NVIM_VER=$(nvim --version | head -n1 | sed 's/^NVIM v//')
-
-# check if >= 0.10
-if printf '%s\n' "$NVIM_VER" "0.10" | sort -V | head -n1 | grep -q "0.10"; then
-    export XDG_CONFIG_HOME="${FOAM_KOMPANION_DIR}/etc/nvim"
-fi
-
 if command -v nvim >/dev/null 2>&1; then
+    NVIM_VER=$(nvim --version | head -n1 | sed 's/^NVIM v//')
+
+    # check if >= 0.10
+    if printf '%s\n' "$NVIM_VER" "0.10" | sort -V | head -n1 | grep -q "0.10"; then
+        export XDG_CONFIG_HOME="${FOAM_KOMPANION_DIR}/etc/nvim"
+    fi
+
     alias vi="nvim"
     alias vim="nvim"
 fi
