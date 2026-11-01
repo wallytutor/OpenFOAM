@@ -29,27 +29,27 @@ function foam_source_append() {
 # Handle OpenFOAM environment sourcing and tweaks:
 if [ ! -f "/opt/openfoam13/etc/bashrc" ]; then
     echo "OpenFOAM environment not found."
-    exit 1
+    # exit 1
 fi
 
 # Pre-source full OpenFOAM environment:
 if [ ! -v WM_PROJECT ]; then
     . /opt/openfoam13/etc/bashrc
+
+    # Source tutorial clean/run functions:
+    . $WM_PROJECT_DIR/bin/tools/CleanFunctions
+    . $WM_PROJECT_DIR/bin/tools/RunFunctions
+
+    # Tweak OpenFOAM environment variables:
+    export WM_PROJECT_USER_DIR="${FOAM_KOMPANION_DIR}"
+    export FOAM_RUN="${FOAM_KOMPANION_DIR}/run"
+    export FOAM_USER_APPBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/bin"
+    export FOAM_USER_LIBBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/lib"
+
+    # Add user directories to path:
+    export PATH="${FOAM_USER_APPBIN}:${PATH}"
+    export LD_LIBRARY_PATH="${FOAM_USER_LIBBIN}:${LD_LIBRARY_PATH}"
 fi
-
-# Source tutorial clean/run functions:
-. $WM_PROJECT_DIR/bin/tools/CleanFunctions
-. $WM_PROJECT_DIR/bin/tools/RunFunctions
-
-# Tweak OpenFOAM environment variables:
-export WM_PROJECT_USER_DIR="${FOAM_KOMPANION_DIR}"
-export FOAM_RUN="${FOAM_KOMPANION_DIR}/run"
-export FOAM_USER_APPBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/bin"
-export FOAM_USER_LIBBIN="${FOAM_KOMPANION_DIR}/platforms/${WM_OPTIONS}/lib"
-
-# Add user directories to path:
-export PATH="${FOAM_USER_APPBIN}:${PATH}"
-export LD_LIBRARY_PATH="${FOAM_USER_LIBBIN}:${LD_LIBRARY_PATH}"
 
 ##############################################################################
 # User scripts
