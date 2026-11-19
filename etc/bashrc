@@ -33,7 +33,7 @@ if [ ! -f "/opt/openfoam13/etc/bashrc" ]; then
 fi
 
 # Pre-source full OpenFOAM environment:
-if [ ! -v WM_PROJECT ]; then
+if [ ! -v WM_PROJECT ] && [ -f "/opt/openfoam13/etc/bashrc" ] ; then
     . /opt/openfoam13/etc/bashrc
 
     # Source tutorial clean/run functions:
